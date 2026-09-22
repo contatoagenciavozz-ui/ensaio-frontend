@@ -1591,11 +1591,51 @@ function fmtBackendTime(s) {
   return m + ':' + (sec < 10 ? '0' : '') + sec;
 }
 
+async function fetchWithRetry(url, options, maxAttempts, onAttempt) {
+  var lastErr;
+  for (var i = 0; i < maxAttempts; i++) {
+    if (onAttempt) onAttempt(i + 1, maxAttempts);
+    try {
+      return await fetch(url, options);
+    } catch (e) {
+      lastErr = e;
+      if (i < maxAttempts - 1) {
+        await new Promise(function (r) { setTimeout(r, 12000); });
+      }
+    }
+  }
+  throw lastErr;
+}
+
+async function wakeBackend(statusEl) {
+  var maxAttempts = 5;
+  for (var i = 0; i < maxAttempts; i++) {
+    try {
+      var res = await fetch(ENSAIO_BACKEND_URL + '/');
+      if (res.ok) return true;
+    } catch (e) {
+      // segue tentando
+    }
+    statusEl.textContent = 'Servidor parece estar dormindo, acordando ele (tentativa ' + (i + 1) + ' de ' + maxAttempts + ')...';
+    await new Promise(function (r) { setTimeout(r, 10000); });
+  }
+  return false;
+}
+
 async function runBackendAnalysis(file) {
   var box = document.getElementById('backendStatusBox');
   var statusEl = document.getElementById('backendStatus');
   var checksList = document.getElementById('landmarksChecks');
   box.style.display = 'block';
+  statusEl.textContent = 'Verificando servidor...';
+
+  var awake = await wakeBackend(statusEl);
+  if (!awake) {
+    statusEl.textContent = 'Não consegui acordar o servidor depois de várias tentativas — ele pode estar realmente fora do ar. Tente de novo em alguns minutos, ou use o campo de colar JSON manual abaixo.';
+    document.getElementById('backendProgress').style.display = 'none';
+    return;
+  }
+
   statusEl.textContent = 'Enviando vídeo pro servidor...';
 
   var startedAt = Date.now();
@@ -1606,7 +1646,9 @@ async function runBackendAnalysis(file) {
   try {
     var form = new FormData();
     form.append('video', file);
-    var postRes = await fetch(ENSAIO_BACKEND_URL + '/analyze', { method: 'POST', body: form });
+    var postRes = await fetchWithRetry(ENSAIO_BACKEND_URL + '/analyze', { method: 'POST', body: form }, 3, function (n, total) {
+      if (n > 1) statusEl.textContent = 'Reconectando ao servidor (tentativa ' + n + ' de ' + total + ')...';
+    });
     if (!postRes.ok) throw new Error('Servidor respondeu ' + postRes.status);
     var postData = await postRes.json();
     var jobId = postData.job_id;
@@ -1616,7 +1658,7 @@ async function runBackendAnalysis(file) {
     var result = null;
     while (true) {
       await new Promise(function (r) { setTimeout(r, 6000); });
-      var statusRes = await fetch(ENSAIO_BACKEND_URL + '/status/' + jobId);
+      var statusRes = await fetchWithRetry(ENSAIO_BACKEND_URL + '/status/' + jobId, undefined, 3, null);
       if (statusRes.status === 404) throw new Error('O servidor perdeu esse trabalho (reiniciou no meio do processo) — tente de novo com um vídeo menor.');
       var statusData = await statusRes.json();
       if (statusData.status === 'done') { result = statusData.result; break; }
