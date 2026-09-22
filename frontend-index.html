@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Ensaio — piloto de análise de discurso</title>
+
+<style>
+:root {
+  --bg: #F2EFE7;
+  --surface: #FFFFFF;
+  --ink: #22261F;
+  --ink-soft: #5B5E51;
+  --ink-faint: #8C8D80;
+  --rule: #DAD4C4;
+  --gold: #A5761F;
+  --hedge: #A6472F;
+  --hedge-soft: #F3E1DB;
+  --filler: #96721E;
+  --filler-soft: #F3E7D2;
+  --vague: #33655F;
+  --vague-soft: #DEEBE7;
+  --weak: #5E4467;
+  --weak-soft: #E9E1EC;
+  --ok: #3E6B44;
+  --warn: #A5761F;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1B1C17;
+    --surface: #232420;
+    --ink: #ECE8DC;
+    --ink-soft: #B3AF9F;
+    --ink-faint: #7C7A6D;
+    --rule: #3A3B34;
+    --gold: #D6A94A;
+    --hedge: #E58969;
+    --hedge-soft: #3A2620;
+    --filler: #E0B45C;
+    --filler-soft: #3A2E18;
+    --vague: #7FC2B8;
+    --vague-soft: #1E2F2C;
+    --weak: #C6A6D1;
+    --weak-soft: #2C2432;
+    --ok: #8FC49A;
+    --warn: #E0B45C;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1B1C17;
+  --surface: #232420;
+  --ink: #ECE8DC;
+  --ink-soft: #B3AF9F;
+  --ink-faint: #7C7A6D;
+  --rule: #3A3B34;
+  --gold: #D6A94A;
+  --hedge: #E58969;
+  --hedge-soft: #3A2620;
+  --filler: #E0B45C;
+  --filler-soft: #3A2E18;
+  --vague: #7FC2B8;
+  --vague-soft: #1E2F2C;
+  --weak: #C6A6D1;
+  --weak-soft: #2C2432;
+  --ok: #8FC49A;
+  --warn: #E0B45C;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+}
+.wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+header.top { margin-bottom: 36px; }
+.kicker { font-size: 14px; color: var(--ink-faint); margin: 0 0 10px; }
+h1 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 34px;
+  line-height: 1.2;
+  margin: 0 0 14px;
+  max-width: 20ch;
+}
+.lede { font-size: 16px; color: var(--ink-soft); max-width: 56ch; margin: 0; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+label.field-label {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+textarea#transcript {
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.7;
+  padding: 16px;
+}
+textarea#transcript:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+.row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-top: 14px; }
+.field-sm { flex: 0 0 160px; }
+input#duration {
+  width: 100%;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  padding: 10px 12px;
+}
+input#duration:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+.hint { font-size: 12px; color: var(--ink-faint); margin-top: 6px; }
+.err { font-size: 13px; color: var(--hedge); margin-top: 6px; min-height: 16px; }
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 4px;
+}
+@media (max-width: 560px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
+.metric { border-top: 2px solid var(--rule); padding-top: 10px; }
+.metric .num { font-family: var(--font-serif); font-size: 26px; }
+.metric .lab { font-size: 12px; color: var(--ink-soft); }
+.metric.m-hedge { border-color: var(--hedge); }
+.metric.m-filler { border-color: var(--filler); }
+.metric.m-vague { border-color: var(--vague); }
+.metric.m-weak { border-color: var(--weak); }
+
+.pace-gauge { margin-top: 18px; }
+.pace-track { position: relative; height: 8px; background: var(--rule); border-radius: 4px; margin-top: 10px; }
+.pace-zone { position: absolute; top: 0; bottom: 0; background: var(--vague-soft); border-radius: 4px; }
+.pace-dot { position: absolute; top: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--gold); border: 2px solid var(--surface); transform: translateX(-50%); }
+.pace-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-faint); margin-top: 6px; }
+
+h2 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 19px;
+  margin: 0 0 4px;
+}
+.section-note { font-size: 13px; color: var(--ink-soft); margin: 0 0 16px; }
+
+#reading {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+}
+#reading mark {
+  background: transparent;
+  color: inherit;
+  border-bottom: 2px solid currentColor;
+  padding-bottom: 1px;
+  cursor: pointer;
+}
+#reading mark.cat-hedge { color: var(--hedge); }
+#reading mark.cat-filler { color: var(--filler); }
+#reading mark.cat-vague { color: var(--vague); }
+#reading mark.cat-weak { color: var(--weak); }
+#reading mark.flash { background: var(--gold); color: var(--surface); border-radius: 3px; }
+.empty-state { font-size: 15px; color: var(--ink-faint); font-style: italic; }
+
+.legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 16px; font-size: 12px; color: var(--ink-soft); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend .cat-hedge i { background: var(--hedge); }
+.legend .cat-filler i { background: var(--filler); }
+.legend .cat-vague i { background: var(--vague); }
+.legend .cat-weak i { background: var(--weak); }
+
+.notes-list { list-style: none; margin: 0; padding: 0; }
+.note-item {
+  padding: 14px 0;
+  border-top: 1px solid var(--rule);
+  cursor: pointer;
+}
+.note-item:first-child { border-top: none; }
+.note-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+.note-tag.cat-hedge { background: var(--hedge-soft); color: var(--hedge); }
+.note-tag.cat-filler { background: var(--filler-soft); color: var(--filler); }
+.note-tag.cat-vague { background: var(--vague-soft); color: var(--vague); }
+.note-tag.cat-weak { background: var(--weak-soft); color: var(--weak); }
+.note-quote { font-family: var(--font-serif); font-size: 15px; margin: 0 0 6px; }
+.note-suggestion { font-size: 14px; color: var(--ink-soft); margin: 0; }
+.note-suggestion b { font-weight: 500; color: var(--ink); }
+
+.preview-badge {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--ink-faint);
+  border: 1px solid var(--rule);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-bottom: 14px;
+}
+.mock-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mock-row .mlab { flex: 0 0 150px; font-size: 13px; color: var(--ink-soft); }
+.mock-bar-track { flex: 1; height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+.mock-bar-fill { height: 100%; background: var(--gold); }
+.mock-val { flex: 0 0 50px; text-align: right; font-size: 13px; font-family: var(--font-serif); }
+
+.check-list { list-style: none; margin: 0; padding: 0; }
+.check-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-top: 1px solid var(--rule); }
+.check-item:first-child { border-top: none; }
+.dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.dot.ok { background: var(--ok); }
+.dot.warn { background: var(--warn); }
+.check-text .ct-title { font-size: 14px; }
+.check-text .ct-sub { font-size: 12px; color: var(--ink-faint); }
+
+footer.foot { font-size: 12px; color: var(--ink-faint); margin-top: 30px; border-top: 1px solid var(--rule); padding-top: 16px; }
+
+.upload-zone {
+  border: 1px dashed var(--rule);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg);
+}
+.upload-zone:hover { border-color: var(--gold); }
+.upload-zone input { display: none; }
+.upload-zone .uz-title { font-size: 14px; color: var(--ink); }
+.upload-zone .uz-sub { font-size: 12px; color: var(--ink-faint); margin-top: 4px; }
+.file-chip {
+  display: flex; align-items: center; justify-content: space-between;
+  border: 1px solid var(--rule); border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; margin-bottom: 14px;
+}
+.file-chip button {
+  border: none; background: none; color: var(--hedge); font-size: 12px; cursor: pointer;
+  font-family: var(--font-sans); padding: 0;
+}
+.progress-track { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; margin: 10px 0; display: none; }
+.progress-fill { height: 100%; background: var(--gold); width: 0%; transition: width .15s; }
+.status-line { font-size: 13px; color: var(--ink-soft); min-height: 18px; }
+
+canvas.viz { width: 100%; display: block; border-radius: 8px; background: var(--bg); border: 1px solid var(--rule); }
+.viz-label { font-size: 11px; color: var(--ink-faint); margin: 12px 0 6px; }
+
+audio.player { width: 100%; margin-top: 12px; }
+
+.pause-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.pause-chip {
+  font-size: 12px; border: 1px solid var(--rule); border-radius: 20px;
+  padding: 4px 10px; cursor: pointer; color: var(--ink-soft); background: var(--surface);
+}
+.pause-chip:hover { border-color: var(--gold); color: var(--ink); }
+
+.video-frame-wrap { position: relative; }
+video.frame-source { width: 100%; border-radius: 8px; display: block; background: #000; }
+input[type="range"].scrub { width: 100%; margin-top: 10px; accent-color: var(--gold); }
+.frame-btn {
+  margin-top: 12px; border: 1px solid var(--ink); background: var(--ink); color: var(--surface);
+  font-family: var(--font-sans); font-size: 13px; padding: 9px 16px; border-radius: 8px; cursor: pointer;
+}
+.frame-btn:hover { opacity: .85; }
+.frame-btn:disabled { opacity: .4; cursor: not-allowed; }
+canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display: none; border: 1px solid var(--rule); }
+
+.check-item .status-text { font-size: 12px; font-weight: 500; }
+.check-item .status-text.ok { color: var(--ok); }
+.check-item .status-text.warn { color: var(--warn); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 620px) { .two-col { grid-template-columns: 1fr; } }
+.check-item input[type="checkbox"] { margin-top: 4px; accent-color: var(--gold); flex-shrink: 0; }
+.compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.compare-table th, .compare-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+.compare-table th { color: var(--ink-soft); font-weight: 500; font-size: 12px; }
+.compare-table td.delta-col { font-family: var(--font-serif); color: var(--ink-faint); }
+.compare-section-title { font-family: var(--font-serif); font-size: 15px; margin: 18px 0 6px; }
+.compare-section-title:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <p class="kicker">Piloto — módulo de texto</p>
+    <h1>Ensaie sua fala antes de subir ao palco</h1>
+    <p class="lede">Cole a transcrição do seu discurso. O texto é lido na hora, sem sair do navegador, e cada trecho que pode enfraquecer sua fala fica marcado com uma sugestão de reescrita.</p>
+  </header>
+
+  <section class="card">
+    <label class="field-label" for="transcript">Transcrição do discurso</label>
+    <textarea id="transcript" placeholder="Cole aqui o texto da sua fala, ou comece a digitar um trecho para testar...">Bom, eu acho que a gente conseguiu um aumento significativo nas vendas esse trimestre. Tipo, foi um resultado bem importante pra empresa, né. A gente, assim, fez a realização de várias melhorias no processo, e eu acredito que isso ajudou bastante. Talvez a gente devesse continuar nessa linha, mas não sei se todo mundo concorda.</textarea>
+    <div class="row">
+      <div class="field-sm">
+        <label class="field-label" for="duration">Duração (mm:ss, opcional)</label>
+        <input id="duration" type="text" placeholder="ex: 1:45">
+      </div>
+    </div>
+    <p class="hint">A duração é usada só para estimar o ritmo (palavras por minuto). Deixe em branco se não gravou o tempo.</p>
+    <p class="err" id="durationError" role="alert"></p>
+  </section>
+
+  <section class="card">
+    <div class="metrics">
+      <div class="metric"><div class="num" id="mWords">0</div><div class="lab">palavras</div></div>
+      <div class="metric m-hedge"><div class="num" id="mHedge">0</div><div class="lab">hedging</div></div>
+      <div class="metric m-filler"><div class="num" id="mFiller">0</div><div class="lab">muletas</div></div>
+      <div class="metric m-vague"><div class="num" id="mVague">0</div><div class="lab">vagueza</div></div>
+    </div>
+    <div class="pace-gauge" id="paceGauge" style="display:none">
+      <div class="lab" style="font-size:13px;color:var(--ink-soft)">Ritmo estimado: <b id="paceValue" style="color:var(--ink)"></b> <span id="paceBin" style="color:var(--ink-faint)"></span></div>
+      <div class="pace-track">
+        <div class="pace-zone" id="paceZone"></div>
+        <div class="pace-dot" id="paceDot"></div>
+      </div>
+      <div class="pace-labels"><span>80 wpm</span><span>zona confortável: 130–160</span><span>200 wpm</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Leitura anotada</h2>
+    <p class="section-note">Passe o texto pelos olhos de quem está assistindo. Clique em um trecho marcado para ver a sugestão.</p>
+    <div id="reading"><span class="empty-state">Cole um texto acima para ver a leitura anotada.</span></div>
+    <div class="legend">
+      <span class="cat-hedge"><i></i>hedging</span>
+      <span class="cat-filler"><i></i>muleta</span>
+      <span class="cat-vague"><i></i>vagueza</span>
+      <span class="cat-weak"><i></i>verbo fraco</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Notas do editor</h2>
+    <p class="section-note" id="notesEmpty">Nenhum trecho marcado ainda.</p>
+    <ul class="notes-list" id="notesList"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Módulo de voz</h2>
+    <p class="section-note">Suba um áudio ou vídeo da fala. A análise roda no seu navegador — pitch, energia e pausas são calculados de verdade, nada é enviado a um servidor.</p>
+
+    <label class="upload-zone" id="audioUploadZone">
+      <input type="file" id="audioFile" accept="audio/*,video/*">
+      <div class="uz-title">Clique para escolher um arquivo de áudio ou vídeo</div>
+      <div class="uz-sub">mp3, wav, m4a, mp4, webm — até ~300MB. Áudio/pitch analisado no navegador; transcrição e rosto/corpo vão pro servidor</div>
+    </label>
+    <div class="file-chip" id="audioChip" style="display:none">
+      <span id="audioChipName"></span>
+      <button id="audioClear" type="button">remover</button>
+    </div>
+    <div class="progress-track" id="audioProgress"><div class="progress-fill" id="audioProgressFill"></div></div>
+    <p class="status-line" id="audioStatus"></p>
+
+    <div id="audioResults" style="display:none">
+      <audio class="player" id="audioPlayer" controls></audio>
+
+      <div class="metrics" style="grid-template-columns: repeat(4, 1fr); margin-top:20px">
+        <div class="metric"><div class="num" id="vDuration">—</div><div class="lab">duração</div></div>
+        <div class="metric"><div class="num" id="vPitchVar">—</div><div class="lab">variação de pitch</div></div>
+        <div class="metric"><div class="num" id="vPauses">—</div><div class="lab">pausas</div></div>
+        <div class="metric"><div class="num" id="vDrops">—</div><div class="lab">quedas de energia</div></div>
+      </div>
+
+      <div class="metrics" style="grid-template-columns: repeat(4, 1fr); margin-top:14px">
+        <div class="metric"><div class="num" id="vLevel" style="font-size:16px">—</div><div class="lab">nível de volume</div></div>
+        <div class="metric"><div class="num" id="vVolConsistency" style="font-size:16px">—</div><div class="lab">consistência de volume</div></div>
+        <div class="metric"><div class="num" id="vRhythm" style="font-size:16px">—</div><div class="lab">cadência</div></div>
+        <div class="metric"><div class="num" id="vMonotone" style="font-size:16px">—</div><div class="lab">fala monótona</div></div>
+      </div>
+
+      <p class="viz-label">Energia da fala ao longo do tempo — trechos claros são pausas</p>
+      <canvas class="viz" id="energyCanvas" height="90"></canvas>
+
+      <p class="viz-label">Contorno de pitch — variação achatada indica monotonia</p>
+      <canvas class="viz" id="pitchCanvas" height="90"></canvas>
+
+      <p class="viz-label" id="pauseListLabel">Pausas detectadas — clique para ouvir o trecho</p>
+      <div class="pause-list" id="pauseList"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Módulo de imagem</h2>
+    <p class="section-note">Checagens técnicas de roupa a partir de um quadro do vídeo ou de uma foto — contraste, estouro de brilho, risco de chroma-key e de moiré. Calculado por pixel, sem modelo de segmentação.</p>
+
+    <div id="videoFrameSection" style="display:none">
+      <div class="video-frame-wrap">
+        <video class="frame-source" id="frameVideo" muted playsinline></video>
+      </div>
+      <input type="range" class="scrub" id="frameScrub" min="0" max="100" value="0" step="0.1">
+      <button class="frame-btn" id="captureFrameBtn" type="button">Analisar este quadro</button>
+    </div>
+
+    <label class="upload-zone" id="photoUploadZone" style="margin-top:14px">
+      <input type="file" id="photoFile" accept="image/*">
+      <div class="uz-title" id="photoUploadTitle">Ou envie uma foto do look</div>
+      <div class="uz-sub">jpg, png — analisado localmente</div>
+    </label>
+
+    <canvas class="frame-canvas" id="frameCanvas"></canvas>
+    <p class="status-line" id="imageStatus"></p>
+
+    <div id="imageResults" style="display:none; margin-top:16px">
+      <ul class="check-list" id="imageChecks"></ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Linguagem corporal — movimento</h2>
+    <p class="section-note">Sinais que dá pra medir por diferença de pixel entre quadros, sem localizar partes do corpo. Requer um vídeo carregado acima.</p>
+    <button class="frame-btn" id="motionBtn" type="button" disabled>Analisar movimento no vídeo</button>
+    <p class="status-line" id="motionStatus"></p>
+    <div class="progress-track" id="motionProgress"><div class="progress-fill" id="motionProgressFill"></div></div>
+
+    <div id="motionResults" style="display:none; margin-top:16px">
+      <div class="metrics" style="grid-template-columns: repeat(3, 1fr)">
+        <div class="metric"><div class="num" id="mMotionLevel">—</div><div class="lab">atividade de movimento</div></div>
+        <div class="metric"><div class="num" id="mLateralPct">—</div><div class="lab">deslocamento lateral</div></div>
+        <div class="metric"><div class="num" id="mPendulum">—</div><div class="lab">balanço rítmico</div></div>
+      </div>
+
+      <div class="pace-gauge" style="margin-top:18px">
+        <div class="lab" style="font-size:13px;color:var(--ink-soft)">Intensidade de movimento: <b id="activityValue" style="color:var(--ink)"></b></div>
+        <div class="pace-track"><div class="pace-zone" id="activityZone"></div><div class="pace-dot" id="activityDot"></div></div>
+        <div class="pace-labels"><span>parado</span><span>zona de referência*</span><span>muita movimentação</span></div>
+      </div>
+
+      <div class="pace-gauge" style="margin-top:16px">
+        <div class="lab" style="font-size:13px;color:var(--ink-soft)">Deslocamento lateral: <b id="lateralValue" style="color:var(--ink)"></b></div>
+        <div class="mock-bar-track" style="margin-top:10px"><div class="mock-bar-fill" id="lateralFill" style="width:0%"></div></div>
+        <div class="pace-labels"><span>parado no mesmo lugar</span><span>ocupou boa parte do quadro</span></div>
+      </div>
+
+      <p class="viz-label">Energia de movimento entre quadros</p>
+      <canvas class="viz" id="motionEnergyCanvas" height="70"></canvas>
+      <p class="viz-label">Posição horizontal do centro de movimento — tendência sustentada = caminhou; oscilação regular = pêndulo</p>
+      <canvas class="viz" id="motionCentroidCanvas" height="70"></canvas>
+
+      <p class="section-note" style="margin-top:14px">*Zona de referência é um ponto de partida arbitrário, não calibrado — ajuste depois de comparar com vídeos reais.</p>
+    </div>
+
+    <p class="section-note" style="margin-top:18px; padding-top:14px; border-top:1px solid var(--rule)">
+      Contato visual, olhar para baixo, desvio de olhar, braços caídos e mãos gesticulando <b>isoladamente</b> (separado do resto do corpo) exigem localizar olhos, mãos e articulações — isso pede um modelo de landmarks (rosto/pose), que este piloto no navegador não consegue carregar. Mãos nos bolsos é ainda mais difícil: a mão some da imagem, então nem pixel nem landmark têm o que rastrear — no máximo dá pra sinalizar "pulso não detectado por muito tempo" como pista fraca. Isso está no script Python, não aqui.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Contato visual, olhar e transcrição</h2>
+    <p class="section-note">Isso roda no servidor (transcrição + landmarks de rosto e corpo) — some sozinho quando você sobe um vídeo no módulo de voz acima. Não precisa mexer aqui, a não ser que o servidor esteja fora do ar.</p>
+    <div id="backendStatusBox" style="display:none; padding:14px 16px; border:1px solid var(--rule); border-radius:8px; background:var(--bg)">
+      <p class="status-line" id="backendStatus" style="margin:0"></p>
+      <div class="progress-track" id="backendProgress" style="display:block; margin-top:10px"><div class="progress-fill" id="backendProgressFill" style="width:15%; animation:none"></div></div>
+    </div>
+    <ul class="check-list" id="landmarksChecks" style="margin-top:8px"></ul>
+
+    <details style="margin-top:16px">
+      <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft)">Servidor fora do ar? Cole o JSON manualmente</summary>
+      <textarea id="landmarksJson" style="width:100%; min-height:120px; font-family:var(--font-sans); font-size:13px; border:1px solid var(--rule); border-radius:8px; background:var(--bg); color:var(--ink); padding:12px; margin-top:10px" placeholder='Cole aqui o JSON de linguagem_corporal, por exemplo: {"contato_visual_estimado_pct": 62.4, ...}'></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="frame-btn" id="loadLandmarksBtn" type="button" style="margin-top:0">Carregar resultado colado</button>
+      </div>
+      <p class="status-line" id="landmarksStatus"></p>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>Relatório</h2>
+    <p class="section-note">Junta o que foi analisado nesta sessão — texto, voz, imagem, movimento e, se carregado, o olhar.</p>
+    <div class="row">
+      <button class="frame-btn" id="generateReportBtn" type="button" style="margin-top:0">Gerar relatório</button>
+      <button class="frame-btn" id="copyReportBtn" type="button" style="margin-top:0; display:none; background:var(--surface); color:var(--ink); border-color:var(--rule)">Copiar</button>
+    </div>
+    <pre id="reportOutput" style="display:none; white-space:pre-wrap; font-family:var(--font-sans); font-size:14px; line-height:1.7; background:var(--bg); border:1px solid var(--rule); border-radius:8px; padding:18px; margin-top:14px"></pre>
+  </section>
+
+  <section class="card">
+    <h2>Salvar e comparar</h2>
+    <p class="section-note">Salve o relatório desta sessão com um nome, e depois compare duas sessões salvas para ver se algo melhorou. Fica guardado neste navegador, neste dispositivo — não sincroniza com outro computador ou celular, e some se limpar os dados do site.</p>
+    <div class="row">
+      <input type="text" id="sessionLabel" placeholder="nome desta sessão, ex: Ensaio 3 — terça" style="flex:1; min-width:200px; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
+      <button class="frame-btn" id="saveSessionBtn" type="button" style="margin-top:0">Salvar sessão atual</button>
+    </div>
+    <p class="status-line" id="saveSessionStatus"></p>
+
+    <p class="viz-label" style="margin-top:20px">Sessões salvas — marque até 2 para comparar</p>
+    <ul class="check-list" id="sessionsList"></ul>
+    <p class="status-line" id="sessionsListStatus">Clique para ver sessões salvas anteriormente.</p>
+    <div class="row" style="margin-top:12px">
+      <button class="frame-btn" id="loadSessionsBtn" type="button" style="margin-top:0; background:var(--surface); color:var(--ink); border-color:var(--rule)">Carregar sessões salvas</button>
+      <button class="frame-btn" id="compareSessionsBtn" type="button" style="margin-top:0" disabled>Comparar selecionadas</button>
+      <button class="frame-btn" id="deleteSessionsBtn" type="button" style="margin-top:0; background:var(--surface); color:var(--hedge); border-color:var(--hedge)" disabled>Excluir selecionadas</button>
+    </div>
+
+    <div id="comparisonOutput" style="display:none; margin-top:20px"></div>
+  </section>
+
+  <footer class="foot">
+    Piloto — texto, gráficos de voz e checagem de imagem rodam no seu navegador. Vídeo/áudio enviado no módulo de voz também vai pro servidor de análise (transcrição e leitura de rosto/corpo).
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var patterns = [
+    { cat: 'hedge', re: /\beu acho que\b/gi, tip: 'Afirme direto: corte "eu acho que" e vá para a frase.' },
+    { cat: 'hedge', re: /\beu acredito que\b/gi, tip: 'Troque por afirmação direta ou por um dado que sustente a frase.' },
+    { cat: 'hedge', re: /\btalvez\b/gi, tip: 'Decida: ou é uma proposta firme, ou vale cortar a frase.' },
+    { cat: 'hedge', re: /\bnão sei se\b/gi, tip: 'Substitua por uma pergunta direta ao público, sem hedging.' },
+    { cat: 'hedge', re: /\bde certa forma\b/gi, tip: 'Frase vaga de transição — geralmente pode ser cortada.' },
+    { cat: 'hedge', re: /\bseria possível\b/gi, tip: 'Troque por "vamos" ou pelo verbo no presente.' },
+    { cat: 'hedge', re: /\ba gente poderia\b/gi, tip: 'Troque por "vamos" — mais firme e mais curto.' },
+    { cat: 'hedge', re: /\bmeio que\b/gi, tip: 'Suaviza sem necessidade — corte.' },
+
+    { cat: 'filler', re: /\bné\b/gi, tip: 'Muleta de fim de frase — corte, a frase já fecha sozinha.' },
+    { cat: 'filler', re: /\btipo\b/gi, tip: 'Verifique se é muleta (pode cortar) ou "tipo de" (mantém).' },
+    { cat: 'filler', re: /\bassim\b/gi, tip: 'Verifique se é muleta de pausa ou parte da frase.' },
+    { cat: 'filler', re: /\bentão\b/gi, tip: 'Se for só encadeando a fala, corte ou troque por uma pausa real.' },
+    { cat: 'filler', re: /\bsabe\?/gi, tip: 'Pergunta retórica vazia — corte ou substitua por pausa.' },
+    { cat: 'filler', re: /^bom,/gim, tip: 'Abertura de frase sem conteúdo — comece direto no ponto.' },
+
+    { cat: 'vague', re: /\bsignificativ[oa]\b/gi, tip: 'Substitua por um número: "significativo" não diz quanto.' },
+    { cat: 'vague', re: /\bbastante\b/gi, tip: 'Quantifique — "bastante" não é verificável.' },
+    { cat: 'vague', re: /\bvári[ao]s\b/gi, tip: 'Diga o número exato, se tiver.' },
+    { cat: 'vague', re: /\bum monte de\b/gi, tip: 'Troque por uma quantidade concreta.' },
+    { cat: 'vague', re: /\balto nível de\b/gi, tip: 'Jargão vago — descreva o efeito concreto.' },
+    { cat: 'vague', re: /\bgrande parte\b/gi, tip: 'Se souber a fração ou percentual, use-o.' },
+
+    { cat: 'weak', re: /\ba realização de\b/gi, tip: 'Nominalização — use o verbo direto: "realizamos".' },
+    { cat: 'weak', re: /\ba implementação de\b/gi, tip: 'Nominalização — use "implementamos".' },
+    { cat: 'weak', re: /\bfizemos uma melhoria\b/gi, tip: 'Verbo genérico — diga o que exatamente melhorou.' },
+    { cat: 'weak', re: /\bhouve um aumento\b/gi, tip: 'Construção passiva e vaga — diga quem fez o quê: "aumentamos".' },
+    { cat: 'weak', re: /\bfoi feito\b/gi, tip: 'Passiva sem sujeito — diga quem fez.' },
+    { cat: 'weak', re: /\bconseguimos avançar\b/gi, tip: 'Verbo genérico — diga em que, exatamente, avançaram.' }
+  ];
+
+  var catLabel = { hedge: 'hedging', filler: 'muleta', vague: 'vagueza', weak: 'verbo fraco' };
+
+  var textarea = document.getElementById('transcript');
+  var durationInput = document.getElementById('duration');
+  var durationError = document.getElementById('durationError');
+  var reading = document.getElementById('reading');
+  var notesList = document.getElementById('notesList');
+  var notesEmpty = document.getElementById('notesEmpty');
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function findMatches(text) {
+    var all = [];
+    patterns.forEach(function (p) {
+      var re = new RegExp(p.re.source, p.re.flags.indexOf('g') === -1 ? p.re.flags + 'g' : p.re.flags);
+      var m;
+      while ((m = re.exec(text)) !== null) {
+        all.push({ start: m.index, end: m.index + m[0].length, text: m[0], cat: p.cat, tip: p.tip });
+        if (m[0].length === 0) re.lastIndex++;
+      }
+    });
+    all.sort(function (a, b) { return a.start - b.start || (b.end - b.start) - (a.end - a.start); });
+    var accepted = [];
+    var lastEnd = -1;
+    all.forEach(function (m) {
+      if (m.start >= lastEnd) {
+        accepted.push(m);
+        lastEnd = m.end;
+      }
+    });
+    return accepted;
+  }
+
+  function contextSnippet(text, m) {
+    var start = Math.max(0, m.start - 22);
+    var end = Math.min(text.length, m.end + 22);
+    var pre = start > 0 ? '…' : '';
+    var post = end < text.length ? '…' : '';
+    return pre + text.slice(start, end).replace(/\s+/g, ' ').trim() + post;
+  }
+
+  function render() {
+    var text = textarea.value;
+
+    if (!text.trim()) {
+      reading.innerHTML = '<span class="empty-state">Cole um texto acima para ver a leitura anotada.</span>';
+      notesList.innerHTML = '';
+      notesEmpty.style.display = 'block';
+      updateMetrics(text, []);
+      return;
+    }
+
+    var matches = findMatches(text);
+
+    var html = '';
+    var cursor = 0;
+    matches.forEach(function (m, i) {
+      html += escapeHtml(text.slice(cursor, m.start));
+      html += '<mark class="cat-' + m.cat + '" data-i="' + i + '" tabindex="0">' + escapeHtml(m.text) + '</mark>';
+      cursor = m.end;
+    });
+    html += escapeHtml(text.slice(cursor));
+    reading.innerHTML = html;
+
+    if (matches.length === 0) {
+      notesList.innerHTML = '';
+      notesEmpty.style.display = 'block';
+    } else {
+      notesEmpty.style.display = 'none';
+      notesList.innerHTML = matches.map(function (m, i) {
+        return '<li class="note-item" data-i="' + i + '">' +
+          '<span class="note-tag cat-' + m.cat + '">' + catLabel[m.cat] + '</span>' +
+          '<p class="note-quote">' + escapeHtml(contextSnippet(text, m)) + '</p>' +
+          '<p class="note-suggestion">' + escapeHtml(m.tip) + '</p>' +
+          '</li>';
+      }).join('');
+    }
+
+    attachInteractions(matches.length);
+    updateMetrics(text, matches);
+  }
+
+  function attachInteractions(count) {
+    var marks = reading.querySelectorAll('mark');
+    var items = notesList.querySelectorAll('.note-item');
+
+    function flash(i) {
+      marks.forEach(function (m) { m.classList.remove('flash'); });
+      var target = reading.querySelector('mark[data-i="' + i + '"]');
+      if (target) {
+        target.classList.add('flash');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    marks.forEach(function (m) {
+      m.addEventListener('click', function () {
+        var i = m.getAttribute('data-i');
+        flash(i);
+        var item = notesList.querySelector('.note-item[data-i="' + i + '"]');
+        if (item) item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+    items.forEach(function (item) {
+      item.addEventListener('click', function () {
+        flash(item.getAttribute('data-i'));
+      });
+    });
+  }
+
+  function parseDuration(v) {
+    v = v.trim();
+    if (!v) return null;
+    if (/^\d+:\d{1,2}$/.test(v)) {
+      var parts = v.split(':');
+      var min = parseInt(parts[0], 10);
+      var sec = parseInt(parts[1], 10);
+      if (sec >= 60) return NaN;
+      return min + sec / 60;
+    }
+    if (/^\d+(\.\d+)?$/.test(v)) return parseFloat(v);
+    return NaN;
+  }
+
+  function updateMetrics(text, matches) {
+    var words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    document.getElementById('mWords').textContent = words;
+    document.getElementById('mHedge').textContent = matches.filter(function (m) { return m.cat === 'hedge'; }).length;
+    document.getElementById('mFiller').textContent = matches.filter(function (m) { return m.cat === 'filler'; }).length;
+    document.getElementById('mVague').textContent = matches.filter(function (m) { return m.cat === 'vague'; }).length;
+
+    var gauge = document.getElementById('paceGauge');
+    var mins = parseDuration(durationInput.value);
+
+    if (durationInput.value.trim() && (mins === null || isNaN(mins) || mins <= 0)) {
+      durationError.textContent = 'Use o formato mm:ss, por exemplo 1:45.';
+    } else {
+      durationError.textContent = '';
+    }
+
+    var wpmForReport = null;
+    var paceBinLabel = null;
+    if (mins && words > 0 && !isNaN(mins) && mins > 0) {
+      var wpm = Math.round(words / mins);
+      gauge.style.display = 'block';
+      document.getElementById('paceValue').textContent = wpm + ' palavras/min';
+      var clamped = Math.max(80, Math.min(200, wpm));
+      var pct = ((clamped - 80) / (200 - 80)) * 100;
+      document.getElementById('paceDot').style.left = pct + '%';
+      var zoneStart = ((130 - 80) / 120) * 100;
+      var zoneWidth = ((160 - 130) / 120) * 100;
+      var zone = document.getElementById('paceZone');
+      zone.style.left = zoneStart + '%';
+      zone.style.width = zoneWidth + '%';
+      wpmForReport = wpm;
+
+      paceBinLabel = wpm < 110 ? 'muito devagar' : wpm < 130 ? 'devagar' : wpm < 160 ? 'adequada' : wpm < 180 ? 'rápida' : 'muito rápida';
+      document.getElementById('paceBin').textContent = '— ' + paceBinLabel;
+
+      if (wpm < 60 || wpm > 260) {
+        durationError.textContent = wpm + ' palavras/min é fisicamente improvável — confira se a duração corresponde ao texto colado (ex: duração do vídeo inteiro com só um trecho transcrito aqui).';
+      }
+    } else {
+      gauge.style.display = 'none';
+      document.getElementById('paceBin').textContent = '';
+    }
+
+    var hedgingN = matches.filter(function (m) { return m.cat === 'hedge'; }).length;
+    var muletasN = matches.filter(function (m) { return m.cat === 'filler'; }).length;
+    var vaguezaN = matches.filter(function (m) { return m.cat === 'vague'; }).length;
+    var verboFracoN = matches.filter(function (m) { return m.cat === 'weak'; }).length;
+    var per100 = function (n) { return words > 0 ? Math.round((n / words) * 100 * 10) / 10 : null; };
+
+    document.getElementById('mHedge').nextElementSibling.textContent = 'hedging' + (words ? ' · ' + per100(hedgingN) + '/100 palavras' : '');
+    document.getElementById('mFiller').nextElementSibling.textContent = 'muletas' + (words ? ' · ' + per100(muletasN) + '/100 palavras' : '');
+    document.getElementById('mVague').nextElementSibling.textContent = 'vagueza' + (words ? ' · ' + per100(vaguezaN) + '/100 palavras' : '');
+
+    window.pilotReportData = window.pilotReportData || {};
+    window.pilotReportData.texto = {
+      palavras: words, wpm: wpmForReport, ritmoFaixa: paceBinLabel,
+      hedging: hedgingN, muletas: muletasN, vagueza: vaguezaN, verboFraco: verboFracoN,
+      hedgingPor100: per100(hedgingN), muletasPor100: per100(muletasN),
+      vaguezaPor100: per100(vaguezaN), verboFracoPor100: per100(verboFracoN),
+      exemplos: matches.slice(0, 5).map(function (m) { return m.text + ' — ' + m.tip; })
+    };
+  }
+
+  window.pilotRerenderText = render;
+
+  var debounce;
+  function schedule() {
+    clearTimeout(debounce);
+    debounce = setTimeout(render, 250);
+  }
+
+  textarea.addEventListener('input', schedule);
+  durationInput.addEventListener('input', schedule);
+
+  render();
+})();
+
+// ---------- Módulo de voz ----------
+(function () {
+  var fileInput = document.getElementById('audioFile');
+  var zone = document.getElementById('audioUploadZone');
+  var chip = document.getElementById('audioChip');
+  var chipName = document.getElementById('audioChipName');
+  var clearBtn = document.getElementById('audioClear');
+  var progress = document.getElementById('audioProgress');
+  var progressFill = document.getElementById('audioProgressFill');
+  var statusLine = document.getElementById('audioStatus');
+  var results = document.getElementById('audioResults');
+  var player = document.getElementById('audioPlayer');
+  var energyCanvas = document.getElementById('energyCanvas');
+  var pitchCanvas = document.getElementById('pitchCanvas');
+  var pauseList = document.getElementById('pauseList');
+
+  var MAX_SECONDS = 180;
+  var TARGET_SR = 8000;
+  var WIN_MS = 30, HOP_MS = 20;
+  var SILENCE_MIN_MS = 300;
+
+  function fmtTime(s) {
+    s = Math.max(0, s);
+    var m = Math.floor(s / 60), sec = Math.round(s % 60);
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function downsample(buffer, targetRate) {
+    var srcRate = buffer.sampleRate;
+    var ch0 = buffer.getChannelData(0);
+    var samples = ch0;
+    if (buffer.numberOfChannels > 1) {
+      var ch1 = buffer.getChannelData(1);
+      samples = new Float32Array(ch0.length);
+      for (var i = 0; i < ch0.length; i++) samples[i] = (ch0[i] + ch1[i]) / 2;
+    }
+    var ratio = srcRate / targetRate;
+    var outLen = Math.floor(samples.length / ratio);
+    var out = new Float32Array(outLen);
+    for (var j = 0; j < outLen; j++) out[j] = samples[Math.floor(j * ratio)];
+    return out;
+  }
+
+  function autoCorrelate(buf, sampleRate) {
+    var SIZE = buf.length;
+    var rms = 0;
+    for (var i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+    rms = Math.sqrt(rms / SIZE);
+    if (rms < 0.01) return -1;
+    var r1 = 0, r2 = SIZE - 1, thres = 0.2;
+    for (i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < thres) { r1 = i; break; } }
+    for (i = 1; i < SIZE / 2; i++) { if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; } }
+    var b = buf.slice(r1, r2);
+    var n = b.length;
+    if (n < 8) return -1;
+    var c = new Float32Array(n);
+    for (i = 0; i < n; i++) { var sum = 0; for (var k = 0; k < n - i; k++) sum += b[k] * b[k + i]; c[i] = sum; }
+    var d = 0; while (d < n - 1 && c[d] > c[d + 1]) d++;
+    var maxval = -1, maxpos = -1;
+    for (i = d; i < n; i++) { if (c[i] > maxval) { maxval = c[i]; maxpos = i; } }
+    if (maxpos <= 0) return -1;
+    var T0 = maxpos;
+    var x1 = c[T0 - 1] !== undefined ? c[T0 - 1] : c[T0];
+    var x2 = c[T0];
+    var x3 = c[T0 + 1] !== undefined ? c[T0 + 1] : c[T0];
+    var a = (x1 + x3 - 2 * x2) / 2, bb = (x3 - x1) / 2;
+    if (a) T0 = T0 - bb / (2 * a);
+    var freq = sampleRate / T0;
+    if (freq < 60 || freq > 500) return -1;
+    return freq;
+  }
+
+  function drawEnergy(canvas, rms, silentMask) {
+    var ctx = canvas.getContext('2d');
+    var w = canvas.clientWidth || 600, h = canvas.height;
+    canvas.width = w * 2; canvas.height = h * 2;
+    ctx.scale(2, 2);
+    ctx.clearRect(0, 0, w, h);
+    var max = Math.max.apply(null, rms) || 1;
+    var barW = w / rms.length;
+    for (var i = 0; i < rms.length; i++) {
+      var bh = Math.max(1, (rms[i] / max) * (h - 8));
+      ctx.fillStyle = silentMask[i] ? 'rgba(140,141,128,0.25)' : getComputedStyle(document.documentElement).getPropertyValue('--gold');
+      ctx.fillRect(i * barW, h - bh, Math.max(1, barW - 0.5), bh);
+    }
+  }
+
+  function drawPitch(canvas, pitch) {
+    var ctx = canvas.getContext('2d');
+    var w = canvas.clientWidth || 600, h = canvas.height;
+    canvas.width = w * 2; canvas.height = h * 2;
+    ctx.scale(2, 2);
+    ctx.clearRect(0, 0, w, h);
+    var voiced = pitch.filter(function (p) { return p > 0; });
+    if (!voiced.length) return;
+    var min = Math.min.apply(null, voiced) - 10, max = Math.max.apply(null, voiced) + 10;
+    var stepX = w / pitch.length;
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--vague');
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    var started = false;
+    for (var i = 0; i < pitch.length; i++) {
+      if (pitch[i] <= 0) { started = false; continue; }
+      var y = h - 6 - ((pitch[i] - min) / (max - min)) * (h - 12);
+      var x = i * stepX;
+      if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+    }
+    ctx.stroke();
+  }
+
+  function analyze(arrayBuffer, objectUrl) {
+    statusLine.textContent = 'Decodificando áudio...';
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var ctx = new AC();
+    ctx.decodeAudioData(arrayBuffer.slice(0), function (buffer) {
+      var duration = Math.min(buffer.duration, MAX_SECONDS);
+      var mono = downsample(buffer, TARGET_SR);
+      var totalSamples = Math.floor(duration * TARGET_SR);
+      mono = mono.slice(0, totalSamples);
+
+      var winSize = Math.floor(TARGET_SR * WIN_MS / 1000);
+      var hopSize = Math.floor(TARGET_SR * HOP_MS / 1000);
+      var nFrames = Math.max(1, Math.floor((mono.length - winSize) / hopSize));
+
+      var rms = new Float32Array(nFrames);
+      var pitch = new Float32Array(nFrames);
+
+      progress.style.display = 'block';
+      var frameIdx = 0;
+
+      function step() {
+        var batchEnd = Math.min(nFrames, frameIdx + 60);
+        for (; frameIdx < batchEnd; frameIdx++) {
+          var start = frameIdx * hopSize;
+          var seg = mono.subarray(start, start + winSize);
+          var sum = 0;
+          for (var i = 0; i < seg.length; i++) sum += seg[i] * seg[i];
+          rms[frameIdx] = Math.sqrt(sum / seg.length);
+          pitch[frameIdx] = autoCorrelate(seg, TARGET_SR);
+        }
+        progressFill.style.width = Math.round((frameIdx / nFrames) * 100) + '%';
+        if (frameIdx < nFrames) {
+          requestAnimationFrame(step);
+        } else {
+          finish();
+        }
+      }
+
+      function finish() {
+        progress.style.display = 'none';
+        statusLine.textContent = '';
+
+        var maxRms = 0;
+        for (var i = 0; i < rms.length; i++) if (rms[i] > maxRms) maxRms = rms[i];
+        var silenceThreshold = maxRms * 0.12;
+        var silentMask = new Array(nFrames);
+        for (i = 0; i < nFrames; i++) silentMask[i] = rms[i] < silenceThreshold;
+
+        var minPauseFrames = Math.ceil(SILENCE_MIN_MS / HOP_MS);
+        var pauses = [];
+        var runStart = -1;
+        for (i = 0; i <= nFrames; i++) {
+          var isSilent = i < nFrames && silentMask[i];
+          if (isSilent && runStart === -1) runStart = i;
+          if (!isSilent && runStart !== -1) {
+            if (i - runStart >= minPauseFrames) {
+              pauses.push({ startFrame: runStart, endFrame: i, startT: runStart * HOP_MS / 1000, endT: i * HOP_MS / 1000 });
+            }
+            runStart = -1;
+          }
+        }
+
+        var drops = 0;
+        pauses.forEach(function (p) {
+          var lookback = Math.ceil(300 / HOP_MS);
+          var from = Math.max(0, p.startFrame - lookback);
+          if (from < p.startFrame - 1) {
+            var early = rms[from], late = rms[p.startFrame - 1];
+            if (early > 0 && late < early * 0.5) drops++;
+          }
+        });
+
+        var voiced = [];
+        for (i = 0; i < nFrames; i++) if (pitch[i] > 0) voiced.push(pitch[i]);
+        var pitchVarLabel = '—';
+        if (voiced.length > 5) {
+          var mean = voiced.reduce(function (a, b) { return a + b; }, 0) / voiced.length;
+          var variance = voiced.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / voiced.length;
+          var stdev = Math.sqrt(variance);
+          var cv = stdev / mean;
+          pitchVarLabel = cv < 0.08 ? 'baixa' : (cv < 0.16 ? 'média' : 'alta');
+        }
+
+        // Volume: nível absoluto reflete o ganho da gravação, não necessariamente
+        // "quão alto a pessoa falou" — deixamos isso explícito na UI.
+        var levelLabel = 'adequado';
+        if (maxRms < 0.02) levelLabel = 'baixo demais (ganho de gravação muito baixo)';
+        else if (maxRms < 0.05) levelLabel = 'baixo';
+
+        var voicedRmsVals = [];
+        for (i = 0; i < nFrames; i++) if (!silentMask[i]) voicedRmsVals.push(rms[i]);
+        var volConsistencyLabel = '—';
+        if (voicedRmsVals.length > 5) {
+          var vMean = voicedRmsVals.reduce(function (a, b) { return a + b; }, 0) / voicedRmsVals.length;
+          var vVar = voicedRmsVals.reduce(function (a, b) { return a + (b - vMean) * (b - vMean); }, 0) / voicedRmsVals.length;
+          var vCv = Math.sqrt(vVar) / vMean;
+          volConsistencyLabel = vCv < 0.35 ? 'mesmo volume o tempo todo' : 'tem variação de volume';
+        }
+
+        // Cadência: duração dos trechos falados entre pausas. Regular = "tem
+        // ritmo" no sentido de cadência de pausas, não musicalidade da fala.
+        var segments = [];
+        for (var pIdx = 0; pIdx < pauses.length - 1; pIdx++) {
+          var segDur = pauses[pIdx + 1].startT - pauses[pIdx].endT;
+          if (segDur > 0.15) segments.push(segDur);
+        }
+        var rhythmLabel = 'poucas pausas para avaliar cadência';
+        if (segments.length >= 3) {
+          var sMean = segments.reduce(function (a, b) { return a + b; }, 0) / segments.length;
+          var sVar = segments.reduce(function (a, b) { return a + (b - sMean) * (b - sMean); }, 0) / segments.length;
+          var sCv = Math.sqrt(sVar) / sMean;
+          rhythmLabel = sCv < 0.5 ? 'cadência regular' : 'cadência irregular';
+        }
+
+        var isMonotone = pitchVarLabel === 'baixa' && volConsistencyLabel === 'mesmo volume o tempo todo';
+        var monotoneLabel = isMonotone ? 'sim, sinais de monotonia' : 'não';
+
+        document.getElementById('vDuration').textContent = fmtTime(duration);
+        document.getElementById('vPitchVar').textContent = pitchVarLabel;
+        document.getElementById('vPauses').textContent = pauses.length;
+        document.getElementById('vDrops').textContent = drops;
+        document.getElementById('vLevel').textContent = levelLabel;
+        document.getElementById('vVolConsistency').textContent = volConsistencyLabel;
+        document.getElementById('vRhythm').textContent = rhythmLabel;
+        document.getElementById('vMonotone').textContent = monotoneLabel;
+
+        var durField = document.getElementById('duration');
+        if (durField && !durField.value.trim()) {
+          durField.value = fmtTime(duration);
+          if (window.pilotRerenderText) window.pilotRerenderText();
+        }
+
+        drawEnergy(energyCanvas, rms, silentMask);
+        drawPitch(pitchCanvas, pitch);
+
+        pauseList.innerHTML = '';
+        if (!pauses.length) {
+          pauseList.innerHTML = '<span class="status-line">Nenhuma pausa maior que 300ms detectada.</span>';
+        } else {
+          pauses.forEach(function (p) {
+            var chipEl = document.createElement('button');
+            chipEl.type = 'button';
+            chipEl.className = 'pause-chip';
+            chipEl.textContent = fmtTime(p.startT) + ' · ' + Math.round((p.endT - p.startT) * 1000) + 'ms';
+            chipEl.addEventListener('click', function () {
+              player.currentTime = Math.max(0, p.startT - 0.5);
+              player.play();
+            });
+            pauseList.appendChild(chipEl);
+          });
+        }
+
+        results.style.display = 'block';
+        window.addEventListener('resize', function () { drawEnergy(energyCanvas, rms, silentMask); drawPitch(pitchCanvas, pitch); });
+
+        var durMin = duration / 60;
+        var pausasPorMin = durMin > 0 ? Math.round((pauses.length / durMin) * 10) / 10 : null;
+        var quedasPorMin = durMin > 0 ? Math.round((drops / durMin) * 10) / 10 : null;
+        document.getElementById('vPauses').nextElementSibling.textContent = 'pausas' + (pausasPorMin !== null ? ' · ' + pausasPorMin + '/min' : '');
+        document.getElementById('vDrops').nextElementSibling.textContent = 'quedas de energia' + (quedasPorMin !== null ? ' · ' + quedasPorMin + '/min' : '');
+
+        window.pilotReportData = window.pilotReportData || {};
+        window.pilotReportData.voz = {
+          duracao: fmtTime(duration), variacaoPitch: pitchVarLabel,
+          pausas: pauses.length, quedasDeEnergia: drops,
+          pausasPorMin: pausasPorMin, quedasPorMin: quedasPorMin,
+          nivelVolume: levelLabel, consistenciaVolume: volConsistencyLabel,
+          cadencia: rhythmLabel, monotona: monotoneLabel
+        };
+      }
+
+      requestAnimationFrame(step);
+    }, function () {
+      statusLine.textContent = 'Não foi possível decodificar este arquivo. Tente outro formato.';
+      progress.style.display = 'none';
+    });
+  }
+
+  var MAX_FILE_MB = 300;
+  var HARD_LIMIT_MB = 800;
+
+  function handleFile(file) {
+    if (!file) return;
+    var sizeMB = file.size / (1024 * 1024);
+
+    if (sizeMB > HARD_LIMIT_MB) {
+      statusLine.textContent = 'Arquivo de ' + Math.round(sizeMB) + 'MB é grande demais para processar no navegador (limite ' + HARD_LIMIT_MB + 'MB) — corte o vídeo ou extraia só o áudio antes de subir.';
+      fileInput.value = '';
+      return;
+    }
+
+    chip.style.display = 'flex';
+    chipName.textContent = file.name + ' (' + Math.round(sizeMB) + 'MB)';
+    zone.style.display = 'none';
+    results.style.display = 'none';
+    pauseList.innerHTML = '';
+    var url = URL.createObjectURL(file);
+    player.src = url;
+
+    if (file.type.indexOf('video') === 0) {
+      var vSection = document.getElementById('videoFrameSection');
+      var vEl = document.getElementById('frameVideo');
+      vEl.src = url;
+      vSection.style.display = 'block';
+      document.getElementById('photoUploadTitle').textContent = 'Ou envie outra foto';
+      document.getElementById('motionBtn').disabled = false;
+    }
+
+    statusLine.textContent = sizeMB > MAX_FILE_MB
+      ? 'Arquivo de ' + Math.round(sizeMB) + 'MB — pode demorar ou travar dependendo do navegador. Lendo...'
+      : 'Lendo arquivo...';
+    var reader = new FileReader();
+    reader.onload = function (e) { analyze(e.target.result, url); };
+    reader.onerror = function () { statusLine.textContent = 'Falha ao ler o arquivo — tente um arquivo menor.'; };
+    reader.readAsArrayBuffer(file);
+
+    // Em paralelo com a análise local (pitch/energia/pausas, que roda no
+    // navegador), manda o mesmo arquivo pro servidor — ele cuida da
+    // transcrição e da leitura de rosto/corpo, que o navegador sozinho
+    // não consegue fazer.
+    if (typeof runBackendAnalysis === 'function') {
+      runBackendAnalysis(file);
+    }
+  }
+
+  fileInput.addEventListener('change', function () { handleFile(fileInput.files[0]); });
+  clearBtn.addEventListener('click', function () {
+    fileInput.value = '';
+    chip.style.display = 'none';
+    zone.style.display = 'block';
+    results.style.display = 'none';
+    statusLine.textContent = '';
+  });
+})();
+
+// ---------- Módulo de imagem ----------
+(function () {
+  var frameVideo = document.getElementById('frameVideo');
+  var scrub = document.getElementById('frameScrub');
+  var captureBtn = document.getElementById('captureFrameBtn');
+  var photoInput = document.getElementById('photoFile');
+  var canvas = document.getElementById('frameCanvas');
+  var statusLine = document.getElementById('imageStatus');
+  var resultsWrap = document.getElementById('imageResults');
+  var checksList = document.getElementById('imageChecks');
+
+  frameVideo.addEventListener('loadedmetadata', function () {
+    scrub.max = frameVideo.duration || 100;
+    scrub.value = (frameVideo.duration || 0) / 2;
+    frameVideo.currentTime = scrub.value;
+  });
+  scrub.addEventListener('input', function () { frameVideo.currentTime = parseFloat(scrub.value); });
+
+  captureBtn.addEventListener('click', function () {
+    drawToCanvas(frameVideo, frameVideo.videoWidth, frameVideo.videoHeight);
+    runChecks();
+  });
+
+  photoInput.addEventListener('change', function () {
+    var file = photoInput.files[0];
+    if (!file) return;
+    var img = new Image();
+    img.onload = function () {
+      drawToCanvas(img, img.naturalWidth, img.naturalHeight);
+      runChecks();
+    };
+    img.src = URL.createObjectURL(file);
+  });
+
+  function drawToCanvas(source, srcW, srcH) {
+    var maxW = 640;
+    var scale = Math.min(1, maxW / srcW);
+    var w = Math.round(srcW * scale), h = Math.round(srcH * scale);
+    canvas.width = w; canvas.height = h;
+    canvas.style.display = 'block';
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(source, 0, 0, w, h);
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60;
+    }
+    return [h, s, l];
+  }
+
+  function runChecks() {
+    statusLine.textContent = 'Analisando quadro...';
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width, h = canvas.height;
+    var full = ctx.getImageData(0, 0, w, h).data;
+
+    var cx0 = Math.floor(w * 0.3), cx1 = Math.floor(w * 0.7);
+    var cy0 = Math.floor(h * 0.25), cy1 = Math.floor(h * 0.9);
+    var center = ctx.getImageData(cx0, cy0, cx1 - cx0, cy1 - cy0).data;
+
+    var edgeSamples = [];
+    var stripH = Math.floor(h * 0.08);
+    edgeSamples.push(ctx.getImageData(0, 0, w, stripH).data);
+    edgeSamples.push(ctx.getImageData(0, h - stripH, w, stripH).data);
+
+    function avgLuminance(data) {
+      var sum = 0, n = data.length / 4;
+      for (var i = 0; i < data.length; i += 4) sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      return sum / n;
+    }
+    function clipPct(data, dark) {
+      var count = 0, n = data.length / 4;
+      for (var i = 0; i < data.length; i += 4) {
+        var lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        if (dark ? lum < 8 : lum > 247) count++;
+      }
+      return count / n;
+    }
+    function avgSaturationInRange(data, hueMin, hueMax) {
+      var count = 0, satSum = 0, n = data.length / 4;
+      for (var i = 0; i < data.length; i += 4) {
+        var hsl = rgbToHsl(data[i], data[i + 1], data[i + 2]);
+        if (hsl[0] >= hueMin && hsl[0] <= hueMax && hsl[1] > 0.3) { count++; satSum += hsl[1]; }
+      }
+      return count / n;
+    }
+    function edgeDensity(data, imgW, imgH) {
+      var gray = new Float32Array(imgW * imgH);
+      for (var i = 0, p = 0; i < data.length; i += 4, p++) gray[p] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      var total = 0, samples = 0;
+      for (var y = 1; y < imgH - 1; y += 2) {
+        for (var x = 1; x < imgW - 1; x += 2) {
+          var idx = y * imgW + x;
+          var gx = gray[idx + 1] - gray[idx - 1];
+          var gy = gray[idx + imgW] - gray[idx - imgW];
+          total += Math.sqrt(gx * gx + gy * gy);
+          samples++;
+        }
+      }
+      return samples ? total / samples : 0;
+    }
+
+    var centerW = cx1 - cx0, centerH = cy1 - cy0;
+    var centerLum = avgLuminance(center);
+    var edgeLum = (avgLuminance(edgeSamples[0]) + avgLuminance(edgeSamples[1])) / 2;
+    var contrast = Math.abs(centerLum - edgeLum);
+
+    var whiteClip = clipPct(center, false);
+    var blackClip = clipPct(center, true);
+    var greenRisk = avgSaturationInRange(center, 90, 150);
+    var blueRisk = avgSaturationInRange(center, 190, 250);
+    var edgeDens = edgeDensity(center, centerW, centerH);
+
+    var checks = [];
+
+    checks.push(contrast > 25
+      ? { ok: true, title: 'Contraste com o fundo', sub: 'Boa separação de luminância entre a região central e as bordas (Δ ' + Math.round(contrast) + ').' }
+      : { ok: false, title: 'Contraste com o fundo', sub: 'Luminância parecida entre roupa e fundo (Δ ' + Math.round(contrast) + ') — risco de "sumir" no cenário.' });
+
+    checks.push((whiteClip < 0.05)
+      ? { ok: true, title: 'Estouro de brilho', sub: 'Sem áreas relevantes de branco estourado.' }
+      : { ok: false, title: 'Estouro de brilho', sub: Math.round(whiteClip * 100) + '% da área central em branco estourado — tecido muito claro sob luz forte.' });
+
+    checks.push((blackClip < 0.15)
+      ? { ok: true, title: 'Perda em preto', sub: 'Sem grandes áreas sem detalhe no escuro.' }
+      : { ok: false, title: 'Perda em preto', sub: Math.round(blackClip * 100) + '% da área central sem detalhe — roupa muito escura pode virar silhueta.' });
+
+    var chromaRisk = Math.max(greenRisk, blueRisk);
+    checks.push((chromaRisk < 0.12)
+      ? { ok: true, title: 'Risco de chroma-key', sub: 'Sem tons de verde ou azul saturado dominantes.' }
+      : { ok: false, title: 'Risco de chroma-key', sub: (greenRisk > blueRisk ? 'Verde' : 'Azul') + ' saturado presente (' + Math.round(chromaRisk * 100) + '% da área) — evite se houver fundo removível.' });
+
+    checks.push((edgeDens < 18)
+      ? { ok: true, title: 'Padrão fino / risco de moiré', sub: 'Sem textura de alta frequência detectada.' }
+      : { ok: false, title: 'Padrão fino / risco de moiré', sub: 'Textura com muitos detalhes finos (listras, xadrez miúdo) — risco de moiré em câmera.' });
+
+    checksList.innerHTML = checks.map(function (c) {
+      return '<li class="check-item"><span class="dot ' + (c.ok ? 'ok' : 'warn') + '"></span>' +
+        '<div class="check-text"><div class="ct-title">' + c.title + '</div><div class="ct-sub">' + c.sub + '</div></div>' +
+        '<span class="status-text ' + (c.ok ? 'ok' : 'warn') + '">' + (c.ok ? 'OK' : 'atenção') + '</span></li>';
+    }).join('');
+
+    resultsWrap.style.display = 'block';
+    statusLine.textContent = 'Análise heurística — não substitui avaliação de estilo humana.';
+
+    window.pilotReportData = window.pilotReportData || {};
+    window.pilotReportData.imagem = { checks: checks };
+  }
+})();
+
+// ---------- Módulo de movimento corporal ----------
+(function () {
+  var video = document.getElementById('frameVideo');
+  var btn = document.getElementById('motionBtn');
+  var statusLine = document.getElementById('motionStatus');
+  var progress = document.getElementById('motionProgress');
+  var progressFill = document.getElementById('motionProgressFill');
+  var results = document.getElementById('motionResults');
+
+  var SAMPLE_W = 64, SAMPLE_H = 48;
+  var STEP_S = 0.3;
+  var WINDOW_S = 18;
+
+  var offCanvas = document.createElement('canvas');
+  offCanvas.width = SAMPLE_W; offCanvas.height = SAMPLE_H;
+  var offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
+
+  function grabGray() {
+    offCtx.drawImage(video, 0, 0, SAMPLE_W, SAMPLE_H);
+    var data = offCtx.getImageData(0, 0, SAMPLE_W, SAMPLE_H).data;
+    var gray = new Float32Array(SAMPLE_W * SAMPLE_H);
+    for (var i = 0, p = 0; i < data.length; i += 4, p++) {
+      gray[p] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    }
+    return gray;
+  }
+
+  function seekTo(t) {
+    return new Promise(function (resolve) {
+      function onSeeked() { video.removeEventListener('seeked', onSeeked); resolve(); }
+      video.addEventListener('seeked', onSeeked);
+      video.currentTime = t;
+    });
+  }
+
+  function drawBars(canvas, values, color) {
+    var ctx = canvas.getContext('2d');
+    var w = canvas.clientWidth || 600, h = canvas.height;
+    canvas.width = w * 2; canvas.height = h * 2;
+    ctx.scale(2, 2);
+    ctx.clearRect(0, 0, w, h);
+    var max = Math.max.apply(null, values) || 1;
+    var barW = w / values.length;
+    for (var i = 0; i < values.length; i++) {
+      var bh = Math.max(1, (values[i] / max) * (h - 8));
+      ctx.fillStyle = color;
+      ctx.fillRect(i * barW, h - bh, Math.max(1, barW - 0.5), bh);
+    }
+  }
+
+  function drawLine(canvas, values, color) {
+    var ctx = canvas.getContext('2d');
+    var w = canvas.clientWidth || 600, h = canvas.height;
+    canvas.width = w * 2; canvas.height = h * 2;
+    ctx.scale(2, 2);
+    ctx.clearRect(0, 0, w, h);
+    var min = Math.min.apply(null, values), max = Math.max.apply(null, values);
+    if (max === min) { max += 1; min -= 1; }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (var i = 0; i < values.length; i++) {
+      var x = (i / (values.length - 1)) * w;
+      var y = h - 6 - ((values[i] - min) / (max - min)) * (h - 12);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(140,141,128,0.4)';
+    ctx.lineWidth = 0.5;
+    var zeroY = h - 6 - ((0 - min) / (max - min)) * (h - 12);
+    ctx.beginPath(); ctx.moveTo(0, zeroY); ctx.lineTo(w, zeroY); ctx.stroke();
+  }
+
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    progress.style.display = 'block';
+    statusLine.textContent = 'Amostrando quadros do vídeo...';
+    results.style.display = 'none';
+
+    var startT = video.currentTime;
+    var endT = Math.min(video.duration || startT + WINDOW_S, startT + WINDOW_S);
+    var nSteps = Math.max(2, Math.floor((endT - startT) / STEP_S));
+
+    var energies = [];
+    var centroids = [];
+    var prevGray = null;
+    var i = 0;
+
+    function next() {
+      if (i > nSteps) { finish(); return; }
+      var t = startT + i * STEP_S;
+      seekTo(Math.min(t, video.duration - 0.05)).then(function () {
+        var gray = grabGray();
+        if (prevGray) {
+          var sumDiff = 0, sumWeightedX = 0;
+          for (var y = 0; y < SAMPLE_H; y++) {
+            for (var x = 0; x < SAMPLE_W; x++) {
+              var idx = y * SAMPLE_W + x;
+              var d = Math.abs(gray[idx] - prevGray[idx]);
+              if (d > 12) { sumDiff += d; sumWeightedX += d * x; }
+            }
+          }
+          energies.push(sumDiff / (SAMPLE_W * SAMPLE_H));
+          centroids.push(sumDiff > 0 ? (sumWeightedX / sumDiff) - (SAMPLE_W / 2) : 0);
+        }
+        prevGray = gray;
+        i++;
+        progressFill.style.width = Math.round((i / nSteps) * 100) + '%';
+        next();
+      });
+    }
+
+    function finish() {
+      progress.style.display = 'none';
+      btn.disabled = false;
+      statusLine.textContent = '';
+
+      if (energies.length < 4) {
+        statusLine.textContent = 'Trecho curto demais para analisar — avance o vídeo e tente de novo.';
+        return;
+      }
+
+      var avgEnergy = energies.reduce(function (a, b) { return a + b; }, 0) / energies.length;
+      var level = avgEnergy < 4 ? 'baixa' : (avgEnergy < 10 ? 'média' : 'alta');
+      document.getElementById('mMotionLevel').textContent = level;
+
+      var activityMax = 20;
+      var clampedActivity = Math.max(0, Math.min(activityMax, avgEnergy));
+      var activityPct = (clampedActivity / activityMax) * 100;
+      document.getElementById('activityDot').style.left = activityPct + '%';
+      document.getElementById('activityValue').textContent = avgEnergy.toFixed(1) + ' (' + level + ')';
+      var zoneStartPct = (3 / activityMax) * 100;
+      var zoneWidthPct = ((10 - 3) / activityMax) * 100;
+      document.getElementById('activityZone').style.left = zoneStartPct + '%';
+      document.getElementById('activityZone').style.width = zoneWidthPct + '%';
+
+      // Trajetória suavizada = posição "grosseira" do corpo (caminhar).
+      // O resíduo (bruto - suavizado) é o que sobra de movimento rápido
+      // no lugar — parte dele é gesto, mas não isola mão de outra coisa.
+      var smoothN = 3;
+      var smoothed = centroids.map(function (_, idx) {
+        var s = Math.max(0, idx - smoothN);
+        var e = Math.min(centroids.length, idx + smoothN + 1);
+        var slice = centroids.slice(s, e);
+        return slice.reduce(function (a, b) { return a + b; }, 0) / slice.length;
+      });
+      var minS = Math.min.apply(null, smoothed), maxS = Math.max.apply(null, smoothed);
+      var lateralRangePx = maxS - minS;
+      var lateralPct = Math.round(Math.min(100, (lateralRangePx / SAMPLE_W) * 100));
+
+      var thirdLen = Math.max(1, Math.ceil(smoothed.length / 3));
+      var firstThird = smoothed.slice(0, thirdLen);
+      var lastThird = smoothed.slice(-thirdLen);
+      var firstAvg = firstThird.reduce(function (a, b) { return a + b; }, 0) / firstThird.length;
+      var lastAvg = lastThird.reduce(function (a, b) { return a + b; }, 0) / lastThird.length;
+      var driftPctOfWidth = ((lastAvg - firstAvg) / SAMPLE_W) * 100;
+
+      var lateralLabel;
+      if (lateralPct < 15) lateralLabel = 'ficou praticamente parado';
+      else if (lateralPct < 40) lateralLabel = 'deslocamento moderado';
+      else lateralLabel = 'andou bastante, ocupou boa parte do quadro';
+      var directionLabel = '';
+      if (Math.abs(driftPctOfWidth) > 8) {
+        directionLabel = driftPctOfWidth > 0 ? ' — terminou mais à direita de onde começou' : ' — terminou mais à esquerda de onde começou';
+      }
+      document.getElementById('mLateralPct').textContent = lateralPct + '%';
+      document.getElementById('lateralValue').textContent = lateralLabel + directionLabel;
+      document.getElementById('lateralFill').style.width = lateralPct + '%';
+
+      var meanC = centroids.reduce(function (a, b) { return a + b; }, 0) / centroids.length;
+      var crossings = [];
+      for (var k = 1; k < centroids.length; k++) {
+        var prevSign = centroids[k - 1] - meanC;
+        var curSign = centroids[k] - meanC;
+        if ((prevSign < 0 && curSign >= 0) || (prevSign > 0 && curSign <= 0)) crossings.push(k);
+      }
+      var pendulumLabel = 'sem padrão claro';
+      var regularity = 0;
+      if (crossings.length >= 4) {
+        var intervals = [];
+        for (k = 1; k < crossings.length; k++) intervals.push(crossings[k] - crossings[k - 1]);
+        var meanInt = intervals.reduce(function (a, b) { return a + b; }, 0) / intervals.length;
+        var varInt = intervals.reduce(function (a, b) { return a + (b - meanInt) * (b - meanInt); }, 0) / intervals.length;
+        var cv = Math.sqrt(varInt) / meanInt;
+        regularity = Math.max(0, Math.min(1, 1 - cv));
+        pendulumLabel = regularity > 0.55 ? ('provável, ' + Math.round(regularity * 100) + '% regular') : 'movimento irregular';
+      }
+      document.getElementById('mPendulum').textContent = pendulumLabel;
+
+      drawBars(document.getElementById('motionEnergyCanvas'), energies, getComputedStyle(document.documentElement).getPropertyValue('--gold'));
+      drawLine(document.getElementById('motionCentroidCanvas'), centroids, getComputedStyle(document.documentElement).getPropertyValue('--vague'));
+
+      results.style.display = 'block';
+
+      window.pilotReportData = window.pilotReportData || {};
+      window.pilotReportData.movimento = {
+        atividade: level, atividadeValor: Number(avgEnergy.toFixed(1)),
+        deslocamentoLateralPct: lateralPct, deslocamentoLabel: lateralLabel + directionLabel,
+        balancoRitmico: pendulumLabel
+      };
+    }
+
+    next();
+  });
+})();
+
+// ---------- Contato visual e olhar — exibição compartilhada ----------
+function renderLandmarksData(data, checksList) {
+  var rows = [
+    ['Contato visual (olhando pra frente)', data.contato_visual_estimado_pct],
+    ['Olhou para baixo', data.olhou_para_baixo_pct],
+    ['Desviou o olhar', data.desviou_o_olhar_pct],
+    ['Mão esquerda na linha da cintura', data.mao_na_linha_da_cintura_esquerda_pct],
+    ['Mão direita na linha da cintura', data.mao_na_linha_da_cintura_direita_pct],
+    ['Mão esquerda em movimento', data.mao_esquerda_em_movimento_pct],
+    ['Mão direita em movimento', data.mao_direita_em_movimento_pct]
+  ].filter(function (r) { return r[1] !== undefined && r[1] !== null; });
+
+  if (data.expressao_facial && data.expressao_facial.classificacao) {
+    rows.push(['Sorriso', data.expressao_facial.sorriso_pct]);
+    rows.push(['Expressão muito séria', data.expressao_facial.serio_pct]);
+  }
+
+  if (!rows.length) {
+    checksList.innerHTML = '';
+    return false;
+  }
+
+  var html = rows.map(function (r) {
+    return '<li class="check-item"><span class="dot ' + (r[1] < 50 ? 'warn' : 'ok') + '"></span>' +
+      '<div class="check-text"><div class="ct-title">' + r[0] + '</div></div>' +
+      '<span class="status-text">' + r[1] + '%</span></li>';
+  }).join('');
+
+  var weakSignals = [];
+  if (data.mao_esquerda_possivel_bolso) weakSignals.push('mão esquerda possivelmente no bolso (~' + data.mao_esquerda_possivel_bolso.maior_periodo_sem_deteccao_s + 's sem detecção)');
+  if (data.mao_direita_possivel_bolso) weakSignals.push('mão direita possivelmente no bolso (~' + data.mao_direita_possivel_bolso.maior_periodo_sem_deteccao_s + 's sem detecção)');
+  if (data.maos_atras_das_costas) weakSignals.push('mãos possivelmente atrás das costas (~' + data.maos_atras_das_costas.maior_periodo_ambas_ocultas_s + 's com ambas ocultas)');
+  if (data.formato_de_mao_incomum && data.formato_de_mao_incomum.total_episodios) {
+    weakSignals.push(data.formato_de_mao_incomum.total_episodios + ' episódio(s) de formato de mão fora do padrão conhecido — revisar manualmente, não é classificação do que é');
+  }
+  if (data.quadros_com_rosto_detectado === 0) {
+    weakSignals.push('rosto não detectado em nenhum quadro — provavelmente o enquadramento está aberto demais (corpo inteiro); tente um plano mais fechado pra medir contato visual e expressão');
+  }
+  if (weakSignals.length) {
+    html += weakSignals.map(function (w) {
+      return '<li class="check-item"><span class="dot warn"></span><div class="check-text"><div class="ct-title">' + w + '</div><div class="ct-sub">Pista de baixa confiança — confira o vídeo manualmente antes de usar.</div></div></li>';
+    }).join('');
+  }
+  checksList.innerHTML = html;
+
+  window.pilotReportData = window.pilotReportData || {};
+  window.pilotReportData.olhar = data;
+  return true;
+}
+
+(function () {
+  var textarea = document.getElementById('landmarksJson');
+  var btn = document.getElementById('loadLandmarksBtn');
+  var statusLine = document.getElementById('landmarksStatus');
+  var checksList = document.getElementById('landmarksChecks');
+
+  btn.addEventListener('click', function () {
+    var raw = textarea.value.trim();
+    if (!raw) { statusLine.textContent = 'Cole o JSON primeiro.'; return; }
+    var data;
+    try { data = JSON.parse(raw); }
+    catch (e) { statusLine.textContent = 'JSON inválido — copie a saída sem editar.'; return; }
+
+    var ok = renderLandmarksData(data, checksList);
+    statusLine.textContent = ok
+      ? 'Carregado de ' + (data.quadros_analisados || '?') + ' quadros amostrados.'
+      : 'JSON lido, mas não reconheci os campos esperados.';
+  });
+})();
+
+// ---------- Análise automática via backend (transcrição + linguagem corporal) ----------
+var ENSAIO_BACKEND_URL = 'https://ensaio-backend.onrender.com';
+
+function fmtBackendTime(s) {
+  s = Math.max(0, Math.round(s));
+  var m = Math.floor(s / 60), sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+async function runBackendAnalysis(file) {
+  var box = document.getElementById('backendStatusBox');
+  var statusEl = document.getElementById('backendStatus');
+  var checksList = document.getElementById('landmarksChecks');
+  box.style.display = 'block';
+  statusEl.textContent = 'Enviando vídeo pro servidor...';
+
+  var startedAt = Date.now();
+  var timer = setInterval(function () {
+    statusEl.textContent = statusEl.textContent.replace(/\(.*\)$/, '') + '(' + fmtBackendTime((Date.now() - startedAt) / 1000) + ')';
+  }, 1000);
+
+  try {
+    var form = new FormData();
+    form.append('video', file);
+    var postRes = await fetch(ENSAIO_BACKEND_URL + '/analyze', { method: 'POST', body: form });
+    if (!postRes.ok) throw new Error('Servidor respondeu ' + postRes.status);
+    var postData = await postRes.json();
+    var jobId = postData.job_id;
+
+    statusEl.textContent = 'Processando no servidor — isso pode levar vários minutos (';
+
+    var result = null;
+    while (true) {
+      await new Promise(function (r) { setTimeout(r, 6000); });
+      var statusRes = await fetch(ENSAIO_BACKEND_URL + '/status/' + jobId);
+      if (statusRes.status === 404) throw new Error('O servidor perdeu esse trabalho (reiniciou no meio do processo) — tente de novo com um vídeo menor.');
+      var statusData = await statusRes.json();
+      if (statusData.status === 'done') { result = statusData.result; break; }
+      if (statusData.status === 'error') throw new Error(statusData.detail || 'Falha no processamento.');
+    }
+
+    clearInterval(timer);
+
+    if (result.transcricao && result.transcricao.transcricao) {
+      var transcriptArea = document.getElementById('transcript');
+      var durationInput = document.getElementById('duration');
+      if (transcriptArea && !transcriptArea.value.trim()) {
+        transcriptArea.value = result.transcricao.transcricao;
+      }
+      if (durationInput && result.transcricao.duracao_s) {
+        durationInput.value = fmtBackendTime(result.transcricao.duracao_s);
+      }
+      if (window.pilotRerenderText) window.pilotRerenderText();
+    }
+
+    if (result.linguagem_corporal) {
+      var ok = renderLandmarksData(result.linguagem_corporal, checksList);
+      statusEl.textContent = ok
+        ? 'Concluído — ' + (result.linguagem_corporal.quadros_analisados || '?') + ' quadros analisados.'
+        : 'Concluído, mas sem dados de rosto/corpo reconhecíveis.';
+    } else {
+      statusEl.textContent = 'Concluído (sem dados de linguagem corporal nesta resposta).';
+    }
+    document.getElementById('backendProgress').style.display = 'none';
+  } catch (e) {
+    clearInterval(timer);
+    statusEl.textContent = 'Não deu pra completar automaticamente: ' + e.message + ' — o servidor gratuito às vezes está "dormindo" ou fica sem memória em vídeos longos. Pode tentar de novo, ou usar o campo de colar JSON manual abaixo.';
+    document.getElementById('backendProgress').style.display = 'none';
+  }
+}
+
+// ---------- Relatório ----------
+(function () {
+  var genBtn = document.getElementById('generateReportBtn');
+  var copyBtn = document.getElementById('copyReportBtn');
+  var output = document.getElementById('reportOutput');
+
+  function line(label, value) { return value === undefined || value === null || value === '' ? '' : '  ' + label + ': ' + value + '\n'; }
+
+  genBtn.addEventListener('click', function () {
+    var d = window.pilotReportData || {};
+    var now = new Date();
+    var parts = [];
+    parts.push('RELATÓRIO DO ENSAIO — ' + now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR').slice(0, 5) + '\n');
+
+    if (d.texto) {
+      parts.push('TEXTO');
+      parts.push(line('palavras', d.texto.palavras));
+      parts.push(line('ritmo estimado', d.texto.wpm ? d.texto.wpm + ' palavras/min (' + d.texto.ritmoFaixa + ') — ref. 130–160' : null));
+      parts.push(line('hedging', d.texto.hedging + (d.texto.hedgingPor100 !== null ? ' (' + d.texto.hedgingPor100 + '/100 palavras — ref. abaixo de ~3)' : '')));
+      parts.push(line('muletas', d.texto.muletas + (d.texto.muletasPor100 !== null ? ' (' + d.texto.muletasPor100 + '/100 palavras — ref. abaixo de ~3)' : '')));
+      parts.push(line('vagueza', d.texto.vagueza + (d.texto.vaguezaPor100 !== null ? ' (' + d.texto.vaguezaPor100 + '/100 palavras — ref. abaixo de ~2)' : '')));
+      parts.push(line('verbo fraco', d.texto.verboFraco + (d.texto.verboFracoPor100 !== null ? ' (' + d.texto.verboFracoPor100 + '/100 palavras — ref. abaixo de ~2)' : '')));
+      if (d.texto.exemplos && d.texto.exemplos.length) {
+        parts.push('  exemplos marcados:');
+        d.texto.exemplos.forEach(function (ex) { parts.push('    - ' + ex); });
+      }
+      parts.push('');
+    }
+
+    if (d.voz) {
+      parts.push('VOZ');
+      parts.push(line('duração analisada', d.voz.duracao));
+      parts.push(line('nível de volume', d.voz.nivelVolume));
+      parts.push(line('consistência de volume', d.voz.consistenciaVolume));
+      parts.push(line('cadência', d.voz.cadencia));
+      parts.push(line('fala monótona', d.voz.monotona));
+      parts.push(line('variação de pitch', d.voz.variacaoPitch + ' — ref. média/alta'));
+      parts.push(line('pausas', d.voz.pausas + (d.voz.pausasPorMin !== null ? ' (' + d.voz.pausasPorMin + '/min)' : '')));
+      parts.push(line('quedas de energia antes de pausa', d.voz.quedasDeEnergia + (d.voz.quedasPorMin !== null ? ' (' + d.voz.quedasPorMin + '/min — ref. abaixo de ~2)' : '')));
+      parts.push('');
+    }
+
+    if (d.imagem) {
+      parts.push('IMAGEM (roupa)');
+      d.imagem.checks.forEach(function (c) { parts.push('  [' + (c.ok ? 'ok' : 'atenção') + '] ' + c.title + ' — ' + c.sub); });
+      parts.push('');
+    }
+
+    if (d.movimento) {
+      parts.push('MOVIMENTO CORPORAL');
+      parts.push(line('atividade de movimento', d.movimento.atividade + ' (' + d.movimento.atividadeValor + ')'));
+      parts.push(line('deslocamento lateral', d.movimento.deslocamentoLateralPct + '% — ' + d.movimento.deslocamentoLabel));
+      parts.push(line('balanço rítmico', d.movimento.balancoRitmico));
+      parts.push('');
+    }
+
+    if (d.olhar) {
+      parts.push('OLHAR E POSTURA (script Python, landmarks reais)');
+      parts.push(line('contato visual', d.olhar.contato_visual_estimado_pct + '%'));
+      parts.push(line('olhou para baixo', d.olhar.olhou_para_baixo_pct + '%'));
+      parts.push(line('desviou o olhar', d.olhar.desviou_o_olhar_pct + '%'));
+      parts.push(line('mão esquerda na linha da cintura', d.olhar.mao_na_linha_da_cintura_esquerda_pct + '%'));
+      parts.push(line('mão direita na linha da cintura', d.olhar.mao_na_linha_da_cintura_direita_pct + '%'));
+      if (d.olhar.expressao_facial) {
+        parts.push(line('expressão facial', d.olhar.expressao_facial.classificacao));
+      }
+      if (d.olhar.mao_esquerda_possivel_bolso) parts.push(line('mão esquerda possível bolso (baixa confiança)', d.olhar.mao_esquerda_possivel_bolso.maior_periodo_sem_deteccao_s + 's'));
+      if (d.olhar.mao_direita_possivel_bolso) parts.push(line('mão direita possível bolso (baixa confiança)', d.olhar.mao_direita_possivel_bolso.maior_periodo_sem_deteccao_s + 's'));
+      if (d.olhar.maos_atras_das_costas) parts.push(line('mãos possivelmente atrás das costas (baixa confiança)', d.olhar.maos_atras_das_costas.maior_periodo_ambas_ocultas_s + 's'));
+      if (d.olhar.formato_de_mao_incomum && d.olhar.formato_de_mao_incomum.total_episodios) {
+        parts.push(line('formato de mão fora do padrão (revisar, não é veredito)', d.olhar.formato_de_mao_incomum.total_episodios + ' episódio(s)'));
+      }
+      parts.push('');
+    }
+
+    if (!d.texto && !d.voz && !d.imagem && !d.movimento && !d.olhar) {
+      parts.push('Nenhum módulo foi analisado ainda nesta sessão. Rode ao menos um acima antes de gerar o relatório.');
+    } else {
+      parts.push('---');
+      parts.push('Números vindos de heurística de pixel (texto, voz, imagem, movimento) não foram calibrados contra avaliação humana. Trate como ponto de partida para conversa, não como nota final.');
+    }
+
+    var text = parts.join('\n').replace(/\n{3,}/g, '\n\n');
+    output.textContent = text;
+    output.style.display = 'block';
+    copyBtn.style.display = 'inline-block';
+  });
+
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard.writeText(output.textContent).then(function () {
+      var orig = copyBtn.textContent;
+      copyBtn.textContent = 'Copiado';
+      setTimeout(function () { copyBtn.textContent = orig; }, 1500);
+    });
+  });
+})();
+
+// ---------- Salvar e comparar sessões (localStorage) ----------
+(function () {
+  var labelInput = document.getElementById('sessionLabel');
+  var saveBtn = document.getElementById('saveSessionBtn');
+  var saveStatus = document.getElementById('saveSessionStatus');
+  var listEl = document.getElementById('sessionsList');
+  var listStatus = document.getElementById('sessionsListStatus');
+  var loadBtn = document.getElementById('loadSessionsBtn');
+  var compareBtn = document.getElementById('compareSessionsBtn');
+  var deleteBtn = document.getElementById('deleteSessionsBtn');
+  var output = document.getElementById('comparisonOutput');
+
+  var STORAGE_KEY = 'ensaio-sessoes';
+  var cache = []; // [{id, label, timestamp, data}]
+
+  function fmtDate(ts) {
+    var d = new Date(ts);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR').slice(0, 5);
+  }
+
+  function readAll() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function writeAll(list) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function loadSessionsList() {
+    cache = readAll().sort(function (a, b) { return b.timestamp - a.timestamp; });
+    if (!cache.length) {
+      listEl.innerHTML = '';
+      listStatus.textContent = 'Nenhuma sessão salva ainda neste navegador.';
+      updateActionButtons();
+      return;
+    }
+    listStatus.textContent = '';
+    listEl.innerHTML = cache.map(function (s) {
+      return '<li class="check-item"><input type="checkbox" class="session-check" data-id="' + s.id + '">' +
+        '<div class="check-text"><div class="ct-title">' + s.label + '</div><div class="ct-sub">' + fmtDate(s.timestamp) + '</div></div></li>';
+    }).join('');
+    listEl.querySelectorAll('.session-check').forEach(function (cb) {
+      cb.addEventListener('change', enforceMaxTwo);
+    });
+    updateActionButtons();
+  }
+
+  function selectedChecks() {
+    return Array.prototype.slice.call(listEl.querySelectorAll('.session-check:checked'));
+  }
+
+  function enforceMaxTwo(e) {
+    var checked = selectedChecks();
+    if (checked.length > 2) { e.target.checked = false; }
+    updateActionButtons();
+  }
+
+  function updateActionButtons() {
+    var n = selectedChecks().length;
+    compareBtn.disabled = n !== 2;
+    deleteBtn.disabled = n === 0;
+  }
+
+  loadBtn.addEventListener('click', loadSessionsList);
+  loadSessionsList(); // localStorage é local e síncrono — não precisa de login nem espera, então já carrega sozinho.
+
+  saveBtn.addEventListener('click', function () {
+    var data = window.pilotReportData;
+    if (!data || (!data.texto && !data.voz && !data.imagem && !data.movimento && !data.olhar)) {
+      saveStatus.textContent = 'Rode pelo menos um módulo de análise antes de salvar.';
+      return;
+    }
+    var label = labelInput.value.trim() || ('Sessão ' + new Date().toLocaleDateString('pt-BR'));
+    var entry = { id: 's' + Date.now() + Math.random().toString(36).slice(2, 8), label: label, timestamp: Date.now(), data: JSON.parse(JSON.stringify(data)) };
+    var list = readAll();
+    list.push(entry);
+    if (!writeAll(list)) {
+      saveStatus.textContent = 'Não consegui salvar — o armazenamento do navegador pode estar cheio ou bloqueado (modo anônimo às vezes bloqueia isso).';
+      return;
+    }
+    saveStatus.textContent = 'Sessão "' + label + '" salva neste navegador.';
+    labelInput.value = '';
+    loadSessionsList();
+  });
+
+  deleteBtn.addEventListener('click', function () {
+    var checks = selectedChecks();
+    if (!checks.length) return;
+    var ids = checks.map(function (c) { return c.getAttribute('data-id'); });
+    var list = readAll().filter(function (s) { return ids.indexOf(s.id) === -1; });
+    writeAll(list);
+    output.style.display = 'none';
+    loadSessionsList();
+  });
+
+  function metricRows(a, b, fields) {
+    return fields.filter(function (f) {
+      return (a && a[f.key] !== undefined && a[f.key] !== null) || (b && b[f.key] !== undefined && b[f.key] !== null);
+    }).map(function (f) {
+      var va = a && a[f.key] !== undefined && a[f.key] !== null ? a[f.key] : '—';
+      var vb = b && b[f.key] !== undefined && b[f.key] !== null ? b[f.key] : '—';
+      var delta = '';
+      if (typeof va === 'number' && typeof vb === 'number') {
+        var diff = vb - va;
+        delta = diff === 0 ? '=' : (diff > 0 ? '▲ +' + Math.round(diff * 10) / 10 : '▼ ' + Math.round(diff * 10) / 10);
+      }
+      return '<tr><td>' + f.label + '</td><td>' + va + '</td><td>' + vb + '</td><td class="delta-col">' + delta + '</td></tr>';
+    }).join('');
+  }
+
+  compareBtn.addEventListener('click', function () {
+    var checks = selectedChecks();
+    if (checks.length !== 2) return;
+    var idA = checks[0].getAttribute('data-id');
+    var idB = checks[1].getAttribute('data-id');
+    var metaA = cache.filter(function (s) { return s.id === idA; })[0];
+    var metaB = cache.filter(function (s) { return s.id === idB; })[0];
+    if (!metaA || !metaB) return;
+    if (metaA.timestamp > metaB.timestamp) { var tmp = metaA; metaA = metaB; metaB = tmp; }
+
+    var a = metaA.data, b = metaB.data;
+    output.style.display = 'block';
+
+    var html = '<p class="section-note">Ordenado por data — <b>' + metaA.label + '</b> (' + fmtDate(metaA.timestamp) + ') é a mais antiga das duas.</p>';
+    html += '<table class="compare-table"><thead><tr><th>Métrica</th><th>' + metaA.label + '</th><th>' + metaB.label + '</th><th>Δ</th></tr></thead><tbody>';
+
+    if (a.texto || b.texto) {
+      html += '<tr><td colspan="4" class="compare-section-title">Texto</td></tr>';
+      html += metricRows(a.texto, b.texto, [
+        { key: 'palavras', label: 'palavras' }, { key: 'wpm', label: 'ritmo (palavras/min)' },
+        { key: 'hedgingPor100', label: 'hedging /100 palavras' }, { key: 'muletasPor100', label: 'muletas /100 palavras' },
+        { key: 'vaguezaPor100', label: 'vagueza /100 palavras' }, { key: 'verboFracoPor100', label: 'verbo fraco /100 palavras' }
+      ]);
+    }
+    if (a.voz || b.voz) {
+      html += '<tr><td colspan="4" class="compare-section-title">Voz</td></tr>';
+      html += metricRows(a.voz, b.voz, [
+        { key: 'pausasPorMin', label: 'pausas por minuto' }, { key: 'quedasPorMin', label: 'quedas de energia por minuto' },
+        { key: 'variacaoPitch', label: 'variação de pitch' }, { key: 'nivelVolume', label: 'nível de volume' },
+        { key: 'consistenciaVolume', label: 'consistência de volume' }, { key: 'cadencia', label: 'cadência' },
+        { key: 'monotona', label: 'fala monótona' }
+      ]);
+    }
+    if (a.movimento || b.movimento) {
+      html += '<tr><td colspan="4" class="compare-section-title">Movimento</td></tr>';
+      html += metricRows(a.movimento, b.movimento, [
+        { key: 'atividade', label: 'atividade de movimento' }, { key: 'deslocamentoLateralPct', label: 'deslocamento lateral (%)' },
+        { key: 'balancoRitmico', label: 'balanço rítmico' }
+      ]);
+    }
+    if (a.olhar || b.olhar) {
+      html += '<tr><td colspan="4" class="compare-section-title">Olhar e postura</td></tr>';
+      html += metricRows(a.olhar, b.olhar, [
+        { key: 'contato_visual_estimado_pct', label: 'contato visual (%)' },
+        { key: 'olhou_para_baixo_pct', label: 'olhou para baixo (%)' },
+        { key: 'desviou_o_olhar_pct', label: 'desviou o olhar (%)' }
+      ]);
+    }
+    if (a.imagem || b.imagem) {
+      var attnA = a.imagem ? a.imagem.checks.filter(function (c) { return !c.ok; }).length : null;
+      var attnB = b.imagem ? b.imagem.checks.filter(function (c) { return !c.ok; }).length : null;
+      html += '<tr><td colspan="4" class="compare-section-title">Imagem</td></tr>';
+      html += metricRows({ pontosDeAtencao: attnA }, { pontosDeAtencao: attnB }, [{ key: 'pontosDeAtencao', label: 'pontos de atenção na roupa' }]);
+    }
+
+    html += '</tbody></table>';
+    html += '<p class="section-note" style="margin-top:12px">Δ mostra a diferença numérica onde faz sentido comparar. Direção "boa" depende da métrica e do que você está treinando.</p>';
+    output.innerHTML = html;
+  });
+})();
+</script>
+</body>
+</html>
