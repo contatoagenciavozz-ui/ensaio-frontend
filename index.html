@@ -1050,8 +1050,16 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
         // depois de aparecer, principalmente visível no celular.
         results.style.display = 'block';
 
-        drawEnergy(energyCanvas, rms, silentMask);
-        drawPitch(pitchCanvas, pitch);
+        // Espera o navegador terminar de organizar o layout (2 quadros de
+        // animação) antes de desenhar — ler o tamanho da área logo depois
+        // de exibi-la pode pegar um valor ainda não assentado, principalmente
+        // em celular, fazendo o gráfico parecer "esticar" depois.
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            drawEnergy(energyCanvas, rms, silentMask);
+            drawPitch(pitchCanvas, pitch);
+          });
+        });
 
         pauseList.innerHTML = '';
         if (!pauses.length) {
@@ -1503,8 +1511,12 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
       results.style.display = 'block';
 
-      drawBars(document.getElementById('motionEnergyCanvas'), energies, getComputedStyle(document.documentElement).getPropertyValue('--gold'));
-      drawLine(document.getElementById('motionCentroidCanvas'), centroids, getComputedStyle(document.documentElement).getPropertyValue('--vague'));
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          drawBars(document.getElementById('motionEnergyCanvas'), energies, getComputedStyle(document.documentElement).getPropertyValue('--gold'));
+          drawLine(document.getElementById('motionCentroidCanvas'), centroids, getComputedStyle(document.documentElement).getPropertyValue('--vague'));
+        });
+      });
       window.addEventListener('resize', function () {
         drawBars(document.getElementById('motionEnergyCanvas'), energies, getComputedStyle(document.documentElement).getPropertyValue('--gold'));
         drawLine(document.getElementById('motionCentroidCanvas'), centroids, getComputedStyle(document.documentElement).getPropertyValue('--vague'));
