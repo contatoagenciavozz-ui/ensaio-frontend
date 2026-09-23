@@ -1181,8 +1181,29 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
   scrub.addEventListener('input', function () { frameVideo.currentTime = parseFloat(scrub.value); });
 
   captureBtn.addEventListener('click', function () {
-    drawToCanvas(frameVideo, frameVideo.videoWidth, frameVideo.videoHeight);
-    runChecks();
+    function doCapture() {
+      drawToCanvas(frameVideo, frameVideo.videoWidth, frameVideo.videoHeight);
+      runChecks();
+    }
+    // No celular, buscar um instante específico do vídeo (seek) costuma
+    // ser mais lento que no computador — clicar em capturar antes disso
+    // terminar desenha um quadro "vazio" (tela preta). Espera confirmação
+    // de que a busca terminou antes de desenhar.
+    if (frameVideo.seeking) {
+      var handled = false;
+      var onSeeked = function () {
+        if (handled) return;
+        handled = true;
+        frameVideo.removeEventListener('seeked', onSeeked);
+        doCapture();
+      };
+      frameVideo.addEventListener('seeked', onSeeked);
+      setTimeout(function () {
+        if (!handled) { handled = true; frameVideo.removeEventListener('seeked', onSeeked); doCapture(); }
+      }, 2000);
+    } else {
+      doCapture();
+    }
   });
 
   photoInput.addEventListener('change', function () {
