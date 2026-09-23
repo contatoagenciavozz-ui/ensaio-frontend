@@ -876,8 +876,9 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
   function drawEnergy(canvas, rms, silentMask) {
     var ctx = canvas.getContext('2d');
-    var w = canvas.clientWidth || 600, h = canvas.height;
+    var w = canvas.clientWidth || 600, h = 90;
     canvas.width = w * 2; canvas.height = h * 2;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(2, 2);
     ctx.clearRect(0, 0, w, h);
     var max = Math.max.apply(null, rms) || 1;
@@ -891,8 +892,9 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
   function drawPitch(canvas, pitch) {
     var ctx = canvas.getContext('2d');
-    var w = canvas.clientWidth || 600, h = canvas.height;
+    var w = canvas.clientWidth || 600, h = 90;
     canvas.width = w * 2; canvas.height = h * 2;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(2, 2);
     ctx.clearRect(0, 0, w, h);
     var voiced = pitch.filter(function (p) { return p > 0; });
@@ -1357,8 +1359,9 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
   function drawBars(canvas, values, color) {
     var ctx = canvas.getContext('2d');
-    var w = canvas.clientWidth || 600, h = canvas.height;
+    var w = canvas.clientWidth || 600, h = 70;
     canvas.width = w * 2; canvas.height = h * 2;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(2, 2);
     ctx.clearRect(0, 0, w, h);
     var max = Math.max.apply(null, values) || 1;
@@ -1372,8 +1375,9 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
   function drawLine(canvas, values, color) {
     var ctx = canvas.getContext('2d');
-    var w = canvas.clientWidth || 600, h = canvas.height;
+    var w = canvas.clientWidth || 600, h = 70;
     canvas.width = w * 2; canvas.height = h * 2;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(2, 2);
     ctx.clearRect(0, 0, w, h);
     var min = Math.min.apply(null, values), max = Math.max.apply(null, values);
