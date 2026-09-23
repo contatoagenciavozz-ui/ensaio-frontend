@@ -1541,6 +1541,9 @@ function renderLandmarksData(data, checksList) {
   }).join('');
 
   var weakSignals = [];
+  if (data.piscadas_por_minuto_estimado && data.piscadas_por_minuto_estimado.valor !== null) {
+    weakSignals.push('~' + data.piscadas_por_minuto_estimado.valor + ' piscadas/min estimadas (' + data.piscadas_por_minuto_estimado.eventos_detectados + ' detectadas) — referência de repouso costuma ser 15-20/min, mas não é regra fixa; provável subcontagem pela amostragem')
+  }
   if (data.mao_esquerda_possivel_bolso) weakSignals.push('mão esquerda possivelmente no bolso (~' + data.mao_esquerda_possivel_bolso.maior_periodo_sem_deteccao_s + 's sem detecção)');
   if (data.mao_direita_possivel_bolso) weakSignals.push('mão direita possivelmente no bolso (~' + data.mao_direita_possivel_bolso.maior_periodo_sem_deteccao_s + 's sem detecção)');
   if (data.maos_atras_das_costas) weakSignals.push('mãos possivelmente atrás das costas (~' + data.maos_atras_das_costas.maior_periodo_ambas_ocultas_s + 's com ambas ocultas)');
@@ -1766,6 +1769,9 @@ async function runBackendAnalysis(file) {
       parts.push(line('mão direita na linha da cintura', d.olhar.mao_na_linha_da_cintura_direita_pct + '%'));
       if (d.olhar.expressao_facial) {
         parts.push(line('expressão facial', d.olhar.expressao_facial.classificacao));
+      }
+      if (d.olhar.piscadas_por_minuto_estimado && d.olhar.piscadas_por_minuto_estimado.valor !== null) {
+        parts.push(line('piscadas/min (estimativa, baixa confiança)', d.olhar.piscadas_por_minuto_estimado.valor));
       }
       if (d.olhar.mao_esquerda_possivel_bolso) parts.push(line('mão esquerda possível bolso (baixa confiança)', d.olhar.mao_esquerda_possivel_bolso.maior_periodo_sem_deteccao_s + 's'));
       if (d.olhar.mao_direita_possivel_bolso) parts.push(line('mão direita possível bolso (baixa confiança)', d.olhar.mao_direita_possivel_bolso.maior_periodo_sem_deteccao_s + 's'));
