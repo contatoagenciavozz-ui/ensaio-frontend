@@ -311,6 +311,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 @media (max-width: 620px) { .two-col { grid-template-columns: 1fr; } }
 .check-item input[type="checkbox"] { margin-top: 4px; accent-color: var(--gold); flex-shrink: 0; }
 .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.compare-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .compare-table th, .compare-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
 .compare-table th { color: var(--ink-soft); font-weight: 500; font-size: 12px; }
 .compare-table td.delta-col { font-family: var(--font-serif); color: var(--ink-faint); }
@@ -1938,7 +1939,7 @@ async function runBackendAnalysis(file) {
     output.style.display = 'block';
 
     var html = '<p class="section-note">Ordenado por data — <b>' + metaA.label + '</b> (' + fmtDate(metaA.timestamp) + ') é a mais antiga das duas.</p>';
-    html += '<table class="compare-table"><thead><tr><th>Métrica</th><th>' + metaA.label + '</th><th>' + metaB.label + '</th><th>Δ</th></tr></thead><tbody>';
+    html += '<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>Métrica</th><th>' + metaA.label + '</th><th>' + metaB.label + '</th><th>Δ</th></tr></thead><tbody>';
 
     if (a.texto || b.texto) {
       html += '<tr><td colspan="4" class="compare-section-title">Texto</td></tr>';
@@ -1979,7 +1980,7 @@ async function runBackendAnalysis(file) {
       html += metricRows({ pontosDeAtencao: attnA }, { pontosDeAtencao: attnB }, [{ key: 'pontosDeAtencao', label: 'pontos de atenção na roupa' }]);
     }
 
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     html += '<p class="section-note" style="margin-top:12px">Δ mostra a diferença numérica onde faz sentido comparar. Direção "boa" depende da métrica e do que você está treinando.</p>';
     output.innerHTML = html;
   });
