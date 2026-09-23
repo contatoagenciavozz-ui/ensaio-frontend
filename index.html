@@ -555,7 +555,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     { cat: 'hedge', re: /\ba gente poderia\b/gi, tip: 'Troque por "vamos" — mais firme e mais curto.' },
     { cat: 'hedge', re: /\bmeio que\b/gi, tip: 'Suaviza sem necessidade — corte.' },
 
-    { cat: 'filler', re: /\bné\b/gi, tip: 'Muleta de fim de frase — corte, a frase já fecha sozinha.' },
+    { cat: 'filler', re: /(?<![\p{L}\p{N}])né(?![\p{L}\p{N}])/giu, tip: 'Muleta de fim de frase — corte, a frase já fecha sozinha.' },
     { cat: 'filler', re: /\btipo\b/gi, tip: 'Verifique se é muleta (pode cortar) ou "tipo de" (mantém).' },
     { cat: 'filler', re: /\bassim\b/gi, tip: 'Verifique se é muleta de pausa ou parte da frase.' },
     { cat: 'filler', re: /\bentão\b/gi, tip: 'Se for só encadeando a fala, corte ou troque por uma pausa real.' },
