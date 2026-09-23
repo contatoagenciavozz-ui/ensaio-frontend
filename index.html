@@ -1044,6 +1044,12 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
           if (window.pilotRerenderText) window.pilotRerenderText();
         }
 
+        // Mostra a área ANTES de desenhar os gráficos — um canvas escondido
+        // (display:none) reporta largura zero, então o desenho usava um
+        // valor padrão de desktop e ficava "grudado" nesse tamanho errado
+        // depois de aparecer, principalmente visível no celular.
+        results.style.display = 'block';
+
         drawEnergy(energyCanvas, rms, silentMask);
         drawPitch(pitchCanvas, pitch);
 
@@ -1064,7 +1070,6 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
           });
         }
 
-        results.style.display = 'block';
         window.addEventListener('resize', function () { drawEnergy(energyCanvas, rms, silentMask); drawPitch(pitchCanvas, pitch); });
 
         var durMin = duration / 60;
@@ -1496,10 +1501,14 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
       }
       document.getElementById('mPendulum').textContent = pendulumLabel;
 
+      results.style.display = 'block';
+
       drawBars(document.getElementById('motionEnergyCanvas'), energies, getComputedStyle(document.documentElement).getPropertyValue('--gold'));
       drawLine(document.getElementById('motionCentroidCanvas'), centroids, getComputedStyle(document.documentElement).getPropertyValue('--vague'));
-
-      results.style.display = 'block';
+      window.addEventListener('resize', function () {
+        drawBars(document.getElementById('motionEnergyCanvas'), energies, getComputedStyle(document.documentElement).getPropertyValue('--gold'));
+        drawLine(document.getElementById('motionCentroidCanvas'), centroids, getComputedStyle(document.documentElement).getPropertyValue('--vague'));
+      });
 
       window.pilotReportData = window.pilotReportData || {};
       window.pilotReportData.movimento = {
