@@ -317,6 +317,13 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 .compare-table td.delta-col { font-family: var(--font-serif); color: var(--ink-faint); }
 .compare-section-title { font-family: var(--font-serif); font-size: 15px; margin: 18px 0 6px; }
 .compare-section-title:first-child { margin-top: 0; }
+.parecer-group { margin-bottom: 20px; }
+.parecer-group:last-child { margin-bottom: 0; }
+.parecer-title { font-family: var(--font-serif); font-size: 16px; margin: 0 0 8px; }
+.parecer-item { font-size: 14px; line-height: 1.6; color: var(--ink); margin: 0 0 8px; padding-left: 14px; border-left: 2px solid var(--rule); }
+.parecer-item.tone-atencao { border-left-color: var(--hedge); }
+.parecer-item.tone-melhorar { border-left-color: var(--gold); }
+.parecer-item.tone-forte { border-left-color: var(--ok); }
 </style>
 </head>
 <body>
@@ -514,6 +521,16 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
       <button class="frame-btn" id="copyReportBtn" type="button" style="margin-top:0; display:none; background:var(--surface); color:var(--ink); border-color:var(--rule)">Copiar</button>
     </div>
     <pre id="reportOutput" style="display:none; white-space:pre-wrap; font-family:var(--font-sans); font-size:14px; line-height:1.7; background:var(--bg); border:1px solid var(--rule); border-radius:8px; padding:18px; margin-top:14px"></pre>
+  </section>
+
+  <section class="card">
+    <h2>Parecer automático</h2>
+    <p class="section-note">Traduz os números em frases prontas — um primeiro parecer pro aluno ler sozinho. É gerado por modelo de frase (regras fixas), não por uma IA lendo o conjunto — não conecta padrões entre categorias sozinho. Trate como rascunho, não veredito final.</p>
+    <div class="row">
+      <button class="frame-btn" id="generateParecerBtn" type="button" style="margin-top:0">Gerar parecer</button>
+      <button class="frame-btn" id="copyParecerBtn" type="button" style="margin-top:0; display:none; background:var(--surface); color:var(--ink); border-color:var(--rule)">Copiar</button>
+    </div>
+    <div id="parecerOutput" style="display:none; margin-top:14px"></div>
   </section>
 
   <section class="card">
@@ -1850,6 +1867,106 @@ async function runBackendAnalysis(file) {
 
   copyBtn.addEventListener('click', function () {
     navigator.clipboard.writeText(output.textContent).then(function () {
+      var orig = copyBtn.textContent;
+      copyBtn.textContent = 'Copiado';
+      setTimeout(function () { copyBtn.textContent = orig; }, 1500);
+    });
+  });
+})();
+
+// ---------- Parecer automático (frases geradas por regra, não por IA) ----------
+function generateParecer(d) {
+  var groups = [];
+
+  if (d.texto) {
+    var items = [];
+    if (d.texto.wpm) {
+      items.push({ tone: 'neutral', text: 'Ritmo de fala: ' + d.texto.wpm + ' palavras/min (' + d.texto.ritmoFaixa + '). Faixa confortável de referência: 130–160.' });
+    }
+    if (d.texto.muletas > 0) {
+      var topMuleta = d.texto.detalhe && d.texto.detalhe.filler && d.texto.detalhe.filler[0];
+      items.push({ tone: 'atencao', text: 'Detectei ' + d.texto.muletas + ' muleta(s)' + (topMuleta ? ', a mais frequente foi "' + topMuleta.frase + '" (' + topMuleta.vezes + 'x)' : '') + '. Considere substituir por uma pausa.' });
+    } else if (d.texto.palavras > 0) {
+      items.push({ tone: 'forte', text: 'Nenhuma muleta detectada no texto analisado.' });
+    }
+    if (d.texto.hedging > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.hedging + ' frase(s) com hedging (ex: "eu acho que"). Tente afirmar direto.' });
+    if (d.texto.vagueza > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.vagueza + ' termo(s) vago(s) (ex: "bastante", "vários"). Prefira números quando tiver.' });
+    if (d.texto.verboFraco > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.verboFraco + ' nominalização(ões)/verbo(s) fraco(s). Use o verbo direto.' });
+    if (items.length) groups.push({ title: 'Texto e linguagem', items: items });
+  }
+
+  if (d.voz) {
+    var items = [];
+    if (d.voz.variacaoPitch) items.push({ tone: d.voz.variacaoPitch === 'baixa' ? 'atencao' : (d.voz.variacaoPitch === 'alta' ? 'forte' : 'melhorar'), text: 'Variação de pitch: ' + d.voz.variacaoPitch + '.' + (d.voz.variacaoPitch === 'baixa' ? ' Voz pouco variada pode soar monótona — tente subir o tom em palavras-chave.' : '') });
+    if (d.voz.consistenciaVolume) items.push({ tone: d.voz.consistenciaVolume.indexOf('variação') > -1 ? 'forte' : 'melhorar', text: 'Volume: ' + d.voz.consistenciaVolume + '.' });
+    if (d.voz.nivelVolume && d.voz.nivelVolume !== 'adequado') items.push({ tone: 'atencao', text: 'Nível de gravação: ' + d.voz.nivelVolume + ' — verifique a distância do microfone.' });
+    if (d.voz.cadencia) items.push({ tone: d.voz.cadencia.indexOf('regular') > -1 ? 'forte' : 'neutral', text: 'Cadência: ' + d.voz.cadencia + '.' });
+    if (d.voz.monotona === 'sim, sinais de monotonia') items.push({ tone: 'atencao', text: 'Sinais combinados de monotonia (pitch baixo + volume constante) — combine variação de tom com variação de volume.' });
+    if (d.voz.pausasPorMin !== undefined && d.voz.pausasPorMin !== null) items.push({ tone: 'neutral', text: 'Pausas: ' + d.voz.pausasPorMin + '/min.' });
+    if (items.length) groups.push({ title: 'Voz', items: items });
+  }
+
+  if (d.movimento) {
+    var items = [];
+    if (d.movimento.atividade) items.push({ tone: 'neutral', text: 'Atividade de movimento: ' + d.movimento.atividade + ' (valor ' + d.movimento.atividadeValor + ').' });
+    if (d.movimento.deslocamentoLateralPct !== undefined) items.push({ tone: 'neutral', text: 'Deslocamento lateral: ' + d.movimento.deslocamentoLateralPct + '% — ' + d.movimento.deslocamentoLabel + '.' });
+    if (d.movimento.balancoRitmico && d.movimento.balancoRitmico.indexOf('provável') > -1) items.push({ tone: 'atencao', text: 'Padrão de balanço repetitivo detectado (' + d.movimento.balancoRitmico + ') — geralmente lido como nervosismo.' });
+    if (items.length) groups.push({ title: 'Movimento corporal', items: items });
+  }
+
+  if (d.olhar) {
+    var items = [];
+    if (d.olhar.contato_visual_estimado_pct !== undefined && d.olhar.contato_visual_estimado_pct !== null) {
+      var cv = d.olhar.contato_visual_estimado_pct;
+      items.push({ tone: cv >= 60 ? 'forte' : (cv >= 40 ? 'melhorar' : 'atencao'), text: 'Contato visual em ' + cv + '% do tempo.' });
+    }
+    if (d.olhar.olhou_para_baixo_pct) items.push({ tone: d.olhar.olhou_para_baixo_pct > 25 ? 'atencao' : 'neutral', text: 'Olhou para baixo em ' + d.olhar.olhou_para_baixo_pct + '% do tempo.' });
+    if (d.olhar.desviou_o_olhar_pct) items.push({ tone: 'neutral', text: 'Desviou o olhar lateralmente em ' + d.olhar.desviou_o_olhar_pct + '% do tempo.' });
+    if (d.olhar.mao_na_linha_da_cintura_esquerda_pct !== undefined) items.push({ tone: 'neutral', text: 'Mãos na linha da cintura: ' + d.olhar.mao_na_linha_da_cintura_esquerda_pct + '% (esq) / ' + d.olhar.mao_na_linha_da_cintura_direita_pct + '% (dir).' });
+    if (d.olhar.mao_esquerda_em_movimento_pct !== undefined) items.push({ tone: 'neutral', text: 'Mãos em movimento: ' + d.olhar.mao_esquerda_em_movimento_pct + '% (esq) / ' + d.olhar.mao_direita_em_movimento_pct + '% (dir).' });
+    if (d.olhar.expressao_facial && d.olhar.expressao_facial.classificacao) items.push({ tone: 'neutral', text: 'Expressão predominante: ' + d.olhar.expressao_facial.classificacao + ' — confira se combina com o tom do conteúdo.' });
+    if (d.olhar.piscadas_por_minuto_estimado && d.olhar.piscadas_por_minuto_estimado.valor !== null) items.push({ tone: 'neutral', text: '~' + d.olhar.piscadas_por_minuto_estimado.valor + ' piscadas/min estimadas (baixa confiança, provável subcontagem).' });
+    if (d.olhar.mao_perto_do_rosto && d.olhar.mao_perto_do_rosto.total_episodios) items.push({ tone: 'atencao', text: d.olhar.mao_perto_do_rosto.total_episodios + ' episódio(s) de possível mão cobrindo o rosto — confira o vídeo.' });
+    if (d.olhar.mao_esquerda_possivel_bolso || d.olhar.mao_direita_possivel_bolso) items.push({ tone: 'atencao', text: 'Possível mão no bolso detectada em algum momento — confira o vídeo.' });
+    if (d.olhar.formato_de_mao_incomum && d.olhar.formato_de_mao_incomum.total_episodios) items.push({ tone: 'neutral', text: d.olhar.formato_de_mao_incomum.total_episodios + ' episódio(s) de formato de mão fora do padrão comum — revisão manual, não é classificação.' });
+    if (items.length) groups.push({ title: 'Olhar, rosto e postura (servidor)', items: items });
+  }
+
+  if (d.imagem && d.imagem.checks) {
+    var items = d.imagem.checks.map(function (c) { return { tone: c.ok ? 'forte' : 'atencao', text: c.title + ' — ' + c.sub }; });
+    if (items.length) groups.push({ title: 'Roupa e imagem', items: items });
+  }
+
+  return groups;
+}
+
+(function () {
+  var genBtn = document.getElementById('generateParecerBtn');
+  var copyBtn = document.getElementById('copyParecerBtn');
+  var output = document.getElementById('parecerOutput');
+
+  genBtn.addEventListener('click', function () {
+    var d = window.pilotReportData || {};
+    var groups = generateParecer(d);
+    output.style.display = 'block';
+    if (!groups.length) {
+      output.innerHTML = '<p class="section-note">Nenhum módulo foi analisado ainda nesta sessão. Rode ao menos um acima antes de gerar o parecer.</p>';
+      copyBtn.style.display = 'none';
+      return;
+    }
+    output.innerHTML = groups.map(function (g) {
+      return '<div class="parecer-group"><p class="parecer-title">' + g.title + '</p>' +
+        g.items.map(function (it) {
+          var toneClass = it.tone === 'atencao' ? ' tone-atencao' : it.tone === 'melhorar' ? ' tone-melhorar' : it.tone === 'forte' ? ' tone-forte' : '';
+          return '<p class="parecer-item' + toneClass + '">' + it.text + '</p>';
+        }).join('') +
+        '</div>';
+    }).join('');
+    copyBtn.style.display = 'inline-block';
+  });
+
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard.writeText(output.innerText).then(function () {
       var orig = copyBtn.textContent;
       copyBtn.textContent = 'Copiado';
       setTimeout(function () { copyBtn.textContent = orig; }, 1500);
