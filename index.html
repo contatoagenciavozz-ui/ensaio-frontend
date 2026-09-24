@@ -1611,8 +1611,8 @@ function renderLandmarksData(data, checksList) {
   if (data.piscadas_por_minuto_estimado && data.piscadas_por_minuto_estimado.valor !== null) {
     weakSignals.push('~' + data.piscadas_por_minuto_estimado.valor + ' piscadas/min estimadas (' + data.piscadas_por_minuto_estimado.eventos_detectados + ' detectadas) — referência de repouso costuma ser 15-20/min, mas não é regra fixa; provável subcontagem pela amostragem')
   }
-  if (data.mao_esquerda_possivel_bolso) weakSignals.push('mão esquerda possivelmente no bolso (~' + data.mao_esquerda_possivel_bolso.maior_periodo_sem_deteccao_s + 's sem detecção)');
-  if (data.mao_direita_possivel_bolso) weakSignals.push('mão direita possivelmente no bolso (~' + data.mao_direita_possivel_bolso.maior_periodo_sem_deteccao_s + 's sem detecção)');
+  if (data.mao_esquerda_possivel_bolso) weakSignals.push('mão esquerda possivelmente no bolso (~' + data.mao_esquerda_possivel_bolso.maior_periodo_parado_perto_quadril_s + 's parada perto do quadril)');
+  if (data.mao_direita_possivel_bolso) weakSignals.push('mão direita possivelmente no bolso (~' + data.mao_direita_possivel_bolso.maior_periodo_parado_perto_quadril_s + 's parada perto do quadril)');
   if (data.maos_atras_das_costas) weakSignals.push('mãos possivelmente atrás das costas (~' + data.maos_atras_das_costas.maior_periodo_ambas_ocultas_s + 's com ambas ocultas)');
   if (data.formato_de_mao_incomum && data.formato_de_mao_incomum.total_episodios) {
     weakSignals.push(data.formato_de_mao_incomum.total_episodios + ' episódio(s) de formato de mão fora do padrão conhecido — revisar manualmente, não é classificação do que é');
@@ -1843,8 +1843,8 @@ async function runBackendAnalysis(file) {
       if (d.olhar.mao_perto_do_rosto && d.olhar.mao_perto_do_rosto.total_episodios) {
         parts.push(line('possível mão cobrindo o rosto (baixa confiança)', d.olhar.mao_perto_do_rosto.total_episodios + ' episódio(s)'));
       }
-      if (d.olhar.mao_esquerda_possivel_bolso) parts.push(line('mão esquerda possível bolso (baixa confiança)', d.olhar.mao_esquerda_possivel_bolso.maior_periodo_sem_deteccao_s + 's'));
-      if (d.olhar.mao_direita_possivel_bolso) parts.push(line('mão direita possível bolso (baixa confiança)', d.olhar.mao_direita_possivel_bolso.maior_periodo_sem_deteccao_s + 's'));
+      if (d.olhar.mao_esquerda_possivel_bolso) parts.push(line('mão esquerda possível bolso (baixa confiança)', d.olhar.mao_esquerda_possivel_bolso.maior_periodo_parado_perto_quadril_s + 's'));
+      if (d.olhar.mao_direita_possivel_bolso) parts.push(line('mão direita possível bolso (baixa confiança)', d.olhar.mao_direita_possivel_bolso.maior_periodo_parado_perto_quadril_s + 's'));
       if (d.olhar.maos_atras_das_costas) parts.push(line('mãos possivelmente atrás das costas (baixa confiança)', d.olhar.maos_atras_das_costas.maior_periodo_ambas_ocultas_s + 's'));
       if (d.olhar.formato_de_mao_incomum && d.olhar.formato_de_mao_incomum.total_episodios) {
         parts.push(line('formato de mão fora do padrão (revisar, não é veredito)', d.olhar.formato_de_mao_incomum.total_episodios + ' episódio(s)'));
