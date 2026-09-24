@@ -1881,27 +1881,32 @@ function generateParecer(d) {
   if (d.texto) {
     var items = [];
     if (d.texto.wpm) {
-      items.push({ tone: 'neutral', text: 'Ritmo de fala: ' + d.texto.wpm + ' palavras/min (' + d.texto.ritmoFaixa + '). Faixa confortável de referência: 130–160.' });
+      var ritmoImpacto = '';
+      if (d.texto.ritmoFaixa === 'muito devagar') ritmoImpacto = ' Ritmo muito devagar pode fazer a plateia perder o interesse.';
+      else if (d.texto.ritmoFaixa === 'devagar') ritmoImpacto = ' Um pouco abaixo do confortável — dá pra acelerar sem perder clareza.';
+      else if (d.texto.ritmoFaixa === 'muito rápida') ritmoImpacto = ' Ritmo muito rápido pode dificultar o acompanhamento pela plateia.';
+      else if (d.texto.ritmoFaixa === 'rápida') ritmoImpacto = ' Um pouco acima do confortável — vale desacelerar em pontos-chave.';
+      items.push({ tone: (d.texto.ritmoFaixa === 'adequada') ? 'forte' : 'atencao', text: 'Ritmo de fala: ' + d.texto.wpm + ' palavras/min (' + d.texto.ritmoFaixa + '). Faixa confortável de referência: 130–160.' + ritmoImpacto });
     }
     if (d.texto.muletas > 0) {
       var topMuleta = d.texto.detalhe && d.texto.detalhe.filler && d.texto.detalhe.filler[0];
-      items.push({ tone: 'atencao', text: 'Detectei ' + d.texto.muletas + ' muleta(s)' + (topMuleta ? ', a mais frequente foi "' + topMuleta.frase + '" (' + topMuleta.vezes + 'x)' : '') + '. Considere substituir por uma pausa.' });
+      items.push({ tone: 'atencao', text: 'Detectei ' + d.texto.muletas + ' muleta(s)' + (topMuleta ? ', a mais frequente foi "' + topMuleta.frase + '" (' + topMuleta.vezes + 'x)' : '') + '. Muletas em excesso costumam tirar força e autoridade da fala — considere substituir por uma pausa.' });
     } else if (d.texto.palavras > 0) {
       items.push({ tone: 'forte', text: 'Nenhuma muleta detectada no texto analisado.' });
     }
-    if (d.texto.hedging > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.hedging + ' frase(s) com hedging (ex: "eu acho que"). Tente afirmar direto.' });
-    if (d.texto.vagueza > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.vagueza + ' termo(s) vago(s) (ex: "bastante", "vários"). Prefira números quando tiver.' });
-    if (d.texto.verboFraco > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.verboFraco + ' nominalização(ões)/verbo(s) fraco(s). Use o verbo direto.' });
+    if (d.texto.hedging > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.hedging + ' frase(s) com hedging (ex: "eu acho que"). Esse tipo de construção costuma ser lida como insegurança sobre o próprio argumento — tente afirmar direto.' });
+    if (d.texto.vagueza > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.vagueza + ' termo(s) vago(s) (ex: "bastante", "vários"). Termos vagos enfraquecem a credibilidade do argumento — prefira números quando tiver.' });
+    if (d.texto.verboFraco > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.verboFraco + ' nominalização(ões)/verbo(s) fraco(s). Deixa a fala mais burocrática e menos direta — use o verbo em vez do substantivo.' });
     if (items.length) groups.push({ title: 'Texto e linguagem', items: items });
   }
 
   if (d.voz) {
     var items = [];
-    if (d.voz.variacaoPitch) items.push({ tone: d.voz.variacaoPitch === 'baixa' ? 'atencao' : (d.voz.variacaoPitch === 'alta' ? 'forte' : 'melhorar'), text: 'Variação de pitch: ' + d.voz.variacaoPitch + '.' + (d.voz.variacaoPitch === 'baixa' ? ' Voz pouco variada pode soar monótona — tente subir o tom em palavras-chave.' : '') });
-    if (d.voz.consistenciaVolume) items.push({ tone: d.voz.consistenciaVolume.indexOf('variação') > -1 ? 'forte' : 'melhorar', text: 'Volume: ' + d.voz.consistenciaVolume + '.' });
+    if (d.voz.variacaoPitch) items.push({ tone: d.voz.variacaoPitch === 'baixa' ? 'atencao' : (d.voz.variacaoPitch === 'alta' ? 'forte' : 'melhorar'), text: 'Variação de pitch: ' + d.voz.variacaoPitch + '.' + (d.voz.variacaoPitch === 'baixa' ? ' Voz pouco variada costuma soar monótona e cansar a atenção da plateia — tente subir o tom em palavras-chave.' : '') });
+    if (d.voz.consistenciaVolume) items.push({ tone: d.voz.consistenciaVolume.indexOf('variação') > -1 ? 'forte' : 'melhorar', text: 'Volume: ' + d.voz.consistenciaVolume + '.' + (d.voz.consistenciaVolume.indexOf('variação') === -1 ? ' Volume sempre igual pode soar monótono — varie pra dar ênfase.' : '') });
     if (d.voz.nivelVolume && d.voz.nivelVolume !== 'adequado') items.push({ tone: 'atencao', text: 'Nível de gravação: ' + d.voz.nivelVolume + ' — verifique a distância do microfone.' });
-    if (d.voz.cadencia) items.push({ tone: d.voz.cadencia.indexOf('regular') > -1 ? 'forte' : 'neutral', text: 'Cadência: ' + d.voz.cadencia + '.' });
-    if (d.voz.monotona === 'sim, sinais de monotonia') items.push({ tone: 'atencao', text: 'Sinais combinados de monotonia (pitch baixo + volume constante) — combine variação de tom com variação de volume.' });
+    if (d.voz.cadencia) items.push({ tone: d.voz.cadencia.indexOf('regular') > -1 ? 'forte' : 'neutral', text: 'Cadência: ' + d.voz.cadencia + '.' + (d.voz.cadencia.indexOf('irregular') > -1 ? ' Não é necessariamente ruim — confira se soa natural ou truncado ao ouvir de novo.' : '') });
+    if (d.voz.monotona === 'sim, sinais de monotonia') items.push({ tone: 'atencao', text: 'Sinais combinados de monotonia (pitch baixo + volume constante) — combine variação de tom com variação de volume pra prender mais a atenção.' });
     if (d.voz.pausasPorMin !== undefined && d.voz.pausasPorMin !== null) items.push({ tone: 'neutral', text: 'Pausas: ' + d.voz.pausasPorMin + '/min.' });
     if (items.length) groups.push({ title: 'Voz', items: items });
   }
@@ -1910,7 +1915,7 @@ function generateParecer(d) {
     var items = [];
     if (d.movimento.atividade) items.push({ tone: 'neutral', text: 'Atividade de movimento: ' + d.movimento.atividade + ' (valor ' + d.movimento.atividadeValor + ').' });
     if (d.movimento.deslocamentoLateralPct !== undefined) items.push({ tone: 'neutral', text: 'Deslocamento lateral: ' + d.movimento.deslocamentoLateralPct + '% — ' + d.movimento.deslocamentoLabel + '.' });
-    if (d.movimento.balancoRitmico && d.movimento.balancoRitmico.indexOf('provável') > -1) items.push({ tone: 'atencao', text: 'Padrão de balanço repetitivo detectado (' + d.movimento.balancoRitmico + ') — geralmente lido como nervosismo.' });
+    if (d.movimento.balancoRitmico && d.movimento.balancoRitmico.indexOf('provável') > -1) items.push({ tone: 'atencao', text: 'Padrão de balanço repetitivo detectado (' + d.movimento.balancoRitmico + ') — esse tipo de movimento costuma ser lido pela plateia como sinal de nervosismo.' });
     if (items.length) groups.push({ title: 'Movimento corporal', items: items });
   }
 
@@ -1918,16 +1923,17 @@ function generateParecer(d) {
     var items = [];
     if (d.olhar.contato_visual_estimado_pct !== undefined && d.olhar.contato_visual_estimado_pct !== null) {
       var cv = d.olhar.contato_visual_estimado_pct;
-      items.push({ tone: cv >= 60 ? 'forte' : (cv >= 40 ? 'melhorar' : 'atencao'), text: 'Contato visual em ' + cv + '% do tempo.' });
+      var cvImpacto = cv < 40 ? ' Contato visual baixo costuma ser lido como insegurança ou desconexão com a plateia.' : (cv < 60 ? ' Dá pra melhorar — mais contato visual reforça conexão.' : '');
+      items.push({ tone: cv >= 60 ? 'forte' : (cv >= 40 ? 'melhorar' : 'atencao'), text: 'Contato visual em ' + cv + '% do tempo.' + cvImpacto });
     }
-    if (d.olhar.olhou_para_baixo_pct) items.push({ tone: d.olhar.olhou_para_baixo_pct > 25 ? 'atencao' : 'neutral', text: 'Olhou para baixo em ' + d.olhar.olhou_para_baixo_pct + '% do tempo.' });
+    if (d.olhar.olhou_para_baixo_pct) items.push({ tone: d.olhar.olhou_para_baixo_pct > 25 ? 'atencao' : 'neutral', text: 'Olhou para baixo em ' + d.olhar.olhou_para_baixo_pct + '% do tempo.' + (d.olhar.olhou_para_baixo_pct > 25 ? ' Olhar frequente para baixo costuma ser lido como insegurança ou falta de conexão — pode ser slide ou anotação, vale conferir o vídeo.' : '') });
     if (d.olhar.desviou_o_olhar_pct) items.push({ tone: 'neutral', text: 'Desviou o olhar lateralmente em ' + d.olhar.desviou_o_olhar_pct + '% do tempo.' });
     if (d.olhar.mao_na_linha_da_cintura_esquerda_pct !== undefined) items.push({ tone: 'neutral', text: 'Mãos na linha da cintura: ' + d.olhar.mao_na_linha_da_cintura_esquerda_pct + '% (esq) / ' + d.olhar.mao_na_linha_da_cintura_direita_pct + '% (dir).' });
     if (d.olhar.mao_esquerda_em_movimento_pct !== undefined) items.push({ tone: 'neutral', text: 'Mãos em movimento: ' + d.olhar.mao_esquerda_em_movimento_pct + '% (esq) / ' + d.olhar.mao_direita_em_movimento_pct + '% (dir).' });
-    if (d.olhar.expressao_facial && d.olhar.expressao_facial.classificacao) items.push({ tone: 'neutral', text: 'Expressão predominante: ' + d.olhar.expressao_facial.classificacao + ' — confira se combina com o tom do conteúdo.' });
+    if (d.olhar.expressao_facial && d.olhar.expressao_facial.classificacao) items.push({ tone: 'neutral', text: 'Expressão predominante: ' + d.olhar.expressao_facial.classificacao + ' — confira se combina com o tom do conteúdo (expressão incoerente com a mensagem tende a soar artificial).' });
     if (d.olhar.piscadas_por_minuto_estimado && d.olhar.piscadas_por_minuto_estimado.valor !== null) items.push({ tone: 'neutral', text: '~' + d.olhar.piscadas_por_minuto_estimado.valor + ' piscadas/min estimadas (baixa confiança, provável subcontagem).' });
-    if (d.olhar.mao_perto_do_rosto && d.olhar.mao_perto_do_rosto.total_episodios) items.push({ tone: 'atencao', text: d.olhar.mao_perto_do_rosto.total_episodios + ' episódio(s) de possível mão cobrindo o rosto — confira o vídeo.' });
-    if (d.olhar.mao_esquerda_possivel_bolso || d.olhar.mao_direita_possivel_bolso) items.push({ tone: 'atencao', text: 'Possível mão no bolso detectada em algum momento — confira o vídeo.' });
+    if (d.olhar.mao_perto_do_rosto && d.olhar.mao_perto_do_rosto.total_episodios) items.push({ tone: 'atencao', text: d.olhar.mao_perto_do_rosto.total_episodios + ' episódio(s) de possível mão cobrindo o rosto. Mão no rosto costuma criar ruído visual e tirar o foco da mensagem — confira o vídeo.' });
+    if (d.olhar.mao_esquerda_possivel_bolso || d.olhar.mao_direita_possivel_bolso) items.push({ tone: 'atencao', text: 'Possível mão parada e perto do bolso detectada em algum momento — mãos escondidas por período prolongado costumam ser lidas como desinteresse ou desconforto. Confira o vídeo (pode ser só braço relaxado).' });
     if (d.olhar.formato_de_mao_incomum && d.olhar.formato_de_mao_incomum.total_episodios) items.push({ tone: 'neutral', text: d.olhar.formato_de_mao_incomum.total_episodios + ' episódio(s) de formato de mão fora do padrão comum — revisão manual, não é classificação.' });
     if (items.length) groups.push({ title: 'Olhar, rosto e postura (servidor)', items: items });
   }
