@@ -1588,6 +1588,9 @@ function renderLandmarksData(data, checksList) {
   }).join('');
 
   var weakSignals = [];
+  if (data.mao_perto_do_rosto && data.mao_perto_do_rosto.total_episodios) {
+    weakSignals.push(data.mao_perto_do_rosto.total_episodios + ' episódio(s) de possível mão cobrindo o rosto (rosto não detectado + pulso perto do nariz)');
+  }
   if (data.piscadas_por_minuto_estimado && data.piscadas_por_minuto_estimado.valor !== null) {
     weakSignals.push('~' + data.piscadas_por_minuto_estimado.valor + ' piscadas/min estimadas (' + data.piscadas_por_minuto_estimado.eventos_detectados + ' detectadas) — referência de repouso costuma ser 15-20/min, mas não é regra fixa; provável subcontagem pela amostragem')
   }
@@ -1819,6 +1822,9 @@ async function runBackendAnalysis(file) {
       }
       if (d.olhar.piscadas_por_minuto_estimado && d.olhar.piscadas_por_minuto_estimado.valor !== null) {
         parts.push(line('piscadas/min (estimativa, baixa confiança)', d.olhar.piscadas_por_minuto_estimado.valor));
+      }
+      if (d.olhar.mao_perto_do_rosto && d.olhar.mao_perto_do_rosto.total_episodios) {
+        parts.push(line('possível mão cobrindo o rosto (baixa confiança)', d.olhar.mao_perto_do_rosto.total_episodios + ' episódio(s)'));
       }
       if (d.olhar.mao_esquerda_possivel_bolso) parts.push(line('mão esquerda possível bolso (baixa confiança)', d.olhar.mao_esquerda_possivel_bolso.maior_periodo_sem_deteccao_s + 's'));
       if (d.olhar.mao_direita_possivel_bolso) parts.push(line('mão direita possível bolso (baixa confiança)', d.olhar.mao_direita_possivel_bolso.maior_periodo_sem_deteccao_s + 's'));
