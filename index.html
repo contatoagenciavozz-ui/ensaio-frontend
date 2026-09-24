@@ -431,9 +431,19 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
   <section class="card">
     <h2>Módulo de imagem</h2>
-    <p class="section-note">Checagens técnicas de roupa a partir de um quadro do vídeo ou de uma foto — contraste, estouro de brilho, risco de chroma-key e de moiré. Calculado por pixel, sem modelo de segmentação.</p>
+    <p class="section-note">Checagens técnicas de roupa (contraste com o fundo, estouro de brilho, risco de moiré) mais a cor dominante detectada, comparada com o que costuma combinar com o contexto do seu evento. Calculado por pixel, sem modelo de segmentação.</p>
 
-    <div id="videoFrameSection" style="display:none">
+    <label class="field-label" for="eventContext" style="margin-top:14px">Contexto da apresentação</label>
+    <select id="eventContext" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
+      <option value="">Não especificado</option>
+      <option value="formal">Corporativo formal (congresso, jurídico, institucional)</option>
+      <option value="startup">Startup / pitch</option>
+      <option value="motivacional">Motivacional / palco aberto</option>
+      <option value="saude">Saúde / bem-estar</option>
+      <option value="jovem">Público jovem / descontraído</option>
+    </select>
+
+    <div id="videoFrameSection" style="display:none; margin-top:14px">
       <div class="video-frame-wrap">
         <video class="frame-source" id="frameVideo" muted playsinline></video>
       </div>
@@ -1260,15 +1270,51 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     return [h, s, l];
   }
 
+  var CONTEXT_COLOR_GUIDE = {
+    formal: { nome: 'Corporativo formal', recomendadas: ['azul', 'preto', 'cinza', 'branco', 'vinho/bordô'], evitar: ['laranja', 'amarelo', 'rosa', 'turquesa', 'lilás'] },
+    startup: { nome: 'Startup / pitch', recomendadas: ['laranja', 'verde', 'azul', 'roxo', 'turquesa'], evitar: [] },
+    motivacional: { nome: 'Motivacional / palco aberto', recomendadas: ['vermelho', 'laranja', 'amarelo', 'azul'], evitar: [] },
+    saude: { nome: 'Saúde / bem-estar', recomendadas: ['verde', 'azul', 'branco'], evitar: ['vermelho', 'preto'] },
+    jovem: { nome: 'Público jovem / descontraído', recomendadas: ['laranja', 'amarelo', 'verde', 'roxo', 'turquesa', 'rosa'], evitar: [] }
+  };
+
+  function classifyColor(r, g, b) {
+    var hsl = rgbToHsl(r, g, b);
+    var h = hsl[0], s = hsl[1], l = hsl[2];
+    if (s < 0.15) {
+      if (l > 0.85) return 'branco';
+      if (l < 0.15) return 'preto';
+      return 'cinza';
+    }
+    if ((h >= 345 || h < 15)) return l < 0.32 ? 'vinho/bordô' : 'vermelho';
+    if (h < 45) {
+      if (l < 0.32) return 'marrom';
+      if (l > 0.68 && s < 0.55) return 'bege/cáqui';
+      return 'laranja';
+    }
+    if (h < 70) return 'amarelo';
+    if (h < 165) return 'verde';
+    if (h < 200) return 'turquesa';
+    if (h < 255) return 'azul';
+    if (h < 285) return l > 0.7 ? 'lilás' : 'roxo';
+    if (h < 320) return 'roxo';
+    return 'rosa';
+  }
+
   function runChecks() {
     statusLine.textContent = 'Analisando quadro...';
     var ctx = canvas.getContext('2d');
     var w = canvas.width, h = canvas.height;
-    var full = ctx.getImageData(0, 0, w, h).data;
 
     var cx0 = Math.floor(w * 0.3), cx1 = Math.floor(w * 0.7);
     var cy0 = Math.floor(h * 0.25), cy1 = Math.floor(h * 0.9);
     var center = ctx.getImageData(cx0, cy0, cx1 - cx0, cy1 - cy0).data;
+
+    // Amostra pro reconhecimento de cor: parte inferior da região central,
+    // tentando pegar mais tronco/roupa e menos rosto — sem segmentação de
+    // verdade, é aproximação, não isolamento garantido da roupa.
+    var cy0Roupa = Math.floor(h * 0.5), cy1Roupa = Math.floor(h * 0.9);
+    var clothingSample = ctx.getImageData(cx0, cy0Roupa, cx1 - cx0, cy1Roupa - cy0Roupa).data;
 
     var edgeSamples = [];
     var stripH = Math.floor(h * 0.08);
@@ -1288,14 +1334,6 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
       }
       return count / n;
     }
-    function avgSaturationInRange(data, hueMin, hueMax) {
-      var count = 0, satSum = 0, n = data.length / 4;
-      for (var i = 0; i < data.length; i += 4) {
-        var hsl = rgbToHsl(data[i], data[i + 1], data[i + 2]);
-        if (hsl[0] >= hueMin && hsl[0] <= hueMax && hsl[1] > 0.3) { count++; satSum += hsl[1]; }
-      }
-      return count / n;
-    }
     function edgeDensity(data, imgW, imgH) {
       var gray = new Float32Array(imgW * imgH);
       for (var i = 0, p = 0; i < data.length; i += 4, p++) gray[p] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
@@ -1311,6 +1349,16 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
       }
       return samples ? total / samples : 0;
     }
+    function dominantColor(data) {
+      var counts = {};
+      for (var i = 0; i < data.length; i += 4) {
+        var name = classifyColor(data[i], data[i + 1], data[i + 2]);
+        counts[name] = (counts[name] || 0) + 1;
+      }
+      var best = null, bestN = 0, total = 0;
+      for (var k in counts) { total += counts[k]; if (counts[k] > bestN) { bestN = counts[k]; best = k; } }
+      return { nome: best, pct: total ? Math.round((bestN / total) * 100) : 0 };
+    }
 
     var centerW = cx1 - cx0, centerH = cy1 - cy0;
     var centerLum = avgLuminance(center);
@@ -1319,9 +1367,8 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
     var whiteClip = clipPct(center, false);
     var blackClip = clipPct(center, true);
-    var greenRisk = avgSaturationInRange(center, 90, 150);
-    var blueRisk = avgSaturationInRange(center, 190, 250);
     var edgeDens = edgeDensity(center, centerW, centerH);
+    var cor = dominantColor(clothingSample);
 
     var checks = [];
 
@@ -1337,14 +1384,27 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
       ? { ok: true, title: 'Perda em preto', sub: 'Sem grandes áreas sem detalhe no escuro.' }
       : { ok: false, title: 'Perda em preto', sub: Math.round(blackClip * 100) + '% da área central sem detalhe — roupa muito escura pode virar silhueta.' });
 
-    var chromaRisk = Math.max(greenRisk, blueRisk);
-    checks.push((chromaRisk < 0.12)
-      ? { ok: true, title: 'Risco de chroma-key', sub: 'Sem tons de verde ou azul saturado dominantes.' }
-      : { ok: false, title: 'Risco de chroma-key', sub: (greenRisk > blueRisk ? 'Verde' : 'Azul') + ' saturado presente (' + Math.round(chromaRisk * 100) + '% da área) — evite se houver fundo removível.' });
-
     checks.push((edgeDens < 18)
       ? { ok: true, title: 'Padrão fino / risco de moiré', sub: 'Sem textura de alta frequência detectada.' }
       : { ok: false, title: 'Padrão fino / risco de moiré', sub: 'Textura com muitos detalhes finos (listras, xadrez miúdo) — risco de moiré em câmera.' });
+
+    var contextKey = document.getElementById('eventContext').value;
+    var corSub = 'Cor dominante estimada na região do tronco (' + cor.pct + '% da amostra) — heurística por pixel, sem isolar a roupa de verdade.';
+    var corOk = true;
+    if (contextKey && CONTEXT_COLOR_GUIDE[contextKey]) {
+      var guide = CONTEXT_COLOR_GUIDE[contextKey];
+      if (guide.recomendadas.indexOf(cor.nome) > -1) {
+        corSub += ' Costuma combinar bem com o contexto "' + guide.nome + '".';
+      } else if (guide.evitar.indexOf(cor.nome) > -1) {
+        corOk = false;
+        corSub += ' Não é a combinação mais clássica para "' + guide.nome + '" — considere um tom mais neutro se quiser jogar seguro (não é regra fixa).';
+      } else {
+        corSub += ' Sem recomendação específica cravada para "' + guide.nome + '" nessa cor — use como referência, não veredito.';
+      }
+    } else {
+      corSub += ' Selecione o contexto da apresentação acima para comparar com a paleta recomendada.';
+    }
+    checks.push({ ok: corOk, title: 'Cor dominante: ' + cor.nome, sub: corSub });
 
     checksList.innerHTML = checks.map(function (c) {
       return '<li class="check-item"><span class="dot ' + (c.ok ? 'ok' : 'warn') + '"></span>' +
@@ -1356,7 +1416,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     statusLine.textContent = 'Análise heurística — não substitui avaliação de estilo humana.';
 
     window.pilotReportData = window.pilotReportData || {};
-    window.pilotReportData.imagem = { checks: checks };
+    window.pilotReportData.imagem = { checks: checks, corDominante: cor.nome, contexto: contextKey };
   }
 })();
 
