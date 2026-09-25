@@ -324,6 +324,13 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 .parecer-item.tone-atencao { border-left-color: var(--hedge); }
 .parecer-item.tone-melhorar { border-left-color: var(--gold); }
 .parecer-item.tone-forte { border-left-color: var(--ok); }
+.index-score-wrap { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+.index-score-num { font-family: var(--font-serif); font-size: 56px; line-height: 1; color: var(--ink); }
+.index-score-max { font-size: 18px; color: var(--ink-faint); }
+.index-breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid var(--rule); font-size: 13px; }
+.index-breakdown-row:first-of-type { border-top: none; }
+.index-breakdown-bar-track { flex: 1; height: 5px; background: var(--rule); border-radius: 3px; margin: 0 12px; overflow: hidden; }
+.index-breakdown-bar-fill { height: 100%; background: var(--gold); }
 </style>
 </head>
 <body>
@@ -352,8 +359,8 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
   <section class="card">
     <div class="metrics">
       <div class="metric"><div class="num" id="mWords">0</div><div class="lab">palavras</div></div>
-      <div class="metric m-hedge"><div class="num" id="mHedge">0</div><div class="lab">hedging</div></div>
-      <div class="metric m-filler"><div class="num" id="mFiller">0</div><div class="lab">muletas</div></div>
+      <div class="metric m-hedge"><div class="num" id="mHedge">0</div><div class="lab">insegurança na fala</div></div>
+      <div class="metric m-filler"><div class="num" id="mFiller">0</div><div class="lab">vícios de linguagem</div></div>
       <div class="metric m-vague"><div class="num" id="mVague">0</div><div class="lab">vagueza</div></div>
     </div>
     <div class="pace-gauge" id="paceGauge" style="display:none">
@@ -372,8 +379,8 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     <p class="section-note">Passe o texto pelos olhos de quem está assistindo. Clique em um trecho marcado para ver a sugestão.</p>
     <div id="reading"><span class="empty-state">Cole um texto acima para ver a leitura anotada.</span></div>
     <div class="legend">
-      <span class="cat-hedge"><i></i>hedging</span>
-      <span class="cat-filler"><i></i>muleta</span>
+      <span class="cat-hedge"><i></i>insegurança na fala</span>
+      <span class="cat-filler"><i></i>vício de linguagem</span>
       <span class="cat-vague"><i></i>vagueza</span>
       <span class="cat-weak"><i></i>verbo fraco</span>
     </div>
@@ -406,7 +413,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
       <div class="metrics" style="grid-template-columns: repeat(4, 1fr); margin-top:20px">
         <div class="metric"><div class="num" id="vDuration">—</div><div class="lab">duração</div></div>
-        <div class="metric"><div class="num" id="vPitchVar">—</div><div class="lab">variação de pitch</div></div>
+        <div class="metric"><div class="num" id="vPitchVar">—</div><div class="lab">entonação</div></div>
         <div class="metric"><div class="num" id="vPauses">—</div><div class="lab">pausas</div></div>
         <div class="metric"><div class="num" id="vDrops">—</div><div class="lab">quedas de energia</div></div>
       </div>
@@ -442,6 +449,34 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
       <option value="saude">Saúde / bem-estar</option>
       <option value="jovem">Público jovem / descontraído</option>
     </select>
+
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft)">Personalizar recomendação de cor (opcional)</summary>
+      <div style="margin-top:12px">
+        <p class="section-note" style="margin-bottom:12px">Fica só nesta sessão, não é salvo em conta nenhuma. Pule se preferir — a análise funciona normalmente sem isso.</p>
+
+        <label class="field-label" for="undertoneSelect">Subtom de pele</label>
+        <select id="undertoneSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:6px">
+          <option value="">Prefiro não informar</option>
+          <option value="quente">Quente</option>
+          <option value="frio">Frio</option>
+          <option value="neutro">Neutro</option>
+        </select>
+        <p class="hint" style="margin-bottom:14px">Não sabe o seu? Olha as veias do pulso sob luz natural: puxam pro esverdeado → tende a quente; puxam pro azulado → tende a frio; mistura dos dois, ou dúvida → neutro.</p>
+
+        <label class="field-label" for="hairColorSelect">Cor de cabelo</label>
+        <select id="hairColorSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
+          <option value="">Prefiro não informar</option>
+          <option value="loiro">Loiro</option>
+          <option value="castanho-claro">Castanho claro</option>
+          <option value="castanho-escuro">Castanho escuro</option>
+          <option value="preto">Preto</option>
+          <option value="ruivo">Ruivo</option>
+          <option value="grisalho">Grisalho / branco</option>
+          <option value="colorido">Colorido / outro</option>
+        </select>
+      </div>
+    </details>
 
     <div id="videoFrameSection" style="display:none; margin-top:14px">
       <div class="video-frame-wrap">
@@ -524,6 +559,15 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
   </section>
 
   <section class="card">
+    <h2>Índice de prontidão técnica</h2>
+    <p class="section-note">Média simples dos sinais mensuráveis disponíveis nesta sessão — peso igual pra cada um, fórmula não calibrada contra plateia real. Mede aderência aos padrões técnicos (ritmo, contato visual, vícios de linguagem etc.), não "quanto a pessoa convence" — conteúdo, carisma e contexto não entram nessa conta.</p>
+    <div class="row">
+      <button class="frame-btn" id="generateIndexBtn" type="button" style="margin-top:0">Calcular índice</button>
+    </div>
+    <div id="indexOutput" style="display:none; margin-top:18px"></div>
+  </section>
+
+  <section class="card">
     <h2>Relatório</h2>
     <p class="section-note">Junta o que foi analisado nesta sessão — texto, voz, imagem, movimento e, se carregado, o olhar.</p>
     <div class="row">
@@ -576,15 +620,15 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     { cat: 'hedge', re: /\beu acho que\b/gi, tip: 'Afirme direto: corte "eu acho que" e vá para a frase.' },
     { cat: 'hedge', re: /\beu acredito que\b/gi, tip: 'Troque por afirmação direta ou por um dado que sustente a frase.' },
     { cat: 'hedge', re: /\btalvez\b/gi, tip: 'Decida: ou é uma proposta firme, ou vale cortar a frase.' },
-    { cat: 'hedge', re: /\bnão sei se\b/gi, tip: 'Substitua por uma pergunta direta ao público, sem hedging.' },
+    { cat: 'hedge', re: /\bnão sei se\b/gi, tip: 'Substitua por uma pergunta direta ao público, sem soar inseguro.' },
     { cat: 'hedge', re: /\bde certa forma\b/gi, tip: 'Frase vaga de transição — geralmente pode ser cortada.' },
     { cat: 'hedge', re: /\bseria possível\b/gi, tip: 'Troque por "vamos" ou pelo verbo no presente.' },
     { cat: 'hedge', re: /\ba gente poderia\b/gi, tip: 'Troque por "vamos" — mais firme e mais curto.' },
     { cat: 'hedge', re: /\bmeio que\b/gi, tip: 'Suaviza sem necessidade — corte.' },
 
-    { cat: 'filler', re: /(?<![\p{L}\p{N}])né(?![\p{L}\p{N}])/giu, tip: 'Muleta de fim de frase — corte, a frase já fecha sozinha.' },
-    { cat: 'filler', re: /\btipo\b/gi, tip: 'Verifique se é muleta (pode cortar) ou "tipo de" (mantém).' },
-    { cat: 'filler', re: /\bassim\b/gi, tip: 'Verifique se é muleta de pausa ou parte da frase.' },
+    { cat: 'filler', re: /(?<![\p{L}\p{N}])né(?![\p{L}\p{N}])/giu, tip: 'Vício de linguagem no fim da frase — corte, a frase já fecha sozinha.' },
+    { cat: 'filler', re: /\btipo\b/gi, tip: 'Verifique se é vício de linguagem (pode cortar) ou "tipo de" (mantém).' },
+    { cat: 'filler', re: /\bassim\b/gi, tip: 'Verifique se é vício de linguagem de pausa ou parte da frase.' },
     { cat: 'filler', re: /\bentão\b/gi, tip: 'Se for só encadeando a fala, corte ou troque por uma pausa real.' },
     { cat: 'filler', re: /\bsabe\?/gi, tip: 'Pergunta retórica vazia — corte ou substitua por pausa.' },
     { cat: 'filler', re: /^bom,/gim, tip: 'Abertura de frase sem conteúdo — comece direto no ponto.' },
@@ -604,7 +648,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     { cat: 'weak', re: /\bconseguimos avançar\b/gi, tip: 'Verbo genérico — diga em que, exatamente, avançaram.' }
   ];
 
-  var catLabel = { hedge: 'hedging', filler: 'muleta', vague: 'vagueza', weak: 'verbo fraco' };
+  var catLabel = { hedge: 'insegurança na fala', filler: 'vício de linguagem', vague: 'vagueza', weak: 'verbo fraco' };
 
   var textarea = document.getElementById('transcript');
   var durationInput = document.getElementById('duration');
@@ -738,7 +782,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     document.getElementById('mVague').textContent = matches.filter(function (m) { return m.cat === 'vague'; }).length;
 
     var breakdownEl = document.getElementById('phraseBreakdown');
-    var catNames = { hedge: 'Hedging', filler: 'Muletas', vague: 'Vagueza', weak: 'Verbo fraco' };
+    var catNames = { hedge: 'Insegurança na fala', filler: 'Vícios de linguagem', vague: 'Vagueza', weak: 'Verbo fraco' };
     var catOrder = ['filler', 'hedge', 'vague', 'weak'];
     var breakdownData = {};
     var breakdownHtml = catOrder.map(function (cat) {
@@ -800,8 +844,8 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     var verboFracoN = matches.filter(function (m) { return m.cat === 'weak'; }).length;
     var per100 = function (n) { return words > 0 ? Math.round((n / words) * 100 * 10) / 10 : null; };
 
-    document.getElementById('mHedge').nextElementSibling.textContent = 'hedging' + (words ? ' · ' + per100(hedgingN) + '/100 palavras' : '');
-    document.getElementById('mFiller').nextElementSibling.textContent = 'muletas' + (words ? ' · ' + per100(muletasN) + '/100 palavras' : '');
+    document.getElementById('mHedge').nextElementSibling.textContent = 'insegurança na fala' + (words ? ' · ' + per100(hedgingN) + '/100 palavras' : '');
+    document.getElementById('mFiller').nextElementSibling.textContent = 'vícios de linguagem' + (words ? ' · ' + per100(muletasN) + '/100 palavras' : '');
     document.getElementById('mVague').nextElementSibling.textContent = 'vagueza' + (words ? ' · ' + per100(vaguezaN) + '/100 palavras' : '');
 
     window.pilotReportData = window.pilotReportData || {};
@@ -1278,6 +1322,9 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     jovem: { nome: 'Público jovem / descontraído', recomendadas: ['laranja', 'amarelo', 'verde', 'roxo', 'turquesa', 'rosa'], evitar: [] }
   };
 
+  var WARM_COLORS = ['laranja', 'amarelo', 'marrom', 'bege/cáqui', 'vermelho', 'vinho/bordô'];
+  var COOL_COLORS = ['azul', 'roxo', 'turquesa', 'rosa', 'lilás'];
+
   function classifyColor(r, g, b) {
     var hsl = rgbToHsl(r, g, b);
     var h = hsl[0], s = hsl[1], l = hsl[2];
@@ -1406,6 +1453,23 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     }
     checks.push({ ok: corOk, title: 'Cor dominante: ' + cor.nome, sub: corSub });
 
+    var undertone = document.getElementById('undertoneSelect').value;
+    if (undertone) {
+      var isWarm = WARM_COLORS.indexOf(cor.nome) > -1;
+      var isCool = COOL_COLORS.indexOf(cor.nome) > -1;
+      var subtomLabel = { quente: 'quente', frio: 'frio', neutro: 'neutro' }[undertone];
+      var subtomSub, subtomOk = true;
+      if (undertone === 'neutro' || (!isWarm && !isCool)) {
+        subtomSub = 'Subtom neutro (ou cor neutra) — tende a combinar com boa parte da paleta, pouca restrição aqui.';
+      } else if ((undertone === 'quente' && isWarm) || (undertone === 'frio' && isCool)) {
+        subtomSub = 'Tom ' + (isWarm ? 'quente' : 'frio') + ' combinando com subtom ' + subtomLabel + ' — tende a harmonizar bem.';
+      } else {
+        subtomOk = false;
+        subtomSub = 'Tom ' + (isWarm ? 'quente' : 'frio') + ' com subtom ' + subtomLabel + ' — pode gerar mais contraste com a pele. Não é proibido, é só um efeito a observar (às vezes contraste é exatamente o que se quer).';
+      }
+      checks.push({ ok: subtomOk, title: 'Harmonia com subtom de pele', sub: subtomSub });
+    }
+
     checksList.innerHTML = checks.map(function (c) {
       return '<li class="check-item"><span class="dot ' + (c.ok ? 'ok' : 'warn') + '"></span>' +
         '<div class="check-text"><div class="ct-title">' + c.title + '</div><div class="ct-sub">' + c.sub + '</div></div>' +
@@ -1416,7 +1480,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     statusLine.textContent = 'Análise heurística — não substitui avaliação de estilo humana.';
 
     window.pilotReportData = window.pilotReportData || {};
-    window.pilotReportData.imagem = { checks: checks, corDominante: cor.nome, contexto: contextKey };
+    window.pilotReportData.imagem = { checks: checks, corDominante: cor.nome, contexto: contextKey, subtom: undertone || null, corCabelo: document.getElementById('hairColorSelect').value || null };
   }
 })();
 
@@ -1807,6 +1871,16 @@ async function runBackendAnalysis(file) {
         durationInput.value = fmtBackendTime(result.transcricao.duracao_s);
       }
       if (window.pilotRerenderText) window.pilotRerenderText();
+
+      if (result.transcricao.clareza_de_fala_estimada) {
+        window.pilotReportData = window.pilotReportData || {};
+        window.pilotReportData.voz = window.pilotReportData.voz || {};
+        window.pilotReportData.voz.clarezaFala = result.transcricao.clareza_de_fala_estimada.estimativa;
+        var clarezaLi = document.createElement('li');
+        clarezaLi.className = 'check-item';
+        clarezaLi.innerHTML = '<span class="dot warn"></span><div class="check-text"><div class="ct-title">Clareza de fala (dicção) estimada: ' + result.transcricao.clareza_de_fala_estimada.estimativa + '</div><div class="ct-sub">Sinal fraco baseado na confiança da transcrição — mistura dicção com ruído de fundo, microfone e sotaque, não isola articulação sozinha.</div></div>';
+        checksList.appendChild(clarezaLi);
+      }
     }
 
     if (result.linguagem_corporal) {
@@ -1843,12 +1917,12 @@ async function runBackendAnalysis(file) {
       parts.push('TEXTO');
       parts.push(line('palavras', d.texto.palavras));
       parts.push(line('ritmo estimado', d.texto.wpm ? d.texto.wpm + ' palavras/min (' + d.texto.ritmoFaixa + ') — ref. 130–160' : null));
-      parts.push(line('hedging', d.texto.hedging + (d.texto.hedgingPor100 !== null ? ' (' + d.texto.hedgingPor100 + '/100 palavras — ref. abaixo de ~3)' : '')));
-      parts.push(line('muletas', d.texto.muletas + (d.texto.muletasPor100 !== null ? ' (' + d.texto.muletasPor100 + '/100 palavras — ref. abaixo de ~3)' : '')));
+      parts.push(line('insegurança na fala', d.texto.hedging + (d.texto.hedgingPor100 !== null ? ' (' + d.texto.hedgingPor100 + '/100 palavras — ref. abaixo de ~3)' : '')));
+      parts.push(line('vícios de linguagem', d.texto.muletas + (d.texto.muletasPor100 !== null ? ' (' + d.texto.muletasPor100 + '/100 palavras — ref. abaixo de ~3)' : '')));
       parts.push(line('vagueza', d.texto.vagueza + (d.texto.vaguezaPor100 !== null ? ' (' + d.texto.vaguezaPor100 + '/100 palavras — ref. abaixo de ~2)' : '')));
       parts.push(line('verbo fraco', d.texto.verboFraco + (d.texto.verboFracoPor100 !== null ? ' (' + d.texto.verboFracoPor100 + '/100 palavras — ref. abaixo de ~2)' : '')));
       if (d.texto.detalhe) {
-        var catNamesReport = { hedge: 'hedging', filler: 'muletas', vague: 'vagueza', weak: 'verbo fraco' };
+        var catNamesReport = { hedge: 'insegurança na fala', filler: 'vícios de linguagem', vague: 'vagueza', weak: 'verbo fraco' };
         ['filler', 'hedge', 'vague', 'weak'].forEach(function (cat) {
           var entries = d.texto.detalhe[cat];
           if (entries && entries.length) {
@@ -1867,7 +1941,7 @@ async function runBackendAnalysis(file) {
       parts.push(line('consistência de volume', d.voz.consistenciaVolume));
       parts.push(line('cadência', d.voz.cadencia));
       parts.push(line('fala monótona', d.voz.monotona));
-      parts.push(line('variação de pitch', d.voz.variacaoPitch + ' — ref. média/alta'));
+      parts.push(line('entonação', d.voz.variacaoPitch + ' — ref. média/alta'));
       parts.push(line('pausas', d.voz.pausas + (d.voz.pausasPorMin !== null ? ' (' + d.voz.pausasPorMin + '/min)' : '')));
       parts.push(line('quedas de energia antes de pausa', d.voz.quedasDeEnergia + (d.voz.quedasPorMin !== null ? ' (' + d.voz.quedasPorMin + '/min — ref. abaixo de ~2)' : '')));
       parts.push('');
@@ -1950,11 +2024,11 @@ function generateParecer(d) {
     }
     if (d.texto.muletas > 0) {
       var topMuleta = d.texto.detalhe && d.texto.detalhe.filler && d.texto.detalhe.filler[0];
-      items.push({ tone: 'atencao', text: 'Detectei ' + d.texto.muletas + ' muleta(s)' + (topMuleta ? ', a mais frequente foi "' + topMuleta.frase + '" (' + topMuleta.vezes + 'x)' : '') + '. Muletas em excesso costumam tirar força e autoridade da fala — considere substituir por uma pausa.' });
+      items.push({ tone: 'atencao', text: 'Detectei ' + d.texto.muletas + ' vício(s) de linguagem' + (topMuleta ? ', o mais frequente foi "' + topMuleta.frase + '" (' + topMuleta.vezes + 'x)' : '') + '. Vícios de linguagem em excesso costumam tirar força e autoridade da fala — considere substituir por uma pausa.' });
     } else if (d.texto.palavras > 0) {
-      items.push({ tone: 'forte', text: 'Nenhuma muleta detectada no texto analisado.' });
+      items.push({ tone: 'forte', text: 'Nenhum vício de linguagem detectado no texto analisado.' });
     }
-    if (d.texto.hedging > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.hedging + ' frase(s) com hedging (ex: "eu acho que"). Esse tipo de construção costuma ser lida como insegurança sobre o próprio argumento — tente afirmar direto.' });
+    if (d.texto.hedging > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.hedging + ' frase(s) com insegurança na fala (ex: "eu acho que"). Esse tipo de construção costuma ser lida como insegurança sobre o próprio argumento — tente afirmar direto.' });
     if (d.texto.vagueza > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.vagueza + ' termo(s) vago(s) (ex: "bastante", "vários"). Termos vagos enfraquecem a credibilidade do argumento — prefira números quando tiver.' });
     if (d.texto.verboFraco > 0) items.push({ tone: 'melhorar', text: 'Detectei ' + d.texto.verboFraco + ' nominalização(ões)/verbo(s) fraco(s). Deixa a fala mais burocrática e menos direta — use o verbo em vez do substantivo.' });
     if (items.length) groups.push({ title: 'Texto e linguagem', items: items });
@@ -1962,7 +2036,7 @@ function generateParecer(d) {
 
   if (d.voz) {
     var items = [];
-    if (d.voz.variacaoPitch) items.push({ tone: d.voz.variacaoPitch === 'baixa' ? 'atencao' : (d.voz.variacaoPitch === 'alta' ? 'forte' : 'melhorar'), text: 'Variação de pitch: ' + d.voz.variacaoPitch + '.' + (d.voz.variacaoPitch === 'baixa' ? ' Voz pouco variada costuma soar monótona e cansar a atenção da plateia — tente subir o tom em palavras-chave.' : '') });
+    if (d.voz.variacaoPitch) items.push({ tone: d.voz.variacaoPitch === 'baixa' ? 'atencao' : (d.voz.variacaoPitch === 'alta' ? 'forte' : 'melhorar'), text: 'Entonação: ' + d.voz.variacaoPitch + '.' + (d.voz.variacaoPitch === 'baixa' ? ' Voz pouco variada costuma soar monótona e cansar a atenção da plateia — tente subir o tom em palavras-chave.' : '') });
     if (d.voz.consistenciaVolume) items.push({ tone: d.voz.consistenciaVolume.indexOf('variação') > -1 ? 'forte' : 'melhorar', text: 'Volume: ' + d.voz.consistenciaVolume + '.' + (d.voz.consistenciaVolume.indexOf('variação') === -1 ? ' Volume sempre igual pode soar monótono — varie pra dar ênfase.' : '') });
     if (d.voz.nivelVolume && d.voz.nivelVolume !== 'adequado') items.push({ tone: 'atencao', text: 'Nível de gravação: ' + d.voz.nivelVolume + ' — verifique a distância do microfone.' });
     if (d.voz.cadencia) items.push({ tone: d.voz.cadencia.indexOf('regular') > -1 ? 'forte' : 'neutral', text: 'Cadência: ' + d.voz.cadencia + '.' + (d.voz.cadencia.indexOf('irregular') > -1 ? ' Não é necessariamente ruim — confira se soa natural ou truncado ao ouvir de novo.' : '') });
@@ -2037,6 +2111,73 @@ function generateParecer(d) {
       copyBtn.textContent = 'Copiado';
       setTimeout(function () { copyBtn.textContent = orig; }, 1500);
     });
+  });
+})();
+
+// ---------- Índice de prontidão técnica ----------
+function computeReadinessIndex(d) {
+  var items = []; // {label, score}
+
+  function clamp(n) { return Math.max(0, Math.min(100, n)); }
+
+  if (d.texto) {
+    if (d.texto.wpm) {
+      var dist = d.texto.wpm < 130 ? (130 - d.texto.wpm) : (d.texto.wpm > 160 ? (d.texto.wpm - 160) : 0);
+      items.push({ label: 'Ritmo de fala', score: clamp(100 - dist * 1.2) });
+    }
+    if (d.texto.hedgingPor100 !== null && d.texto.hedgingPor100 !== undefined) items.push({ label: 'Insegurança na fala', score: clamp(100 - d.texto.hedgingPor100 * 15) });
+    if (d.texto.muletasPor100 !== null && d.texto.muletasPor100 !== undefined) items.push({ label: 'Vícios de linguagem', score: clamp(100 - d.texto.muletasPor100 * 15) });
+    if (d.texto.vaguezaPor100 !== null && d.texto.vaguezaPor100 !== undefined) items.push({ label: 'Especificidade (vagueza)', score: clamp(100 - d.texto.vaguezaPor100 * 15) });
+    if (d.texto.verboFracoPor100 !== null && d.texto.verboFracoPor100 !== undefined) items.push({ label: 'Verbo direto', score: clamp(100 - d.texto.verboFracoPor100 * 15) });
+  }
+
+  if (d.voz) {
+    if (d.voz.variacaoPitch) items.push({ label: 'Entonação', score: { baixa: 40, média: 75, alta: 100 }[d.voz.variacaoPitch] || 60 });
+    if (d.voz.consistenciaVolume) items.push({ label: 'Variação de volume', score: d.voz.consistenciaVolume.indexOf('variação') > -1 ? 100 : 50 });
+    if (d.voz.cadencia) items.push({ label: 'Cadência', score: d.voz.cadencia.indexOf('irregular') > -1 ? 65 : 100 });
+    if (d.voz.clarezaFala) items.push({ label: 'Clareza de fala (dicção, sinal fraco)', score: { alta: 100, média: 65, baixa: 35 }[d.voz.clarezaFala] || 60 });
+  }
+
+  if (d.movimento && d.movimento.balancoRitmico) {
+    items.push({ label: 'Estabilidade postural', score: d.movimento.balancoRitmico.indexOf('provável') > -1 ? 50 : 90 });
+  }
+
+  if (d.olhar) {
+    if (d.olhar.contato_visual_estimado_pct !== undefined && d.olhar.contato_visual_estimado_pct !== null) items.push({ label: 'Contato visual', score: clamp(d.olhar.contato_visual_estimado_pct) });
+    if (d.olhar.olhou_para_baixo_pct !== undefined && d.olhar.olhou_para_baixo_pct !== null) items.push({ label: 'Olhar direcionado à plateia', score: clamp(100 - d.olhar.olhou_para_baixo_pct * 2) });
+    if (d.olhar.mao_perto_do_rosto && d.olhar.mao_perto_do_rosto.total_episodios) items.push({ label: 'Rosto visível (sem obstrução)', score: clamp(100 - d.olhar.mao_perto_do_rosto.total_episodios * 15) });
+  }
+
+  if (d.imagem && d.imagem.checks && d.imagem.checks.length) {
+    var okCount = d.imagem.checks.filter(function (c) { return c.ok; }).length;
+    items.push({ label: 'Imagem e vestuário', score: Math.round((okCount / d.imagem.checks.length) * 100) });
+  }
+
+  if (!items.length) return null;
+  var total = items.reduce(function (a, it) { return a + it.score; }, 0);
+  return { overall: Math.round(total / items.length), items: items };
+}
+
+(function () {
+  var genBtn = document.getElementById('generateIndexBtn');
+  var output = document.getElementById('indexOutput');
+
+  genBtn.addEventListener('click', function () {
+    var d = window.pilotReportData || {};
+    var result = computeReadinessIndex(d);
+    output.style.display = 'block';
+    if (!result) {
+      output.innerHTML = '<p class="section-note">Nenhum módulo foi analisado ainda nesta sessão. Rode ao menos um acima antes de calcular.</p>';
+      return;
+    }
+    var html = '<div class="index-score-wrap"><span class="index-score-num">' + result.overall + '</span><span class="index-score-max">/ 100</span></div>';
+    html += result.items.map(function (it) {
+      return '<div class="index-breakdown-row"><span>' + it.label + '</span>' +
+        '<span class="index-breakdown-bar-track"><span class="index-breakdown-bar-fill" style="width:' + Math.round(it.score) + '%"></span></span>' +
+        '<span>' + Math.round(it.score) + '</span></div>';
+    }).join('');
+    html += '<p class="section-note" style="margin-top:14px">Calculado a partir de ' + result.items.length + ' sinal(is) disponível(is) nesta sessão — média simples, sem peso diferenciado entre eles.</p>';
+    output.innerHTML = html;
   });
 })();
 
@@ -2180,7 +2321,7 @@ function generateParecer(d) {
       html += '<tr><td colspan="4" class="compare-section-title">Texto</td></tr>';
       html += metricRows(a.texto, b.texto, [
         { key: 'palavras', label: 'palavras' }, { key: 'wpm', label: 'ritmo (palavras/min)' },
-        { key: 'hedgingPor100', label: 'hedging /100 palavras' }, { key: 'muletasPor100', label: 'muletas /100 palavras' },
+        { key: 'hedgingPor100', label: 'insegurança na fala /100 palavras' }, { key: 'muletasPor100', label: 'vícios de linguagem /100 palavras' },
         { key: 'vaguezaPor100', label: 'vagueza /100 palavras' }, { key: 'verboFracoPor100', label: 'verbo fraco /100 palavras' }
       ]);
     }
@@ -2188,7 +2329,7 @@ function generateParecer(d) {
       html += '<tr><td colspan="4" class="compare-section-title">Voz</td></tr>';
       html += metricRows(a.voz, b.voz, [
         { key: 'pausasPorMin', label: 'pausas por minuto' }, { key: 'quedasPorMin', label: 'quedas de energia por minuto' },
-        { key: 'variacaoPitch', label: 'variação de pitch' }, { key: 'nivelVolume', label: 'nível de volume' },
+        { key: 'variacaoPitch', label: 'entonação' }, { key: 'nivelVolume', label: 'nível de volume' },
         { key: 'consistenciaVolume', label: 'consistência de volume' }, { key: 'cadencia', label: 'cadência' },
         { key: 'monotona', label: 'fala monótona' }
       ]);
