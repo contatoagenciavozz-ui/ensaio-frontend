@@ -438,16 +438,68 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
   <section class="card">
     <h2>Módulo de imagem</h2>
-    <p class="section-note">Checagens técnicas de roupa (contraste com o fundo, estouro de brilho, risco de moiré) mais a cor dominante detectada, comparada com o que costuma combinar com o contexto do seu evento. Calculado por pixel, sem modelo de segmentação.</p>
+    <p class="section-note">Checagens técnicas de roupa (contraste com o fundo, estouro de brilho, risco de moiré) mais a cor dominante detectada, comparada com o que costuma combinar com o tom do seu discurso. Calculado por pixel, sem modelo de segmentação.</p>
 
-    <label class="field-label" for="eventContext" style="margin-top:14px">Contexto da apresentação</label>
-    <select id="eventContext" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
+    <label class="field-label" for="occasionSelect" style="margin-top:14px">Ocasião</label>
+    <select id="occasionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
       <option value="">Não especificado</option>
-      <option value="formal">Corporativo formal (congresso, jurídico, institucional)</option>
-      <option value="startup">Startup / pitch</option>
-      <option value="motivacional">Motivacional / palco aberto</option>
-      <option value="saude">Saúde / bem-estar</option>
-      <option value="jovem">Público jovem / descontraído</option>
+      <option value="entrevista">Entrevista em vídeo</option>
+      <option value="aula">Ministrar aula / treinamento</option>
+      <option value="palestra">Palestra</option>
+      <option value="podcast">Podcast</option>
+      <option value="discurso">Discurso</option>
+      <option value="reuniao">Reunião</option>
+      <option value="pitch">Pitch / apresentação comercial</option>
+      <option value="debate">Debate</option>
+      <option value="live">Transmissão ao vivo</option>
+      <option value="cerimonia">Cerimônia / evento social</option>
+      <option value="outra_ocasiao">Outra</option>
+    </select>
+
+    <label class="field-label" for="professionSelect">Profissão / papel</label>
+    <select id="professionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
+      <option value="">Não especificado</option>
+      <option value="professor">Professor</option>
+      <option value="advogado">Advogado</option>
+      <option value="politico">Político</option>
+      <option value="lider">Líder de empresa</option>
+      <option value="gestor">Gestor</option>
+      <option value="porta-voz">Porta-voz</option>
+      <option value="reporter">Repórter</option>
+      <option value="jornalista">Jornalista</option>
+      <option value="locutor">Locutor</option>
+      <option value="mestre-cerimonia">Mestre de cerimônia</option>
+      <option value="apresentador">Apresentador</option>
+      <option value="vendedor">Vendedor / consultor comercial</option>
+      <option value="saude">Profissional de saúde</option>
+      <option value="coach">Coach / palestrante profissional</option>
+      <option value="criador">Criador de conteúdo / influenciador</option>
+      <option value="estudante">Estudante</option>
+      <option value="outra_profissao">Outra</option>
+    </select>
+
+    <label class="field-label" for="audienceSelect">Público</label>
+    <select id="audienceSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
+      <option value="">Não especificado</option>
+      <option value="grande">Grande público / multidão</option>
+      <option value="medio">Médio público</option>
+      <option value="pequeno">Pequeno público / grupo pequeno</option>
+      <option value="equipe">Equipe / funcionários</option>
+      <option value="qualificado">Público qualificado / especialistas</option>
+      <option value="clientes">Clientes</option>
+      <option value="outro_publico">Outro</option>
+    </select>
+
+    <label class="field-label" for="toneSelect">Tom do discurso</label>
+    <select id="toneSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
+      <option value="">Não especificado</option>
+      <option value="professoral">Professoral / didático</option>
+      <option value="energetico">Energético</option>
+      <option value="motivacional">Motivacional</option>
+      <option value="formal">Institucional / formal</option>
+      <option value="descontraido">Descontraído</option>
+      <option value="tecnico">Técnico / analítico</option>
+      <option value="outro_tom">Outro</option>
     </select>
 
     <details style="margin-top:14px">
@@ -1314,12 +1366,13 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     return [h, s, l];
   }
 
-  var CONTEXT_COLOR_GUIDE = {
-    formal: { nome: 'Corporativo formal', recomendadas: ['azul', 'preto', 'cinza', 'branco', 'vinho/bordô'], evitar: ['laranja', 'amarelo', 'rosa', 'turquesa', 'lilás'] },
-    startup: { nome: 'Startup / pitch', recomendadas: ['laranja', 'verde', 'azul', 'roxo', 'turquesa'], evitar: [] },
-    motivacional: { nome: 'Motivacional / palco aberto', recomendadas: ['vermelho', 'laranja', 'amarelo', 'azul'], evitar: [] },
-    saude: { nome: 'Saúde / bem-estar', recomendadas: ['verde', 'azul', 'branco'], evitar: ['vermelho', 'preto'] },
-    jovem: { nome: 'Público jovem / descontraído', recomendadas: ['laranja', 'amarelo', 'verde', 'roxo', 'turquesa', 'rosa'], evitar: [] }
+  var TONE_COLOR_GUIDE = {
+    formal: { nome: 'Institucional / formal', recomendadas: ['azul', 'preto', 'cinza', 'branco', 'vinho/bordô'], evitar: ['laranja', 'amarelo', 'rosa', 'turquesa', 'lilás'] },
+    professoral: { nome: 'Professoral / didático', recomendadas: ['azul', 'verde', 'cinza', 'branco', 'marrom'], evitar: ['rosa', 'lilás'] },
+    energetico: { nome: 'Energético', recomendadas: ['vermelho', 'laranja', 'amarelo'], evitar: [] },
+    motivacional: { nome: 'Motivacional', recomendadas: ['vermelho', 'laranja', 'amarelo', 'azul'], evitar: [] },
+    tecnico: { nome: 'Técnico / analítico', recomendadas: ['azul', 'verde', 'branco', 'cinza'], evitar: ['vermelho', 'rosa'] },
+    descontraido: { nome: 'Descontraído', recomendadas: ['laranja', 'amarelo', 'verde', 'roxo', 'turquesa', 'rosa'], evitar: [] }
   };
 
   var WARM_COLORS = ['laranja', 'amarelo', 'marrom', 'bege/cáqui', 'vermelho', 'vinho/bordô'];
@@ -1435,21 +1488,25 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
       ? { ok: true, title: 'Padrão fino / risco de moiré', sub: 'Sem textura de alta frequência detectada.' }
       : { ok: false, title: 'Padrão fino / risco de moiré', sub: 'Textura com muitos detalhes finos (listras, xadrez miúdo) — risco de moiré em câmera.' });
 
-    var contextKey = document.getElementById('eventContext').value;
+    var occasion = document.getElementById('occasionSelect').value;
+    var profession = document.getElementById('professionSelect').value;
+    var audience = document.getElementById('audienceSelect').value;
+    var tone = document.getElementById('toneSelect').value;
+
     var corSub = 'Cor dominante estimada na região do tronco (' + cor.pct + '% da amostra) — heurística por pixel, sem isolar a roupa de verdade.';
     var corOk = true;
-    if (contextKey && CONTEXT_COLOR_GUIDE[contextKey]) {
-      var guide = CONTEXT_COLOR_GUIDE[contextKey];
+    if (tone && TONE_COLOR_GUIDE[tone]) {
+      var guide = TONE_COLOR_GUIDE[tone];
       if (guide.recomendadas.indexOf(cor.nome) > -1) {
-        corSub += ' Costuma combinar bem com o contexto "' + guide.nome + '".';
+        corSub += ' Costuma combinar bem com um tom "' + guide.nome + '".';
       } else if (guide.evitar.indexOf(cor.nome) > -1) {
         corOk = false;
-        corSub += ' Não é a combinação mais clássica para "' + guide.nome + '" — considere um tom mais neutro se quiser jogar seguro (não é regra fixa).';
+        corSub += ' Não é a combinação mais clássica para um tom "' + guide.nome + '" — considere um tom mais neutro se quiser jogar seguro (não é regra fixa).';
       } else {
         corSub += ' Sem recomendação específica cravada para "' + guide.nome + '" nessa cor — use como referência, não veredito.';
       }
     } else {
-      corSub += ' Selecione o contexto da apresentação acima para comparar com a paleta recomendada.';
+      corSub += ' Selecione o tom do discurso acima para comparar com a paleta recomendada.';
     }
     checks.push({ ok: corOk, title: 'Cor dominante: ' + cor.nome, sub: corSub });
 
@@ -1480,7 +1537,11 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     statusLine.textContent = 'Análise heurística — não substitui avaliação de estilo humana.';
 
     window.pilotReportData = window.pilotReportData || {};
-    window.pilotReportData.imagem = { checks: checks, corDominante: cor.nome, contexto: contextKey, subtom: undertone || null, corCabelo: document.getElementById('hairColorSelect').value || null };
+    window.pilotReportData.imagem = {
+      checks: checks, corDominante: cor.nome,
+      ocasiao: occasion || null, profissao: profession || null, publico: audience || null, tomDiscurso: tone || null,
+      subtom: undertone || null, corCabelo: document.getElementById('hairColorSelect').value || null
+    };
   }
 })();
 
