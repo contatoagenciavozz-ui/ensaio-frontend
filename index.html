@@ -1790,6 +1790,12 @@ function renderLandmarksData(data, checksList) {
   }).join('');
 
   var weakSignals = [];
+  if (data.maos_fora_do_quadro) {
+    var lados = [];
+    if (data.maos_fora_do_quadro.esquerda_nunca_visivel) lados.push('esquerda');
+    if (data.maos_fora_do_quadro.direita_nunca_visivel) lados.push('direita');
+    weakSignals.push('Mão ' + lados.join(' e ') + ' nunca apareceu com confiança no vídeo — provavelmente o enquadramento não mostra as mãos (ex: plano acima da cintura). "Mão na cintura" e "mão em movimento" ficam sem valor nesse caso, em vez de calculados sobre posição estimada.');
+  }
   if (data.mao_perto_do_rosto && data.mao_perto_do_rosto.total_episodios) {
     weakSignals.push(data.mao_perto_do_rosto.total_episodios + ' episódio(s) de possível mão cobrindo o rosto (rosto não detectado + pulso perto do nariz)');
   }
