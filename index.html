@@ -344,6 +344,101 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
   </header>
 
   <section class="card">
+    <h2>Contexto da apresentação</h2>
+    <p class="section-note">Vale pra análise inteira (voz, corpo, texto, imagem), não só pra foto — preencha uma vez por sessão. Tudo opcional.</p>
+
+    <label class="field-label" for="occasionSelect" style="margin-top:14px">Ocasião</label>
+    <select id="occasionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
+      <option value="">Não especificado</option>
+      <option value="entrevista">Entrevista em vídeo</option>
+      <option value="aula">Ministrar aula / treinamento</option>
+      <option value="palestra">Palestra</option>
+      <option value="podcast">Podcast</option>
+      <option value="discurso">Discurso</option>
+      <option value="reuniao">Reunião</option>
+      <option value="pitch">Pitch / apresentação comercial</option>
+      <option value="debate">Debate</option>
+      <option value="live">Transmissão ao vivo</option>
+      <option value="cerimonia">Cerimônia / evento social</option>
+      <option value="outra_ocasiao">Outra</option>
+    </select>
+
+    <label class="field-label" for="professionSelect">Profissão / papel</label>
+    <select id="professionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
+      <option value="">Não especificado</option>
+      <option value="professor">Professor</option>
+      <option value="advogado">Advogado</option>
+      <option value="politico">Político</option>
+      <option value="lider">Líder de empresa</option>
+      <option value="gestor">Gestor</option>
+      <option value="porta-voz">Porta-voz</option>
+      <option value="reporter">Repórter</option>
+      <option value="jornalista">Jornalista</option>
+      <option value="locutor">Locutor</option>
+      <option value="mestre-cerimonia">Mestre de cerimônia</option>
+      <option value="apresentador">Apresentador</option>
+      <option value="vendedor">Vendedor / consultor comercial</option>
+      <option value="saude">Profissional de saúde</option>
+      <option value="coach">Coach / palestrante profissional</option>
+      <option value="criador">Criador de conteúdo / influenciador</option>
+      <option value="estudante">Estudante</option>
+      <option value="outra_profissao">Outra</option>
+    </select>
+
+    <label class="field-label" for="audienceSelect">Público</label>
+    <select id="audienceSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
+      <option value="">Não especificado</option>
+      <option value="grande">Grande público / multidão</option>
+      <option value="medio">Médio público</option>
+      <option value="pequeno">Pequeno público / grupo pequeno</option>
+      <option value="equipe">Equipe / funcionários</option>
+      <option value="qualificado">Público qualificado / especialistas</option>
+      <option value="clientes">Clientes</option>
+      <option value="outro_publico">Outro</option>
+    </select>
+
+    <label class="field-label" for="toneSelect">Tom do discurso</label>
+    <select id="toneSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
+      <option value="">Não especificado</option>
+      <option value="professoral">Professoral / didático</option>
+      <option value="energetico">Energético</option>
+      <option value="motivacional">Motivacional</option>
+      <option value="formal">Institucional / formal</option>
+      <option value="descontraido">Descontraído</option>
+      <option value="tecnico">Técnico / analítico</option>
+      <option value="outro_tom">Outro</option>
+    </select>
+
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft)">Personalizar recomendação de cor de roupa (opcional)</summary>
+      <div style="margin-top:12px">
+        <p class="section-note" style="margin-bottom:12px">Fica só nesta sessão, não é salvo em conta nenhuma. Pule se preferir — a análise funciona normalmente sem isso.</p>
+
+        <label class="field-label" for="undertoneSelect">Subtom de pele</label>
+        <select id="undertoneSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:6px">
+          <option value="">Prefiro não informar</option>
+          <option value="quente">Quente</option>
+          <option value="frio">Frio</option>
+          <option value="neutro">Neutro</option>
+        </select>
+        <p class="hint" style="margin-bottom:14px">Não sabe o seu? Olha as veias do pulso sob luz natural: puxam pro esverdeado → tende a quente; puxam pro azulado → tende a frio; mistura dos dois, ou dúvida → neutro.</p>
+
+        <label class="field-label" for="hairColorSelect">Cor de cabelo</label>
+        <select id="hairColorSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
+          <option value="">Prefiro não informar</option>
+          <option value="loiro">Loiro</option>
+          <option value="castanho-claro">Castanho claro</option>
+          <option value="castanho-escuro">Castanho escuro</option>
+          <option value="preto">Preto</option>
+          <option value="ruivo">Ruivo</option>
+          <option value="grisalho">Grisalho / branco</option>
+          <option value="colorido">Colorido / outro</option>
+        </select>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
     <label class="field-label" for="transcript">Transcrição do discurso</label>
     <textarea id="transcript" placeholder="Cole aqui o texto da sua fala, ou suba um vídeo no módulo de voz abaixo que a transcrição preenche sozinha..."></textarea>
     <div class="row">
@@ -438,97 +533,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
 
   <section class="card">
     <h2>Módulo de imagem</h2>
-    <p class="section-note">Checagens técnicas de roupa (contraste com o fundo, estouro de brilho, risco de moiré) mais a cor dominante detectada, comparada com o que costuma combinar com o tom do seu discurso. Calculado por pixel, sem modelo de segmentação.</p>
-
-    <label class="field-label" for="occasionSelect" style="margin-top:14px">Ocasião</label>
-    <select id="occasionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
-      <option value="">Não especificado</option>
-      <option value="entrevista">Entrevista em vídeo</option>
-      <option value="aula">Ministrar aula / treinamento</option>
-      <option value="palestra">Palestra</option>
-      <option value="podcast">Podcast</option>
-      <option value="discurso">Discurso</option>
-      <option value="reuniao">Reunião</option>
-      <option value="pitch">Pitch / apresentação comercial</option>
-      <option value="debate">Debate</option>
-      <option value="live">Transmissão ao vivo</option>
-      <option value="cerimonia">Cerimônia / evento social</option>
-      <option value="outra_ocasiao">Outra</option>
-    </select>
-
-    <label class="field-label" for="professionSelect">Profissão / papel</label>
-    <select id="professionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
-      <option value="">Não especificado</option>
-      <option value="professor">Professor</option>
-      <option value="advogado">Advogado</option>
-      <option value="politico">Político</option>
-      <option value="lider">Líder de empresa</option>
-      <option value="gestor">Gestor</option>
-      <option value="porta-voz">Porta-voz</option>
-      <option value="reporter">Repórter</option>
-      <option value="jornalista">Jornalista</option>
-      <option value="locutor">Locutor</option>
-      <option value="mestre-cerimonia">Mestre de cerimônia</option>
-      <option value="apresentador">Apresentador</option>
-      <option value="vendedor">Vendedor / consultor comercial</option>
-      <option value="saude">Profissional de saúde</option>
-      <option value="coach">Coach / palestrante profissional</option>
-      <option value="criador">Criador de conteúdo / influenciador</option>
-      <option value="estudante">Estudante</option>
-      <option value="outra_profissao">Outra</option>
-    </select>
-
-    <label class="field-label" for="audienceSelect">Público</label>
-    <select id="audienceSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
-      <option value="">Não especificado</option>
-      <option value="grande">Grande público / multidão</option>
-      <option value="medio">Médio público</option>
-      <option value="pequeno">Pequeno público / grupo pequeno</option>
-      <option value="equipe">Equipe / funcionários</option>
-      <option value="qualificado">Público qualificado / especialistas</option>
-      <option value="clientes">Clientes</option>
-      <option value="outro_publico">Outro</option>
-    </select>
-
-    <label class="field-label" for="toneSelect">Tom do discurso</label>
-    <select id="toneSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
-      <option value="">Não especificado</option>
-      <option value="professoral">Professoral / didático</option>
-      <option value="energetico">Energético</option>
-      <option value="motivacional">Motivacional</option>
-      <option value="formal">Institucional / formal</option>
-      <option value="descontraido">Descontraído</option>
-      <option value="tecnico">Técnico / analítico</option>
-      <option value="outro_tom">Outro</option>
-    </select>
-
-    <details style="margin-top:14px">
-      <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft)">Personalizar recomendação de cor (opcional)</summary>
-      <div style="margin-top:12px">
-        <p class="section-note" style="margin-bottom:12px">Fica só nesta sessão, não é salvo em conta nenhuma. Pule se preferir — a análise funciona normalmente sem isso.</p>
-
-        <label class="field-label" for="undertoneSelect">Subtom de pele</label>
-        <select id="undertoneSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:6px">
-          <option value="">Prefiro não informar</option>
-          <option value="quente">Quente</option>
-          <option value="frio">Frio</option>
-          <option value="neutro">Neutro</option>
-        </select>
-        <p class="hint" style="margin-bottom:14px">Não sabe o seu? Olha as veias do pulso sob luz natural: puxam pro esverdeado → tende a quente; puxam pro azulado → tende a frio; mistura dos dois, ou dúvida → neutro.</p>
-
-        <label class="field-label" for="hairColorSelect">Cor de cabelo</label>
-        <select id="hairColorSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
-          <option value="">Prefiro não informar</option>
-          <option value="loiro">Loiro</option>
-          <option value="castanho-claro">Castanho claro</option>
-          <option value="castanho-escuro">Castanho escuro</option>
-          <option value="preto">Preto</option>
-          <option value="ruivo">Ruivo</option>
-          <option value="grisalho">Grisalho / branco</option>
-          <option value="colorido">Colorido / outro</option>
-        </select>
-      </div>
-    </details>
+    <p class="section-note">Checagens técnicas de roupa (contraste com o fundo, estouro de brilho, risco de moiré) mais a cor dominante detectada, comparada com o que costuma combinar com o tom do seu discurso (selecionado lá em cima, em "Contexto da apresentação"). Calculado por pixel, sem modelo de segmentação.</p>
 
     <div id="videoFrameSection" style="display:none; margin-top:14px">
       <div class="video-frame-wrap">
@@ -2078,6 +2083,33 @@ async function runBackendAnalysis(file) {
 // ---------- Parecer automático (frases geradas por regra, não por IA) ----------
 function generateParecer(d) {
   var groups = [];
+
+  var tone = d.imagem && d.imagem.tomDiscurso;
+  if (tone && (d.texto || d.movimento)) {
+    var items = [];
+    var TOM_LABEL = { energetico: 'Energético', motivacional: 'Motivacional', professoral: 'Professoral / didático', tecnico: 'Técnico / analítico', formal: 'Institucional / formal', descontraido: 'Descontraído' };
+    var tomNome = TOM_LABEL[tone] || tone;
+
+    if (d.texto && d.texto.wpm) {
+      if ((tone === 'energetico' || tone === 'motivacional') && d.texto.wpm < 130) {
+        items.push({ tone: 'atencao', text: 'Tom selecionado foi "' + tomNome + '", mas o ritmo ficou em ' + d.texto.wpm + ' palavras/min — abaixo do que costuma transmitir energia. Considere acelerar um pouco.' });
+      } else if ((tone === 'professoral' || tone === 'tecnico') && d.texto.wpm > 170) {
+        items.push({ tone: 'atencao', text: 'Tom selecionado foi "' + tomNome + '", mas o ritmo ficou em ' + d.texto.wpm + ' palavras/min — rápido pro que costuma ajudar didática/clareza técnica. Considere desacelerar um pouco.' });
+      } else {
+        items.push({ tone: 'forte', text: 'Ritmo de fala (' + d.texto.wpm + ' palavras/min) condizente com o tom "' + tomNome + '" selecionado.' });
+      }
+    }
+
+    if (d.movimento && d.movimento.atividade) {
+      if ((tone === 'energetico' || tone === 'motivacional') && d.movimento.atividade === 'baixa') {
+        items.push({ tone: 'melhorar', text: 'Tom "' + tomNome + '" costuma vir acompanhado de mais movimento corporal — o nível detectado foi baixo.' });
+      } else if ((tone === 'professoral' || tone === 'tecnico') && d.movimento.atividade === 'alta') {
+        items.push({ tone: 'melhorar', text: 'Tom "' + tomNome + '" costuma pedir presença mais estável — o nível de movimento detectado foi alto, o que pode distrair.' });
+      }
+    }
+
+    if (items.length) groups.push({ title: 'Coerência com o tom selecionado (heurística inicial, poucos casos testados)', items: items });
+  }
 
   if (d.texto) {
     var items = [];
