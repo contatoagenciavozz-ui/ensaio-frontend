@@ -354,6 +354,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
       <option value="aula">Ministrar aula / treinamento</option>
       <option value="palestra">Palestra</option>
       <option value="podcast">Podcast</option>
+      <option value="redes_sociais">Vídeo para redes sociais</option>
       <option value="discurso">Discurso</option>
       <option value="reuniao">Reunião</option>
       <option value="pitch">Pitch / apresentação comercial</option>
@@ -388,13 +389,30 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     <label class="field-label" for="audienceSelect">Público</label>
     <select id="audienceSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
       <option value="">Não especificado</option>
-      <option value="grande">Grande público / multidão</option>
+      <option value="grande">Grande público / multidão / massa</option>
       <option value="medio">Médio público</option>
       <option value="pequeno">Pequeno público / grupo pequeno</option>
       <option value="equipe">Equipe / funcionários</option>
-      <option value="qualificado">Público qualificado / especialistas</option>
+      <option value="qualificado">Público qualificado (especialistas na área)</option>
       <option value="clientes">Clientes</option>
+      <option value="redes_sociais">Redes sociais / público digital</option>
+      <option value="infantil">Público infantil (crianças)</option>
+      <option value="adolescente">Público adolescente</option>
+      <option value="jovem">Público jovem (18-29)</option>
+      <option value="30+">Público 30-39 anos</option>
+      <option value="40+">Público 40-49 anos</option>
+      <option value="50+">Público 50-59 anos</option>
+      <option value="60+">Público 60+</option>
+      <option value="politico">Público político</option>
+      <option value="diretoria">Diretoria / liderança executiva (C-level, presidentes, supervisores)</option>
       <option value="outro_publico">Outro</option>
+    </select>
+
+    <label class="field-label" for="formatSelect">Tipo de apresentação</label>
+    <select id="formatSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
+      <option value="">Não especificado</option>
+      <option value="presencial">Presencial</option>
+      <option value="virtual">Virtual (câmera/webcam)</option>
     </select>
 
     <label class="field-label" for="toneSelect">Tom do discurso</label>
@@ -1545,6 +1563,7 @@ canvas.frame-canvas { width: 100%; border-radius: 8px; margin-top: 12px; display
     window.pilotReportData.imagem = {
       checks: checks, corDominante: cor.nome,
       ocasiao: occasion || null, profissao: profession || null, publico: audience || null, tomDiscurso: tone || null,
+      formato: document.getElementById('formatSelect').value || null,
       subtom: undertone || null, corCabelo: document.getElementById('hairColorSelect').value || null
     };
   }
@@ -2109,6 +2128,33 @@ function generateParecer(d) {
     }
 
     if (items.length) groups.push({ title: 'Coerência com o tom selecionado (heurística inicial, poucos casos testados)', items: items });
+  }
+
+  var publico = d.imagem && d.imagem.publico;
+  var formato = d.imagem && d.imagem.formato;
+  if ((publico || formato) && (d.texto || d.movimento)) {
+    var items2 = [];
+    var PUBLICO_FORMAL = ['politico', 'diretoria', 'qualificado'];
+
+    if (publico && PUBLICO_FORMAL.indexOf(publico) > -1 && d.texto) {
+      var PUBLICO_LABEL = { politico: 'público político', diretoria: 'diretoria / liderança executiva', qualificado: 'público qualificado' };
+      var pubNome = PUBLICO_LABEL[publico] || publico;
+      if (d.texto.hedgingPor100 !== null && d.texto.hedgingPor100 !== undefined && d.texto.hedgingPor100 > 1.5) {
+        items2.push({ tone: 'atencao', text: 'Público selecionado foi "' + pubNome + '" — audiências assim costumam exigir mais firmeza. Insegurança na fala ficou em ' + d.texto.hedgingPor100 + '/100 palavras, acima do que essa plateia costuma tolerar bem.' });
+      }
+      if (d.texto.vaguezaPor100 !== null && d.texto.vaguezaPor100 !== undefined && d.texto.vaguezaPor100 > 1.5) {
+        items2.push({ tone: 'atencao', text: 'Pra "' + pubNome + '", vagueza costuma pesar mais contra a credibilidade — ficou em ' + d.texto.vaguezaPor100 + '/100 palavras. Prefira números e afirmações diretas com esse público.' });
+      }
+      if (!items2.length && (d.texto.hedgingPor100 !== null || d.texto.vaguezaPor100 !== null)) {
+        items2.push({ tone: 'forte', text: 'Firmeza da fala (hedging e vagueza) condizente com o que "' + pubNome + '" costuma exigir.' });
+      }
+    }
+
+    if (formato === 'virtual' && d.movimento) {
+      items2.push({ tone: 'neutral', text: 'Apresentação marcada como "virtual" — deslocamento lateral e balanço importam menos aqui do que em palco físico; o que mais conta em webcam costuma ser contato visual com a câmera e enquadramento estável. Leia os números de movimento com esse filtro.' });
+    }
+
+    if (items2.length) groups.push({ title: 'Coerência com público e formato selecionados (heurística inicial)', items: items2 });
   }
 
   if (d.texto) {
