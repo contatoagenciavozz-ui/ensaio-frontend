@@ -413,6 +413,15 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
     <p class="lede">Duas etapas: conte o contexto da sua fala e suba o vídeo. A plataforma analisa voz, texto, corpo e olhar, mostra cada resultado em uma caixinha e gera o relatório em Word.</p>
   </header>
 
+  <section class="card" id="seusDados">
+    <h2>Seus dados</h2>
+    <p class="section-note">Seu nome e contato aparecem no relatório em Word. Ficam só neste navegador: não são enviados a nenhum servidor.</p>
+    <div class="ctxgrid" style="margin-top:12px">
+      <div><label class="field-label" for="userName">Nome</label><input id="userName" type="text" autocomplete="name" placeholder="Seu nome completo" style="width:100%; border:1px solid var(--rule); background:var(--bg); color:var(--ink); padding:10px 12px; font-family:var(--font-sans); font-size:14px; margin-bottom:12px"></div>
+      <div><label class="field-label" for="userContact">Contato (WhatsApp ou e-mail)</label><input id="userContact" type="text" autocomplete="tel" placeholder="(61) 90000-0000 ou voce@email.com" style="width:100%; border:1px solid var(--rule); background:var(--bg); color:var(--ink); padding:10px 12px; font-family:var(--font-sans); font-size:14px; margin-bottom:12px"></div>
+    </div>
+  </section>
+
   <section class="card">
     <h2><span class="stepnum">1</span> Preencha o contexto da sua fala</h2>
     <p class="section-note">Isso vale pra análise inteira (corpo, texto e olhar). Preencha antes de subir o vídeo. Tudo é opcional.</p>
@@ -567,13 +576,19 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
   <section class="card dl-card" id="box-word">
     <div>
       <h2 style="margin:0 0 4px">Relatório em Word</h2>
-      <p class="section-note" style="margin:0">Baixa o relatório individual com tudo que foi analisado. Nome do aluno, link e parecer final saem como "[a completar]" para você preencher no Word.</p>
+      <p class="section-note" style="margin:0">Baixa o relatório individual com tudo que foi analisado. Nome e contato entram sozinhos. Formato, link do material e parecer final saem como "[a completar]" para você preencher no Word.</p>
       <p class="status-line" id="wordStatus"></p>
     </div>
     <button class="frame-btn" id="downloadWordBtn" type="button" style="margin-top:0">Baixar relatório em Word</button>
   </section>
 
   <p class="acc-banner" id="accBanner"></p>
+  <section class="card" id="evalCard" style="display:none; border-top-color:var(--blue)">
+    <h2>Sua avaliação</h2>
+    <p id="evalText" style="font-size:16px; line-height:1.65; margin:8px 0 10px"></p>
+    <p class="section-note" style="margin:0">Avaliação automática por regras, a partir dos sinais que a plataforma consegue medir. Não substitui a avaliação do professor.</p>
+  </section>
+
   <section class="card res" id="box-texto">
     <h2>Texto</h2>
     <p class="section-note">Preenche sozinho com a transcrição do vídeo. Você também pode colar ou corrigir o texto aqui.</p>
@@ -2407,12 +2422,66 @@ function computeSignalSummary(d) {
   var counts = { ok: 0, warn: 0, bad: 0 }, groups = [];
   PILOT_SIGNAL_GROUPS.forEach(function (g) {
     var items = [];
-    g[1].forEach(function (k) { var r = pilotSignalStatus(k, d); if (r) { items.push(r); counts[r.status]++; } });
+    g[1].forEach(function (k) { var r = pilotSignalStatus(k, d); if (r) { r.key = k; items.push(r); counts[r.status]++; } });
     if (items.length) groups.push({ title: g[0], items: items });
   });
   var total = counts.ok + counts.warn + counts.bad;
   return total ? { counts: counts, total: total, groups: groups } : null;
 }
+// ---------- Avaliação em texto, montada por regras a partir dos sinais ----------
+function computeEvaluationText(d, nome) {
+  var sum = computeSignalSummary(d); if (!sum) return null;
+  var POS = {
+    ritmoFala: 'ritmo de fala confortável', inseguranca: 'firmeza na fala', vicios: 'poucos vícios de linguagem', vagueza: 'linguagem concreta', verboFraco: 'verbos diretos',
+    entonacao: 'boa variação de tom de voz', pausas: 'boas pausas', quedas: 'energia mantida até o fim das frases', volume: 'volume adequado', varVolume: 'boa variação de volume',
+    cadencia: 'cadência regular', monotonia: 'voz expressiva', atividade: 'movimento corporal na medida', lateral: 'boa ancoragem no espaço', balanco: 'postura estável, sem balançar',
+    contatoVisual: 'bom contato visual', olharBaixo: 'olhar erguido', desviou: 'olhar firme'
+  };
+  function tip(it) {
+    var v = d.texto, vz = d.voz, m = d.movimento;
+    switch (it.key) {
+      case 'ritmoFala': return v && v.wpm < 130 ? 'acelerar um pouco o ritmo, com mais energia' : 'desacelerar um pouco para o público acompanhar';
+      case 'inseguranca': return 'cortar expressões que enfraquecem, como “eu acho que” e “talvez”, e afirmar direto';
+      case 'vicios': return 'trocar vícios de linguagem como “né” e “tipo” por uma pausa';
+      case 'vagueza': return 'trocar termos vagos, como “bastante” e “vários”, por números ou exemplos';
+      case 'verboFraco': return 'usar verbos diretos no lugar de construções como “foi feito”';
+      case 'entonacao': return 'variar mais o tom da voz, subindo e descendo nas ideias importantes';
+      case 'pausas': return vz && vz.pausasPorMin < 8 ? 'fazer mais pausas para respirar e destacar as ideias' : 'reduzir o excesso de pausas, para a fala não ficar picada';
+      case 'quedas': return 'manter a energia até o fim de cada frase';
+      case 'volume': return 'falar um pouco mais alto ou chegar mais perto do microfone';
+      case 'varVolume': return 'variar o volume para dar ênfase';
+      case 'cadencia': return 'cuidar da cadência, evitando que as frases fiquem cortadas';
+      case 'monotonia': return 'dar mais variação à voz, em tom e volume';
+      case 'atividade': return m && m.atividadeValor < 3 ? 'usar um pouco mais o corpo e as mãos para reforçar as ideias' : 'reduzir o excesso de movimento';
+      case 'lateral': return 'andar menos de um lado para o outro e firmar os pés';
+      case 'balanco': return 'evitar balançar o corpo de um lado para o outro';
+      case 'contatoVisual': return 'olhar mais para a câmera ou para a plateia';
+      case 'olharBaixo': return 'evitar olhar para baixo e manter o olhar erguido';
+      case 'desviou': return 'reduzir os desvios de olhar';
+      case 'rosto': return 'evitar cobrir o rosto com a mão';
+    }
+    return null;
+  }
+  function join(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1]; }
+  var used = sum.groups.map(function (g) { return g.items.filter(function (it) { return it.key !== 'clareza'; }); });
+  var all = []; used.forEach(function (g) { g.forEach(function (it) { all.push(it); }); });
+  var n = all.length; if (!n) return null;
+  var okN = all.filter(function (i) { return i.status === 'ok'; }).length, warnN = all.filter(function (i) { return i.status === 'warn'; }).length;
+  var ratio = (okN + warnN * 0.5) / n;
+  // destaques: um de cada grupo por rodada, até 3
+  var strengths = [], round = 0;
+  var oks = used.map(function (g) { return g.filter(function (i) { return i.status === 'ok' && POS[i.key]; }); });
+  while (strengths.length < 3 && round < 6) { oks.forEach(function (g) { if (strengths.length < 3 && g[round]) strengths.push(POS[g[round].key]); }); round++; }
+  var needs = all.filter(function (i) { return i.status === 'bad'; }).concat(all.filter(function (i) { return i.status === 'warn'; }));
+  var tips = []; needs.forEach(function (i) { var t = tip(i); if (t && tips.length < 3 && tips.indexOf(t) < 0) tips.push(t); });
+  var verdict = ratio >= 0.75 ? 'você tem uma boa oratória' : (ratio >= 0.5 ? 'você tem uma boa base de oratória' : 'sua oratória tem bastante espaço para evoluir');
+  var texto = (nome ? nome + ', pelos' : 'Pelos') + ' sinais que a plataforma mede, ' + verdict + '.';
+  if (strengths.length) texto += ' Destaques: ' + join(strengths) + '.';
+  if (tips.length) texto += (ratio >= 0.5 ? ' Porém, se puder ' + join(tips) + ', sua fala ganha ainda mais força.' : ' Para evoluir, comece por ' + join(tips) + '.');
+  else texto += ' Continue assim.';
+  return { texto: texto, ratio: ratio, fortes: strengths, dicas: tips };
+}
+
 function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.warn + ' amarelo(s), ' + r.counts.bad + ' vermelho(s) em ' + r.total + ' sinais'; }
 
 (function () {
@@ -2774,7 +2843,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       para([run('FALA ', { size: 22, color: 'FFFFFF' }), run('MUSICALIZADA', { b: 1, size: 22, color: C.light })], { after: 80, before: 120 }) +
       para(run('Relatório Individual', { b: 1, size: 44, color: 'FFFFFF' }), { after: 60 }) +
       para(run('Acompanhamento em Comunicação e Oratória', { size: 24, color: 'FFFFFF' }), { after: 120 }), W, { fill: C.dark })], [W]));
-    body.push(kvTable([['Aluno(a)', nome], ['Período', periodo], ['Formato', f.formato || '[a completar]'], ['Encontros', f.encontros || '[a completar]'], ['Objetivo', f.objetivo || '[a completar]']]));
+    body.push(kvTable([['Aluno(a)', nome], ['Contato', f.contato || '[a completar]'], ['Período', periodo], ['Formato', f.formato || '[a completar]'], ['Encontros', f.encontros || '[a completar]'], ['Objetivo', f.objetivo || '[a completar]']]));
 
     // 01
     n++; body.push(heading(n, 'Formato do Acompanhamento'));
@@ -2807,6 +2876,8 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     var groups = metricRows(d), idx = typeof computeSignalSummary === 'function' ? computeSignalSummary(d) : null;
     if (groups.length || idx) {
       n++; body.push(heading(n, 'Análise do Ensaio'));
+      var evl = typeof computeEvaluationText === 'function' ? computeEvaluationText(d, (f.aluno || '').trim().split(/\s+/)[0]) : null;
+      if (evl) { body.push(para(run('Avaliação automática', { b: 1, color: C.dark, size: 22 }), { after: 60, keep: 1 })); body.push(table([cell(para(run(evl.texto), { after: 0 }), W, { fill: C.tint, leftBar: C.light })], [W])); }
       if (idx) {
         body.push(para([run('Resumo dos sinais: ', { b: 1, color: C.dark }), run(pilotSummaryLine(idx), { b: 1, color: C.dark })], { after: 60 }));
         var WORDS = { ok: '✓ bom', warn: '! atenção', bad: '✕ vale melhorar' }, WCOL = { ok: '3E6B44', warn: 'A5761F', bad: 'B03A2E' };
@@ -2894,7 +2965,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     var d = window.pilotReportData || {};
     var status = document.getElementById('wordStatus');
     var f = {
-      aluno: val('wAluno'), periodo: val('wPeriodo'), formato: val('wFormato'), encontros: val('wEncontros'), objetivo: val('wObjetivo'),
+      aluno: val('userName'), contato: val('userContact'), periodo: val('wPeriodo'), formato: val('wFormato'), encontros: val('wEncontros'), objetivo: val('wObjetivo'),
       formatoTexto: val('wFormatoTexto'), conteudo: val('wConteudo').split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
       saude: [['Consumo de água por dia', val('wAgua')], ['Qualidade do sono', val('wSono')], ['Horas de sono por noite', val('wHoras')], ['Rouquidão', val('wRouquidao')], ['Queixa sobre a voz', val('wQueixa')]],
       fortes: val('wFortes'), desenvolver: val('wDesenvolver'), link: val('wLink'), parecer: val('wParecer')
@@ -3258,6 +3329,14 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     setTimeout(go, 6000);
   });
 
+  function renderEval() {
+    var card = document.getElementById('evalCard'), txt = document.getElementById('evalText');
+    if (!card || typeof computeEvaluationText !== 'function') return;
+    var nm = (document.getElementById('userName') || {}).value || '';
+    var r = computeEvaluationText(window.pilotReportData || {}, nm.trim().split(/\s+/)[0]);
+    if (r && state === 'ready') { txt.textContent = r.texto; card.style.display = ''; } else card.style.display = 'none';
+  }
+  document.getElementById('generateIndexBtn').addEventListener('click', function () { setTimeout(renderEval, 50); });
   // Fim da análise do servidor (olhar e postura): libera as caixinhas
   if (typeof runBackendAnalysis === 'function') {
     var orig = runBackendAnalysis;
