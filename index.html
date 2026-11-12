@@ -2894,6 +2894,51 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       body.push(para(run('Os números de texto, voz e movimento vêm de heurísticas que ainda não foram calibradas contra avaliação humana. Servem como ponto de partida para conversa, não como nota final.', { i: 1, size: 17, color: '5B5E51' })));
     }
 
+    // Texto: achados e orientações (vem do módulo de dicas do texto)
+    var td = window.pilotTextoDicas;
+    if (td) {
+      n++; body.push(heading(n, 'Texto: achados e orientações'));
+      body.push(para(run('Com base na transcrição da fala (' + td.palavras + ' palavras). ' + (td.found ? 'A plataforma encontrou ' + td.found + ' ponto(s) para melhorar.' : 'A plataforma não encontrou pontos críticos.'))));
+      if (td.rows.length) {
+        body.push(para(run('Expressões para trocar', { b: 1, color: C.dark, size: 22 }), { before: 80, after: 60, keep: 1 }));
+        body.push(tbl2(head3(['Expressão', 'Vezes', 'Como trocar'], [2600, 900, 6100]), td.rows.map(function (r, i) {
+          var fl = i % 2 ? 'FFFFFF' : C.gray;
+          return cell(para(run('“' + r.expr + '”', { b: 1, color: C.dark, size: 18 }), { after: 0 }), 2600, { fill: fl }) + cell(para(run(String(r.n), { size: 18 }), { after: 0, jc: 'center' }), 900, { fill: fl }) + cell(para(run(r.alts.join('  ·  '), { size: 18 }), { after: 0 }), 6100, { fill: fl });
+        }), [2600, 900, 6100]));
+      }
+      if (td.ex.length) {
+        body.push(para(run('Antes e depois', { b: 1, color: C.dark, size: 22 }), { before: 80, after: 60, keep: 1 }));
+        body.push(tbl2(head3(['Como você falou', 'Sugestão'], [4800, 4800]), td.ex.map(function (e, i) {
+          var fl = i % 2 ? 'FFFFFF' : C.gray;
+          return cell(para(run(e.before, { size: 18 }), { after: 0 }), 4800, { fill: fl }) + cell(para(run(e.after, { size: 18, color: '3E6B44' }), { after: 0 }), 4800, { fill: fl });
+        }), [4800, 4800]));
+      }
+      function blockTxt(title, ok, msgs, okMsg) {
+        body.push(para(run(title, { b: 1, color: C.dark, size: 22 }), { before: 80, after: 60, keep: 1 }));
+        if (ok) body.push(para(run('✓ ' + okMsg, { size: 19, color: '3E6B44' }), { after: 60 }));
+        else msgs.forEach(function (m) { body.push(bullet([run(m, { size: 19 })])); });
+        body.push(para('', { after: 40 }));
+      }
+      blockTxt('Abertura', td.aberturaOk, td.abertura, 'A abertura entra direto no assunto.');
+      blockTxt('Fechamento', td.fechamentoOk, td.fechamento, 'Tem um fechamento com síntese ou convite.');
+      body.push(para(run('Frases longas', { b: 1, color: C.dark, size: 22 }), { before: 80, after: 60, keep: 1 }));
+      if (!td.longasTotal) body.push(para(run('✓ Nenhuma frase passa de 25 palavras.', { size: 19, color: '3E6B44' }), { after: 60 }));
+      else {
+        td.longas.forEach(function (l) { body.push(bullet([run(l.palavras + ' palavras: ', { b: 1, size: 18 }), run(l.texto, { size: 18 })])); });
+        if (td.longasTotal > td.longas.length) body.push(para(run('+ ' + (td.longasTotal - td.longas.length) + ' frase(s) longa(s) além dessas.', { i: 1, size: 18 }), { after: 40 }));
+        body.push(para(run('O ideal é falar em blocos de até uns 20 palavras: uma ideia em cada frase.', { size: 18 }), { after: 60 }));
+      }
+      body.push(para('', { after: 40 }));
+      blockTxt('Conexão com o público', td.conexaoOk, td.conexao, 'Boa conexão: fala com o público e usa perguntas ou exemplos.');
+      if (td.reps.length || td.fortes.length) {
+        body.push(para(run('Palavras repetidas e palavras mais fortes', { b: 1, color: C.dark, size: 22 }), { before: 80, after: 60, keep: 1 }));
+        td.reps.forEach(function (m) { body.push(bullet([run(m, { size: 19 })])); });
+        td.fortes.forEach(function (f) { body.push(bullet([run('“' + f[0] + '” → ', { b: 1, size: 19 }), run(f[1], { size: 19 })])); });
+        body.push(para('', { after: 40 }));
+      }
+      body.push(para(run('Dicas geradas por regras fixas (não é IA e não lê o sentido do texto). Use como pistas: a decisão final é do aluno e do professor.', { i: 1, size: 17, color: '5B5E51' })));
+    }
+
     // 06 observações
     var pf = [], pd = [];
     try { (generateParecer(d) || []).forEach(function (gr) { gr.items.forEach(function (it) { (it.tone === 'forte' ? pf : pd).push(it.text); }); }); } catch (e) {}
@@ -3065,14 +3110,16 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
 
   function block(title, sub) { var b = el('div', 'dica-block'); b.appendChild(el('p', 'dica-title', title)); if (sub) b.appendChild(el('p', 'dica-sub', sub)); host.appendChild(b); return b; }
   function good(b, msg) { b.appendChild(el('p', 'dica-ok', '✓ ' + msg)); }
-  function note(b, msg) { b.appendChild(el('p', 'dica-item', msg)); }
+  var REC = null;
+  function note(b, msg) { b.appendChild(el('p', 'dica-item', msg)); if (REC) REC.push(msg); }
 
   function analyze() {
     var text = (ta.value || '').trim();
     host.textContent = '';
     var wc = words(text).length;
-    if (wc < 25) { host.appendChild(el('p', 'section-note', 'Cole ou grave um texto com pelo menos umas 25 palavras para ver dicas de melhoria.')); return; }
+    if (wc < 25) { window.pilotTextoDicas = null; host.appendChild(el('p', 'section-note', 'Cole ou grave um texto com pelo menos umas 25 palavras para ver dicas de melhoria.')); return; }
     var sents = sentences(text), found = 0;
+    var out = { palavras: wc, rows: [], ex: [], abertura: [], aberturaOk: false, fechamento: [], fechamentoOk: false, longas: [], longasTotal: 0, conexao: [], conexaoOk: false, reps: [], fortes: [], found: 0 };
 
     // 1) trocas prontas
     var rows = [];
@@ -3081,7 +3128,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     var b1 = block('Troque estas expressões', 'Do que mais aparece pro que menos aparece. O que está em "→" são opções, escolha a que combina com você.');
     if (!rows.length) good(b1, 'Não encontrei expressões que enfraquecem a fala.');
     rows.slice(0, 10).forEach(function (r) {
-      found++;
+      found++; out.rows.push({ expr: r.t.id, n: r.n, alts: r.t.alts });
       var line = el('div', 'dica-row');
       line.appendChild(el('span', 'dica-expr', '"' + r.t.id + '"' + (r.n > 1 ? ' ×' + r.n : '')));
       line.appendChild(el('span', 'dica-arrow', ' → ' + r.t.alts.join('  ·  ')));
@@ -3097,6 +3144,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       after = tidy(after);
       if (changed && after.length > 8 && after !== s) ex.push({ before: s, after: after });
     });
+    out.ex = ex;
     if (ex.length) {
       var b2 = block('Antes e depois', 'Reescrita automática simples (só cortes e trocas seguras). Releia: o sentido pode pedir um ajuste seu.');
       ex.forEach(function (e) {
@@ -3115,6 +3163,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     if (/^\s*(?:(?:bom|então|olha|bem|ah+|é+),?\s*)?(hoje\s+)?(eu\s+)?(vou|vamos|iremos)\s+(falar|apresentar|abordar|conversar)\b/iu.test(first)) openProblems.push('Abre anunciando o que vai fazer ("vou falar sobre…"). Abra com a ideia em si: uma pergunta, um dado ou uma cena.');
     if (/^\s*(boa\s+(tarde|noite)|bom\s+dia)[,.!\s]*$/iu.test(first) && sents[1]) { /* cumprimento isolado: olha a 2ª frase */ var f2 = sents[1]; if (/^\s*(eu\s+)?(vou|vamos)\s+(falar|apresentar|abordar)/iu.test(f2)) openProblems.push('Depois do cumprimento, você anuncia o assunto. Troque por uma pergunta ou dado que prenda.'); }
     if (fw.length > 30) openProblems.push('A primeira frase tem ' + fw.length + ' palavras. Abra com algo curto, de até uns 15.');
+    out.abertura = openProblems.slice(); out.aberturaOk = !openProblems.length;
     if (!openProblems.length) good(b3, 'A abertura entra direto no assunto.'); else { found += openProblems.length; openProblems.forEach(function (m) { note(b3, m); }); b3.appendChild(el('p', 'dica-sub', 'Modelos: ' + APOIO['Abrir com impacto'].join('   |   '))); }
 
     // 4) fechamento
@@ -3125,14 +3174,16 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       var prev = sents[sents.length - 2] || '';
       if (!/(vamos|convido|peço|lembre|conto com|proponho|decida|comece|faça|façam|venham|participe|juntos)/iu.test(prev)) closeProblems.push('Termina só com agradecimento. Antes dele, resuma a ideia central ou convide o público a agir.');
     } else if (!/(vamos|convido|peço|lembr|conto com|proponho|comece|façam|faça|juntos|importa|essencial|fundamental)/iu.test(sents.slice(-2).join(' '))) closeProblems.push('Não vi uma frase final de síntese ou convite à ação. Feche dizendo o que você quer que o público pense, sinta ou faça.');
+    out.fechamento = closeProblems.slice(); out.fechamentoOk = !closeProblems.length;
     if (!closeProblems.length) good(b4, 'Tem um fechamento com síntese ou convite.'); else { found += closeProblems.length; closeProblems.forEach(function (m) { note(b4, m); }); b4.appendChild(el('p', 'dica-sub', 'Modelos: ' + APOIO['Reforçar e concluir'].join('   |   '))); }
 
     // 5) frases longas
     var longs = sents.filter(function (s) { return words(s).length > 25; });
     var b5 = block('Frases longas', 'Frase longa pede fôlego e perde o ouvinte. O ideal é falar em blocos de até uns 20 palavras.');
     if (!longs.length) good(b5, 'Nenhuma frase passa de 25 palavras.');
+    out.longasTotal = longs.length;
     longs.slice(0, 4).forEach(function (s) {
-      found++;
+      found++; out.longas.push({ palavras: words(s).length, texto: s.length > 170 ? s.slice(0, 170) + '…' : s });
       var w = words(s).length, r = el('div', 'dica-ba');
       r.appendChild(el('p', 'dica-before', w + ' palavras: ' + (s.length > 170 ? s.slice(0, 170) + '…' : s)));
       var cut = s.search(/[,;]\s+(mas|e|porque|que|pois|porém|então|ou)\s/i);
@@ -3147,11 +3198,12 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     var voce = count(R(B + '(?:você|vocês|voce|voces|nós|nos|nosso|nossa|nossos|nossas|vamos|a gente)' + E), text), eu = count(R(B + '(?:eu|meu|minha|meus|minhas)' + E), text);
     var perg = (text.match(/\?/g) || []).length;
     var hist = count(R('(?:por exemplo|imagine|imaginem|lembro|certa vez|uma vez|outro dia|conheci|conheço um|conta-se|a história de|vou contar)', 'giu'), text);
-    var cn = 0;
+    var cn = 0; REC = out.conexao;
     if (voce / wc * 100 < 1.2) { note(b6, 'Pouco “você / nós”: ' + voce + ' em ' + wc + ' palavras. Fale com o público, não sobre ele. Ex.: “você já sentiu…”, “vamos juntos…”.'); cn++; }
     if (perg === 0) { note(b6, 'Nenhuma pergunta ao público. Uma pergunta retórica a cada trecho mantém a atenção.'); cn++; }
     if (hist === 0 && wc > 80) { note(b6, 'Não achei exemplo nem história. Um caso concreto (“imagine…”, “por exemplo…”) ajuda o público a lembrar.'); cn++; }
     if (eu > 0 && voce > 0 && eu > voce * 2) { note(b6, 'Você fala bem mais de si (“eu”) do que do público. Equilibre.'); cn++; }
+    REC = null; out.conexaoOk = !cn;
     if (!cn) good(b6, 'Boa conexão: fala com o público e usa perguntas ou exemplos.'); found += cn;
 
     // 7) repetições e palavras mais fortes
@@ -3160,9 +3212,9 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     var reps = Object.keys(freq).filter(function (w) { return freq[w] >= 4 && freq[w] / wc * 100 >= 1.2; }).sort(function (a, b) { return freq[b] - freq[a]; }).slice(0, 5);
     var b7 = block('Palavras repetidas e palavras mais fortes');
     if (!reps.length) good(b7, 'Nenhuma palavra importante se repete demais.');
-    reps.forEach(function (w) { found++; note(b7, '“' + w + '” aparece ' + freq[w] + ' vezes. Varie ou troque por um pronome.'); });
+    reps.forEach(function (w) { found++; out.reps.push('“' + w + '” aparece ' + freq[w] + ' vezes. Varie ou troque por um pronome.'); note(b7, '“' + w + '” aparece ' + freq[w] + ' vezes. Varie ou troque por um pronome.'); });
     var fortes = FORTES.filter(function (p) { return R(B + p[0] + E).test(text); });
-    if (fortes.length) { b7.appendChild(el('p', 'dica-sub', 'Palavras que podem ficar mais fortes:')); fortes.slice(0, 8).forEach(function (p) { found++; var r = el('div', 'dica-row'); r.appendChild(el('span', 'dica-expr', '“' + p[0] + '”')); r.appendChild(el('span', 'dica-arrow', ' → ' + p[1])); b7.appendChild(r); }); }
+    if (fortes.length) { b7.appendChild(el('p', 'dica-sub', 'Palavras que podem ficar mais fortes:')); fortes.slice(0, 8).forEach(function (p) { found++; out.fortes.push([p[0], p[1]]); var r = el('div', 'dica-row'); r.appendChild(el('span', 'dica-expr', '“' + p[0] + '”')); r.appendChild(el('span', 'dica-arrow', ' → ' + p[1])); b7.appendChild(r); }); }
 
     // 8) banco de frases
     var d = el('details', 'dica-bank'); d.appendChild(el('summary', null, 'Banco de frases de apoio (abrir, conectar, concluir)'));
@@ -3172,6 +3224,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
 
     var head = el('p', 'dica-summary', found ? 'Encontrei ' + found + ' pontos para melhorar neste texto.' : 'Não encontrei pontos críticos neste texto.');
     host.insertBefore(head, host.firstChild);
+    out.found = found; window.pilotTextoDicas = out;
     window.pilotReportData = window.pilotReportData || {};
     window.pilotReportData.textoDicas = { pontos: found };
   }
