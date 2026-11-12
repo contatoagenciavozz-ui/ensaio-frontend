@@ -2302,19 +2302,19 @@ function generateParecer(d) {
 
   if (d.voz) {
     var items = [];
-    if (d.voz.variacaoPitch) items.push({ tone: d.voz.variacaoPitch === 'baixa' ? 'atencao' : (d.voz.variacaoPitch === 'alta' ? 'forte' : 'melhorar'), text: 'Entonação: ' + d.voz.variacaoPitch + '.' + (d.voz.variacaoPitch === 'baixa' ? ' Voz pouco variada costuma soar monótona e cansar a atenção da plateia — tente subir o tom em palavras-chave.' : '') });
-    if (d.voz.consistenciaVolume) items.push({ tone: d.voz.consistenciaVolume.indexOf('variação') > -1 ? 'forte' : 'melhorar', text: 'Volume: ' + d.voz.consistenciaVolume + '.' + (d.voz.consistenciaVolume.indexOf('variação') === -1 ? ' Volume sempre igual pode soar monótono — varie pra dar ênfase.' : '') });
-    if (d.voz.nivelVolume && d.voz.nivelVolume !== 'adequado') items.push({ tone: 'atencao', text: 'Nível de gravação: ' + d.voz.nivelVolume + ' — verifique a distância do microfone.' });
-    if (d.voz.cadencia) items.push({ tone: d.voz.cadencia.indexOf('regular') > -1 ? 'forte' : 'neutral', text: 'Cadência: ' + d.voz.cadencia + '.' + (d.voz.cadencia.indexOf('irregular') > -1 ? ' Não é necessariamente ruim — confira se soa natural ou truncado ao ouvir de novo.' : '') });
+    if (d.voz.variacaoPitch) items.push({ tone: d.voz.variacaoPitch === 'baixa' ? 'atencao' : (d.voz.variacaoPitch === 'alta' ? 'forte' : 'melhorar'), text: 'Variação do tom da voz: ' + ({ alta: 'bastante', 'média': 'alguma', baixa: 'pouca' })[d.voz.variacaoPitch] + '.' + (d.voz.variacaoPitch === 'baixa' ? ' Voz pouco variada costuma soar monótona e cansar a atenção da plateia — tente subir o tom em palavras-chave.' : '') });
+    if (d.voz.consistenciaVolume) items.push({ tone: d.voz.consistenciaVolume.indexOf('variação') > -1 ? 'forte' : 'melhorar', text: 'Variação do volume: ' + (d.voz.consistenciaVolume.indexOf('variação') > -1 ? 'varia bem' : 'sempre igual') + '.' + (d.voz.consistenciaVolume.indexOf('variação') === -1 ? ' Volume sempre igual pode soar monótono — varie pra dar ênfase.' : '') });
+    if (d.voz.nivelVolume && d.voz.nivelVolume !== 'adequado') items.push({ tone: 'atencao', text: 'Volume da voz: ' + d.voz.nivelVolume + '. Verifique a distância do microfone.' });
+    if (d.voz.cadencia) items.push({ tone: d.voz.cadencia.indexOf('regular') > -1 ? 'forte' : 'neutral', text: 'Regularidade do ritmo: ' + (d.voz.cadencia.indexOf('irregular') > -1 ? 'ritmo irregular' : 'ritmo constante') + '.' + (d.voz.cadencia.indexOf('irregular') > -1 ? ' Não é necessariamente ruim — confira se soa natural ou truncado ao ouvir de novo.' : '') });
     if (d.voz.monotona === 'sim, sinais de monotonia') items.push({ tone: 'atencao', text: 'Sinais combinados de monotonia (pitch baixo + volume constante) — combine variação de tom com variação de volume pra prender mais a atenção.' });
-    if (d.voz.pausasPorMin !== undefined && d.voz.pausasPorMin !== null) items.push({ tone: 'neutral', text: 'Pausas: ' + d.voz.pausasPorMin + '/min.' });
+    if (d.voz.pausasPorMin !== undefined && d.voz.pausasPorMin !== null) items.push({ tone: 'neutral', text: 'Pausas para respirar: ' + d.voz.pausasPorMin + ' por minuto.' });
     if (items.length) groups.push({ title: 'Voz', items: items });
   }
 
   if (d.movimento) {
     var items = [];
-    if (d.movimento.atividade) items.push({ tone: 'neutral', text: 'Atividade de movimento: ' + d.movimento.atividade + ' (valor ' + d.movimento.atividadeValor + ').' });
-    if (d.movimento.deslocamentoLateralPct !== undefined) items.push({ tone: 'neutral', text: 'Deslocamento lateral: ' + d.movimento.deslocamentoLateralPct + '% — ' + d.movimento.deslocamentoLabel + '.' });
+    if (d.movimento.atividade) items.push({ tone: 'neutral', text: 'Quanto você se mexe: ' + ({ alta: 'bastante', 'média': 'na medida', baixa: 'pouco' })[d.movimento.atividade] + '.' });
+    if (d.movimento.deslocamentoLateralPct !== undefined) items.push({ tone: 'neutral', text: 'Quanto você andou para os lados: ' + d.movimento.deslocamentoLateralPct + '% da largura do quadro.' });
     if (d.movimento.balancoRitmico && d.movimento.balancoRitmico.indexOf('provável') > -1) items.push({ tone: 'atencao', text: 'Padrão de balanço repetitivo detectado (' + d.movimento.balancoRitmico + ') — esse tipo de movimento costuma ser lido pela plateia como sinal de nervosismo.' });
     if (items.length) groups.push({ title: 'Movimento corporal', items: items });
   }
@@ -2808,15 +2808,22 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       if (d.texto.detalhe && d.texto.detalhe.filler && d.texto.detalhe.filler.length) out.push(['Vícios mais frequentes', d.texto.detalhe.filler.slice(0, 8).map(function (e) { return '"' + e.frase + '" ' + e.vezes + 'x'; }).join('; ')]);
       return out;
     })()));
+    var pAlta = function (x) { return ({ alta: 'bastante variação', 'média': 'alguma variação', baixa: 'pouca variação' })[x] || x; };
     if (d.voz) add('Voz', [
-      ['Duração analisada', d.voz.duracao], ['Nível de volume', d.voz.nivelVolume], ['Consistência de volume', d.voz.consistenciaVolume],
-      ['Cadência', d.voz.cadencia], ['Fala monótona', d.voz.monotona], ['Entonação', d.voz.variacaoPitch],
-      ['Pausas', d.voz.pausas !== undefined ? d.voz.pausas + (d.voz.pausasPorMin !== null && d.voz.pausasPorMin !== undefined ? ' (' + d.voz.pausasPorMin + '/min)' : '') : null],
-      ['Clareza de fala (sinal fraco)', d.voz.clarezaFala]
+      ['Duração analisada', d.voz.duracao],
+      ['Volume da voz', d.voz.nivelVolume ? (d.voz.nivelVolume === 'adequado' ? 'bom (dá para ouvir bem)' : d.voz.nivelVolume) : null],
+      ['Variação do volume', d.voz.consistenciaVolume ? (d.voz.consistenciaVolume.indexOf('variação') > -1 ? 'varia bem (dá ênfase às ideias)' : 'sempre igual (pode cansar quem ouve)') : null],
+      ['Regularidade do ritmo', d.voz.cadencia ? (d.voz.cadencia.indexOf('irregular') > -1 ? 'ritmo irregular (trechos ora curtos, ora longos)' : 'ritmo constante (a fala flui no mesmo passo)') : null],
+      ['Voz monótona?', d.voz.monotona ? (d.voz.monotona === 'não' ? 'não' : 'sim (tom e volume muito parados)') : null],
+      ['Variação do tom da voz', d.voz.variacaoPitch ? pAlta(d.voz.variacaoPitch) : null],
+      ['Pausas para respirar', d.voz.pausasPorMin !== null && d.voz.pausasPorMin !== undefined ? d.voz.pausasPorMin + ' por minuto (ideal: 8 a 25)' : (d.voz.pausas !== undefined ? String(d.voz.pausas) : null)],
+      ['Frases que perdem força no final', d.voz.quedasPorMin !== null && d.voz.quedasPorMin !== undefined ? d.voz.quedasPorMin + ' por minuto (ideal: até 2)' : null],
+      ['Clareza da fala (sinal fraco)', d.voz.clarezaFala]
     ]);
     if (d.movimento) add('Movimento corporal', [
-      ['Atividade de movimento', d.movimento.atividade], ['Deslocamento lateral', d.movimento.deslocamentoLateralPct !== undefined ? d.movimento.deslocamentoLateralPct + '% — ' + d.movimento.deslocamentoLabel : null],
-      ['Balanço rítmico', d.movimento.balancoRitmico]
+      ['Quanto você se mexe', d.movimento.atividade ? ({ alta: 'bastante', 'média': 'na medida (ideal)', baixa: 'pouco' })[d.movimento.atividade] : null],
+      ['Quanto você andou para os lados', d.movimento.deslocamentoLateralPct !== undefined ? d.movimento.deslocamentoLateralPct + '% da largura do quadro (ideal: até 40%)' : null],
+      ['Balanço do corpo', d.movimento.balancoRitmico ? (/\d+% regular/.test(d.movimento.balancoRitmico) ? 'balanço repetido, como um pêndulo' : 'sem balanço repetido (bom)') : null]
     ]);
     if (d.olhar) {
       var o = d.olhar, r = [];
