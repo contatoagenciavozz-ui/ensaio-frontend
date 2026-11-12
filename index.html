@@ -324,9 +324,12 @@ a { color:var(--vague); }
 .site-footer { text-align:center; margin-top:40px; font-size:12px; color:var(--ink-faint); letter-spacing:.08em; }
 .site-footer b { color:var(--gold); font-weight:600; }
 
-.metric.has-sem { position:relative; padding-right:34px; }
+.sem-explain { margin-top:12px; }
+.sem-explain p:not(.sem-legend) { font-size:13px; color:var(--ink-soft); margin:8px 0; line-height:1.55; }
+.sem-explain b { color:var(--ink); }
+.metric.has-sem .num { display:inline; }
 .sem-badge { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:13px; font-weight:800; line-height:1; }
-.metric .sem-badge { position:absolute; top:8px; right:2px; }
+.metric .sem-badge { margin-left:10px; vertical-align:middle; }
 .sem-badge.ok { background:rgba(111,207,151,.2); color:#6FCF97; border:1px solid #6FCF97; }
 .sem-badge.warn { background:rgba(232,185,90,.18); color:#E8B95A; border:1px solid #E8B95A; }
 .sem-badge.bad { background:rgba(255,99,99,.18); color:#FF7070; border:1px solid #FF7070; }
@@ -3107,7 +3110,8 @@ function computeReadinessIndex(d) {
       var num = document.getElementById(id); if (!num) return;
       var box = num.parentNode; box.classList.add('has-sem'); box.title = REF[id].tip;
       var st = status(id, d), badge = box.querySelector('.sem-badge'), ref = box.querySelector('.sem-ref');
-      if (!badge) { badge = document.createElement('span'); box.appendChild(badge); }
+      if (!badge) { badge = document.createElement('span'); }
+      if (num.nextElementSibling !== badge) num.insertAdjacentElement('afterend', badge);
       if (!ref) { ref = document.createElement('div'); ref.className = 'sem-ref'; box.appendChild(ref); }
       badge.className = 'sem-badge ' + (st || 'none'); badge.textContent = st ? ICON[st] : ''; badge.setAttribute('aria-label', st ? WORD[st] : '');
       ref.textContent = REF[id].ref;
@@ -3117,6 +3121,65 @@ function computeReadinessIndex(d) {
       var lg = document.createElement('p'); lg.id = 'semLegend'; lg.className = 'sem-legend';
       lg.innerHTML = '<span class="sem-badge ok">✓</span> bom &nbsp; <span class="sem-badge warn">!</span> atenção &nbsp; <span class="sem-badge bad">✕</span> vale melhorar. Passe o mouse (ou toque) em cada medida para ver o que ela significa. As referências são de trabalho, ainda não calibradas com vídeos reais.';
       var ms = res.querySelectorAll('.metrics'); (ms[ms.length - 1] || res).insertAdjacentElement('afterend', lg);
+    }
+  }
+  setInterval(decorate, 800);
+})();
+
+// ---------- Semáforo do movimento do corpo ----------
+(function () {
+  var REF = {
+    mMotionLevel: { ref: 'ref.: média (3 a 10)', tip: 'Mede quanto do quadro muda de um instante pro outro. Média é a faixa de referência.' },
+    mLateralPct: { ref: 'ref.: até 40% da largura', tip: 'Quanto o centro do movimento andou para os lados. Ficar no lugar é bom; passar de 40% é andar muito.' },
+    mPendulum: { ref: 'ref.: sem balanço repetitivo', tip: 'Verifica se o corpo oscila de um lado pro outro em ritmo regular (efeito pêndulo).' }
+  };
+  function status(id, d) {
+    if (id === 'mMotionLevel') {
+      var v = d.atividadeValor; if (v === undefined || v === null) return null;
+      if (v >= 3 && v <= 10) return 'ok'; if (v > 16) return 'bad'; return (v > 10 || v >= 1.5) ? 'warn' : 'warn';
+    }
+    if (id === 'mLateralPct') {
+      var p = d.deslocamentoLateralPct; if (p === undefined || p === null) return null;
+      return p <= 40 ? 'ok' : (p <= 65 ? 'warn' : 'bad');
+    }
+    if (id === 'mPendulum') {
+      var s = d.balancoRitmico || ''; if (!s) return null;
+      var m = s.match(/(\d+)% regular/);
+      if (m) return parseInt(m[1], 10) >= 75 ? 'bad' : 'warn';
+      return 'ok';
+    }
+    return null;
+  }
+  var ICON = { ok: '✓', warn: '!', bad: '✕' }, WORD = { ok: 'bom', warn: 'atenção', bad: 'vale melhorar' };
+  var EXPLAIN = [
+    ['Atividade de movimento', 'Mede quanto do quadro muda de um instante pro outro: gestos, balanço, passos. “Alta” não quer dizer movimento brusco; quer dizer que há muita coisa se mexendo (ou a câmera tremendo). Média é o ideal. Muito baixa pode indicar corpo rígido; muito alta, agitação ou câmera na mão.'],
+    ['Deslocamento lateral', 'Quanto você andou para os lados, em % da largura do quadro. Ficar no lugar é bom (é a ancoragem). Até 40% é uso natural do espaço. Passar disso, indo e voltando de um lado ao outro, costuma distrair o público e pode sair do enquadramento. Andar com propósito e parar em pontos funciona; ficar indo e voltando, não.'],
+    ['Balanço rítmico', 'Verifica se o corpo oscila de um lado pro outro sempre no mesmo compasso (o “pêndulo”). “Sem balanço repetitivo” é o bom resultado. “Provável, X% regular” é alerta: o balanço constante costuma ser lido como nervosismo.']
+  ];
+
+  function decorate() {
+    var d = (window.pilotReportData || {}).movimento; if (!d) return;
+    var pend = document.getElementById('mPendulum');
+    if (pend && pend.textContent === 'movimento irregular') pend.textContent = 'sem balanço repetitivo';
+    if (pend && pend.textContent === 'sem padrão claro') pend.textContent = 'sem balanço repetitivo';
+    Object.keys(REF).forEach(function (id) {
+      var num = document.getElementById(id); if (!num) return;
+      var box = num.parentNode; box.classList.add('has-sem'); box.title = REF[id].tip;
+      var st = status(id, d), badge = box.querySelector('.sem-badge'), ref = box.querySelector('.sem-ref');
+      if (!badge) badge = document.createElement('span');
+      if (num.nextElementSibling !== badge) num.insertAdjacentElement('afterend', badge);
+      if (!ref) { ref = document.createElement('div'); ref.className = 'sem-ref'; box.appendChild(ref); }
+      badge.className = 'sem-badge ' + (st || 'none'); badge.textContent = st ? ICON[st] : ''; badge.setAttribute('aria-label', st ? WORD[st] : '');
+      ref.textContent = REF[id].ref;
+    });
+    var res = document.getElementById('motionResults');
+    if (res && !document.getElementById('motionExplain')) {
+      var ex = document.createElement('div'); ex.id = 'motionExplain'; ex.className = 'sem-explain';
+      var lg = document.createElement('p'); lg.className = 'sem-legend';
+      lg.innerHTML = '<span class="sem-badge ok">✓</span> bom &nbsp; <span class="sem-badge warn">!</span> atenção &nbsp; <span class="sem-badge bad">✕</span> vale melhorar. Referências de trabalho, ainda não calibradas com vídeos reais.';
+      ex.appendChild(lg);
+      EXPLAIN.forEach(function (e) { var p = document.createElement('p'); var b = document.createElement('b'); b.textContent = e[0] + ': '; p.appendChild(b); p.appendChild(document.createTextNode(e[1])); ex.appendChild(p); });
+      var ms = res.querySelector('.metrics'); ms.insertAdjacentElement('afterend', ex);
     }
   }
   setInterval(decorate, 800);
