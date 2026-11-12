@@ -324,6 +324,16 @@ a { color:var(--vague); }
 .site-footer { text-align:center; margin-top:40px; font-size:12px; color:var(--ink-faint); letter-spacing:.08em; }
 .site-footer b { color:var(--gold); font-weight:600; }
 
+.sum-top { display:flex; gap:12px; flex-wrap:wrap; margin:6px 0 8px; }
+.sum-count { display:flex; align-items:center; gap:10px; background:var(--bg); border:1px solid var(--rule); border-radius:14px; padding:12px 18px; }
+.sum-count .sem-badge { width:28px; height:28px; font-size:16px; }
+.sum-num { font-family:var(--font-serif); font-size:32px; font-weight:800; line-height:1; }
+.sum-lab { font-size:12px; color:var(--ink-faint); }
+.sum-group { font-family:var(--font-serif); font-weight:700; font-size:14px; margin:18px 0 6px; }
+.sum-row { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; padding:8px 0; border-bottom:1px solid var(--rule); font-size:13.5px; }
+.sum-name { font-weight:600; }
+.sum-val { color:var(--ink-soft); }
+.sum-ref { margin-left:auto; font-size:11.5px; color:var(--ink-faint); }
 .sem-explain { margin-top:12px; }
 .sem-explain p:not(.sem-legend) { font-size:13px; color:var(--ink-soft); margin:8px 0; line-height:1.55; }
 .sem-explain b { color:var(--ink); }
@@ -400,15 +410,15 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
   <header class="top">
     <p class="kicker">Ensaio · piloto</p>
     <h1 style="margin-top:16px">Ensaie sua fala <em>antes de subir ao palco</em></h1>
-    <p class="lede">Duas etapas: conte o contexto da sua fala e suba o vídeo. A plataforma analisa voz, texto, corpo, olhar e roupa, mostra cada resultado em uma caixinha e gera o relatório em Word.</p>
+    <p class="lede">Duas etapas: conte o contexto da sua fala e suba o vídeo. A plataforma analisa voz, texto, corpo e olhar, mostra cada resultado em uma caixinha e gera o relatório em Word.</p>
   </header>
 
   <section class="card">
     <h2><span class="stepnum">1</span> Preencha o contexto da sua fala</h2>
-    <p class="section-note">Isso vale pra análise inteira (voz, corpo, texto e roupa). Preencha antes de subir o vídeo. Tudo é opcional.</p>
+    <p class="section-note">Isso vale pra análise inteira (corpo, texto e olhar). Preencha antes de subir o vídeo. Tudo é opcional.</p>
 
 <div class="ctxgrid" style="margin-top:14px">
-<div>
+<div style="display:none">
     <label class="field-label" for="occasionSelect">Ocasião</label>
     <select id="occasionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
       <option value="">Não especificado</option>
@@ -427,7 +437,7 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
     </select>
 </div>
 
-<div>
+<div style="display:none">
     <label class="field-label" for="professionSelect">Profissão / papel</label>
     <select id="professionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
       <option value="">Não especificado</option>
@@ -499,8 +509,8 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
 </div>
 </div>
 
-    <details style="margin-top:14px">
-      <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft)">Personalizar recomendação de cor de roupa (opcional)</summary>
+    <details style="display:none">
+      <summary>Personalizar recomendação de cor de roupa (opcional)</summary>
       <div style="margin-top:12px">
         <p class="section-note" style="margin-bottom:12px">Fica só nesta sessão, não é salvo em conta nenhuma. Pule se preferir — a análise funciona normalmente sem isso.</p>
 
@@ -530,7 +540,7 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
 
   <section class="card" id="etapa2">
     <h2><span class="stepnum">2</span> Suba seu vídeo</h2>
-    <p class="section-note">É só enviar um vídeo da sua fala. A plataforma analisa voz, texto, corpo, olhar e roupa sozinha e mostra tudo logo abaixo, em Resultados. A leitura do servidor pode levar alguns minutos.</p>
+    <p class="section-note">É só enviar um vídeo da sua fala. A plataforma analisa voz, texto, corpo e olhar sozinha e mostra tudo logo abaixo, em Resultados. A leitura do servidor pode levar alguns minutos.</p>
     <label class="upload-zone" id="audioUploadZone">
       <input type="file" id="audioFile" accept="audio/*,video/*">
       <div class="uz-title">Clique para escolher um arquivo de áudio ou vídeo</div>
@@ -695,37 +705,11 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
     </details>
   </section>
 
-  <section class="card res" id="box-img">
-    <h2>Roupa e imagem</h2>
-    <p class="section-note">Checagens técnicas de roupa (contraste com o fundo, estouro de brilho, risco de moiré) mais a cor dominante detectada, comparada com o que costuma combinar com o tom do seu discurso (selecionado lá em cima, em "Contexto da apresentação"). Calculado por pixel, sem modelo de segmentação.</p>
-
-    <div id="videoFrameSection" style="display:none; margin-top:14px">
-      <div class="video-frame-wrap">
-        <video class="frame-source" id="frameVideo" muted playsinline></video>
-      </div>
-      <input type="range" class="scrub" id="frameScrub" min="0" max="100" value="0" step="0.1">
-      <button class="frame-btn" id="captureFrameBtn" type="button">Analisar este quadro</button>
-    </div>
-
-    <label class="upload-zone" id="photoUploadZone" style="margin-top:14px">
-      <input type="file" id="photoFile" accept="image/*">
-      <div class="uz-title" id="photoUploadTitle">Ou envie uma foto do look</div>
-      <div class="uz-sub">jpg, png — analisado localmente</div>
-    </label>
-
-    <canvas class="frame-canvas" id="frameCanvas"></canvas>
-    <p class="status-line" id="imageStatus"></p>
-
-    <div id="imageResults" style="display:none; margin-top:16px">
-      <ul class="check-list" id="imageChecks"></ul>
-    </div>
-  </section>
-
   <section class="card res" id="box-idx">
-    <h2>Índice de prontidão técnica</h2>
-    <p class="section-note">Média simples dos sinais mensuráveis disponíveis nesta sessão — peso igual pra cada um, fórmula não calibrada contra plateia real. Mede aderência aos padrões técnicos (ritmo, contato visual, vícios de linguagem etc.), não "quanto a pessoa convence" — conteúdo, carisma e contexto não entram nessa conta.</p>
+    <h2>Resumo dos sinais</h2>
+    <p class="section-note">Mostra quantos sinais medidos nesta sessão estão em verde, amarelo ou vermelho, sem nota numérica. As referências são de trabalho, ainda não calibradas.</p>
     <div class="row">
-      <button class="frame-btn" id="generateIndexBtn" type="button" style="margin-top:0">Calcular índice</button>
+      <button class="frame-btn" id="generateIndexBtn" type="button" style="margin-top:0">Atualizar resumo</button>
     </div>
     <div id="indexOutput" style="display:none; margin-top:18px"></div>
   </section>
@@ -742,7 +726,7 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
 
   <section class="card res" id="box-rel">
     <h2>Resumo em texto</h2>
-    <p class="section-note">Junta o que foi analisado nesta sessão — texto, voz, imagem, movimento e, se carregado, o olhar.</p>
+    <p class="section-note">Junta o que foi analisado nesta sessão — texto, voz, movimento e olhar.</p>
     <div class="row">
       <button class="frame-btn" id="generateReportBtn" type="button" style="margin-top:0">Gerar relatório</button>
       <button class="frame-btn" id="copyReportBtn" type="button" style="margin-top:0; display:none; background:var(--surface); color:var(--ink); border-color:var(--rule)">Copiar</button>
@@ -773,8 +757,37 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
 
   </div>
 
+  <div style="position:absolute;left:-9999px;top:0;width:320px;height:240px;overflow:hidden" aria-hidden="true">
+  <section class="card res" id="box-img">
+    <h2>Roupa e imagem</h2>
+    <p class="section-note">Checagens técnicas de roupa (contraste com o fundo, estouro de brilho, risco de moiré) mais a cor dominante detectada, comparada com o que costuma combinar com o tom do seu discurso (selecionado lá em cima, em "Contexto da apresentação"). Calculado por pixel, sem modelo de segmentação.</p>
+
+    <div id="videoFrameSection" style="display:none; margin-top:14px">
+      <div class="video-frame-wrap">
+        <video class="frame-source" id="frameVideo" muted playsinline></video>
+      </div>
+      <input type="range" class="scrub" id="frameScrub" min="0" max="100" value="0" step="0.1">
+      <button class="frame-btn" id="captureFrameBtn" type="button">Analisar este quadro</button>
+    </div>
+
+    <label class="upload-zone" id="photoUploadZone" style="margin-top:14px">
+      <input type="file" id="photoFile" accept="image/*">
+      <div class="uz-title" id="photoUploadTitle">Ou envie uma foto do look</div>
+      <div class="uz-sub">jpg, png — analisado localmente</div>
+    </label>
+
+    <canvas class="frame-canvas" id="frameCanvas"></canvas>
+    <p class="status-line" id="imageStatus"></p>
+
+    <div id="imageResults" style="display:none; margin-top:16px">
+      <ul class="check-list" id="imageChecks"></ul>
+    </div>
+  </section>
+
+  </div>
+
   <footer class="foot">
-    Piloto — texto, gráficos de voz e checagem de imagem rodam no seu navegador. Vídeo/áudio enviado no módulo de voz também vai pro servidor de análise (transcrição e leitura de rosto/corpo).
+    Piloto — texto e gráficos de voz rodam no seu navegador. Vídeo/áudio enviado no módulo de voz também vai pro servidor de análise (transcrição e leitura de rosto/corpo).
   </footer>
 
 </div>
@@ -1877,6 +1890,9 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
 
 // ---------- Contato visual e olhar — exibição compartilhada ----------
 function renderLandmarksData(data, checksList) {
+  // Sinais removidos da exibição: contagem de piscadas e 'mãos atrás das costas' (davam falso alarme, principalmente em vídeo sentado).
+  delete data.piscadas_por_minuto_estimado;
+  delete data.maos_atras_das_costas;
   var rows = [
     ['Contato visual (olhando pra frente)', data.contato_visual_estimado_pct],
     ['Olhou para baixo', data.olhou_para_baixo_pct],
@@ -2193,7 +2209,7 @@ async function runBackendAnalysis(file) {
 function generateParecer(d) {
   var groups = [];
 
-  var tone = d.imagem && d.imagem.tomDiscurso;
+  var tone = document.getElementById('toneSelect').value;
   if (tone && (d.texto || d.movimento)) {
     var items = [];
     var TOM_LABEL = { energetico: 'Energético', motivacional: 'Motivacional', professoral: 'Professoral / didático', tecnico: 'Técnico / analítico', formal: 'Institucional / formal', descontraido: 'Descontraído' };
@@ -2220,8 +2236,8 @@ function generateParecer(d) {
     if (items.length) groups.push({ title: 'Coerência com o tom selecionado (heurística inicial, poucos casos testados)', items: items });
   }
 
-  var publico = d.imagem && d.imagem.publico;
-  var formato = d.imagem && d.imagem.formato;
+  var publico = document.getElementById('audienceSelect').value;
+  var formato = document.getElementById('formatSelect').value;
   if ((publico || formato) && (d.texto || d.movimento)) {
     var items2 = [];
     var PUBLICO_FORMAL = ['politico', 'diretoria', 'qualificado'];
@@ -2349,70 +2365,88 @@ function generateParecer(d) {
   });
 })();
 
-// ---------- Índice de prontidão técnica ----------
-function computeReadinessIndex(d) {
-  var items = []; // {label, score}
-
-  function clamp(n) { return Math.max(0, Math.min(100, n)); }
-
-  if (d.texto) {
-    if (d.texto.wpm) {
-      var dist = d.texto.wpm < 130 ? (130 - d.texto.wpm) : (d.texto.wpm > 160 ? (d.texto.wpm - 160) : 0);
-      items.push({ label: 'Ritmo de fala', score: clamp(100 - dist * 1.2) });
-    }
-    if (d.texto.hedgingPor100 !== null && d.texto.hedgingPor100 !== undefined) items.push({ label: 'Insegurança na fala', score: clamp(100 - d.texto.hedgingPor100 * 15) });
-    if (d.texto.muletasPor100 !== null && d.texto.muletasPor100 !== undefined) items.push({ label: 'Vícios de linguagem', score: clamp(100 - d.texto.muletasPor100 * 15) });
-    if (d.texto.vaguezaPor100 !== null && d.texto.vaguezaPor100 !== undefined) items.push({ label: 'Especificidade (vagueza)', score: clamp(100 - d.texto.vaguezaPor100 * 15) });
-    if (d.texto.verboFracoPor100 !== null && d.texto.verboFracoPor100 !== undefined) items.push({ label: 'Verbo direto', score: clamp(100 - d.texto.verboFracoPor100 * 15) });
+// ---------- Resumo dos sinais (semáforo; substitui o antigo índice numérico) ----------
+// Fonte única das regras de verde / amarelo / vermelho (referências de trabalho, ainda não calibradas).
+function pilotSignalStatus(key, d) {
+  function band(v, okFn, warnFn) { return okFn(v) ? 'ok' : (warnFn(v) ? 'warn' : 'bad'); }
+  function res(status, label, valor, ref) { return { status: status, label: label, valor: valor, ref: ref }; }
+  var t = d.texto, v = d.voz, m = d.movimento, o = d.olhar, x;
+  switch (key) {
+    case 'ritmoFala': if (!t || !t.wpm) return null; return res(band(t.wpm, function (n) { return n >= 130 && n <= 160; }, function (n) { return n >= 110 && n <= 180; }), 'Ritmo de fala', t.wpm + ' palavras/min', '130 a 160');
+    case 'inseguranca': if (!t || t.hedgingPor100 === null || t.hedgingPor100 === undefined) return null; return res(band(t.hedgingPor100, function (n) { return n <= 3; }, function (n) { return n <= 4.5; }), 'Insegurança na fala', t.hedgingPor100 + ' por 100 palavras', 'até 3');
+    case 'vicios': if (!t || t.muletasPor100 === null || t.muletasPor100 === undefined) return null; return res(band(t.muletasPor100, function (n) { return n <= 3; }, function (n) { return n <= 4.5; }), 'Vícios de linguagem', t.muletasPor100 + ' por 100 palavras', 'até 3');
+    case 'vagueza': if (!t || t.vaguezaPor100 === null || t.vaguezaPor100 === undefined) return null; return res(band(t.vaguezaPor100, function (n) { return n <= 2; }, function (n) { return n <= 3; }), 'Vagueza', t.vaguezaPor100 + ' por 100 palavras', 'até 2');
+    case 'verboFraco': if (!t || t.verboFracoPor100 === null || t.verboFracoPor100 === undefined) return null; return res(band(t.verboFracoPor100, function (n) { return n <= 2; }, function (n) { return n <= 3; }), 'Verbos fracos', t.verboFracoPor100 + ' por 100 palavras', 'até 2');
+    case 'entonacao': if (!v || !v.variacaoPitch || v.variacaoPitch === '—') return null; return res(v.variacaoPitch === 'baixa' ? 'bad' : 'ok', 'Entonação', v.variacaoPitch, 'média ou alta');
+    case 'pausas': if (!v || v.pausasPorMin === null || v.pausasPorMin === undefined) return null; return res(band(v.pausasPorMin, function (n) { return n >= 8 && n <= 25; }, function (n) { return (n >= 4 && n < 8) || (n > 25 && n <= 32); }), 'Pausas', v.pausasPorMin + ' por minuto', '8 a 25 por minuto');
+    case 'quedas': if (!v || v.quedasPorMin === null || v.quedasPorMin === undefined) return null; return res(band(v.quedasPorMin, function (n) { return n <= 2; }, function (n) { return n <= 4; }), 'Quedas de energia', v.quedasPorMin + ' por minuto', 'até 2 por minuto');
+    case 'volume': if (!v || !v.nivelVolume) return null; return res(v.nivelVolume === 'adequado' ? 'ok' : (/demais/.test(v.nivelVolume) ? 'bad' : 'warn'), 'Nível de volume', v.nivelVolume, 'adequado');
+    case 'varVolume': if (!v || !v.consistenciaVolume || v.consistenciaVolume === '—') return null; return res(v.consistenciaVolume.indexOf('variação') > -1 ? 'ok' : 'warn', 'Variação de volume', v.consistenciaVolume, 'com variação');
+    case 'cadencia': if (!v || !v.cadencia || v.cadencia.indexOf('poucas') > -1) return null; return res(v.cadencia.indexOf('irregular') > -1 ? 'warn' : 'ok', 'Cadência', v.cadencia, 'regular');
+    case 'monotonia': if (!v || !v.monotona) return null; return res(v.monotona === 'não' ? 'ok' : 'bad', 'Fala monótona', v.monotona, 'não');
+    case 'clareza': if (!v || !v.clarezaFala) return null; return res(v.clarezaFala === 'alta' ? 'ok' : (v.clarezaFala === 'média' ? 'warn' : 'bad'), 'Clareza de fala (sinal fraco)', v.clarezaFala, 'alta');
+    case 'atividade': if (!m || m.atividadeValor === undefined || m.atividadeValor === null) return null; x = m.atividadeValor; return res(x >= 3 && x <= 10 ? 'ok' : (x > 16 ? 'bad' : 'warn'), 'Atividade de movimento', m.atividade + ' (' + x + ')', 'média (3 a 10)');
+    case 'lateral': if (!m || m.deslocamentoLateralPct === undefined || m.deslocamentoLateralPct === null) return null; return res(band(m.deslocamentoLateralPct, function (n) { return n <= 40; }, function (n) { return n <= 65; }), 'Deslocamento lateral', m.deslocamentoLateralPct + '%', 'até 40% da largura');
+    case 'balanco': if (!m || !m.balancoRitmico) return null; x = (m.balancoRitmico.match(/(\d+)% regular/) || [])[1]; return res(x ? (parseInt(x, 10) >= 75 ? 'bad' : 'warn') : 'ok', 'Balanço rítmico', x ? 'provável pêndulo, ' + x + '% regular' : 'sem balanço repetitivo', 'sem balanço repetitivo');
+    case 'contatoVisual': if (!o || o.contato_visual_estimado_pct === undefined || o.contato_visual_estimado_pct === null) return null; return res(band(o.contato_visual_estimado_pct, function (n) { return n >= 70; }, function (n) { return n >= 50; }), 'Contato visual', o.contato_visual_estimado_pct + '%', '70% ou mais');
+    case 'olharBaixo': if (!o || o.olhou_para_baixo_pct === undefined || o.olhou_para_baixo_pct === null) return null; return res(band(o.olhou_para_baixo_pct, function (n) { return n <= 10; }, function (n) { return n <= 25; }), 'Olhou para baixo', o.olhou_para_baixo_pct + '%', 'até 10%');
+    case 'desviou': if (!o || o.desviou_o_olhar_pct === undefined || o.desviou_o_olhar_pct === null) return null; return res(band(o.desviou_o_olhar_pct, function (n) { return n <= 15; }, function (n) { return n <= 30; }), 'Desviou o olhar', o.desviou_o_olhar_pct + '%', 'até 15%');
+    case 'rosto': if (!o || !o.mao_perto_do_rosto || !o.mao_perto_do_rosto.total_episodios) return null; x = o.mao_perto_do_rosto.total_episodios; return res(x <= 2 ? 'warn' : 'bad', 'Mão perto do rosto (baixa confiança)', x + ' episódio(s)', 'nenhum');
   }
-
-  if (d.voz) {
-    if (d.voz.variacaoPitch) items.push({ label: 'Entonação', score: { baixa: 40, média: 75, alta: 100 }[d.voz.variacaoPitch] || 60 });
-    if (d.voz.consistenciaVolume) items.push({ label: 'Variação de volume', score: d.voz.consistenciaVolume.indexOf('variação') > -1 ? 100 : 50 });
-    if (d.voz.cadencia) items.push({ label: 'Cadência', score: d.voz.cadencia.indexOf('irregular') > -1 ? 65 : 100 });
-    if (d.voz.clarezaFala) items.push({ label: 'Clareza de fala (dicção, sinal fraco)', score: { alta: 100, média: 65, baixa: 35 }[d.voz.clarezaFala] || 60 });
-  }
-
-  if (d.movimento && d.movimento.balancoRitmico) {
-    items.push({ label: 'Estabilidade postural', score: d.movimento.balancoRitmico.indexOf('provável') > -1 ? 50 : 90 });
-  }
-
-  if (d.olhar) {
-    if (d.olhar.contato_visual_estimado_pct !== undefined && d.olhar.contato_visual_estimado_pct !== null) items.push({ label: 'Contato visual', score: clamp(d.olhar.contato_visual_estimado_pct) });
-    if (d.olhar.olhou_para_baixo_pct !== undefined && d.olhar.olhou_para_baixo_pct !== null) items.push({ label: 'Olhar direcionado à plateia', score: clamp(100 - d.olhar.olhou_para_baixo_pct * 2) });
-    if (d.olhar.mao_perto_do_rosto && d.olhar.mao_perto_do_rosto.total_episodios) items.push({ label: 'Rosto visível (sem obstrução)', score: clamp(100 - d.olhar.mao_perto_do_rosto.total_episodios * 15) });
-  }
-
-  if (d.imagem && d.imagem.checks && d.imagem.checks.length) {
-    var okCount = d.imagem.checks.filter(function (c) { return c.ok; }).length;
-    items.push({ label: 'Imagem e vestuário', score: Math.round((okCount / d.imagem.checks.length) * 100) });
-  }
-
-  if (!items.length) return null;
-  var total = items.reduce(function (a, it) { return a + it.score; }, 0);
-  return { overall: Math.round(total / items.length), items: items };
+  return null;
 }
+
+var PILOT_SIGNAL_GROUPS = [
+  ['Texto', ['ritmoFala', 'inseguranca', 'vicios', 'vagueza', 'verboFraco']],
+  ['Voz', ['entonacao', 'pausas', 'quedas', 'volume', 'varVolume', 'cadencia', 'monotonia', 'clareza']],
+  ['Corpo', ['atividade', 'lateral', 'balanco']],
+  ['Olhar e postura', ['contatoVisual', 'olharBaixo', 'desviou', 'rosto']]
+];
+
+function computeSignalSummary(d) {
+  var counts = { ok: 0, warn: 0, bad: 0 }, groups = [];
+  PILOT_SIGNAL_GROUPS.forEach(function (g) {
+    var items = [];
+    g[1].forEach(function (k) { var r = pilotSignalStatus(k, d); if (r) { items.push(r); counts[r.status]++; } });
+    if (items.length) groups.push({ title: g[0], items: items });
+  });
+  var total = counts.ok + counts.warn + counts.bad;
+  return total ? { counts: counts, total: total, groups: groups } : null;
+}
+function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.warn + ' amarelo(s), ' + r.counts.bad + ' vermelho(s) em ' + r.total + ' sinais'; }
 
 (function () {
   var genBtn = document.getElementById('generateIndexBtn');
   var output = document.getElementById('indexOutput');
+  var ICON = { ok: '✓', warn: '!', bad: '✕' };
 
   genBtn.addEventListener('click', function () {
     var d = window.pilotReportData || {};
-    var result = computeReadinessIndex(d);
+    var result = computeSignalSummary(d);
     output.style.display = 'block';
-    if (!result) {
-      output.innerHTML = '<p class="section-note">Nenhum módulo foi analisado ainda nesta sessão. Rode ao menos um acima antes de calcular.</p>';
-      return;
-    }
-    var html = '<div class="index-score-wrap"><span class="index-score-num">' + result.overall + '</span><span class="index-score-max">/ 100</span></div>';
-    html += result.items.map(function (it) {
-      return '<div class="index-breakdown-row"><span>' + it.label + '</span>' +
-        '<span class="index-breakdown-bar-track"><span class="index-breakdown-bar-fill" style="width:' + Math.round(it.score) + '%"></span></span>' +
-        '<span>' + Math.round(it.score) + '</span></div>';
-    }).join('');
-    html += '<p class="section-note" style="margin-top:14px">Calculado a partir de ' + result.items.length + ' sinal(is) disponível(is) nesta sessão — média simples, sem peso diferenciado entre eles.</p>';
-    output.innerHTML = html;
+    output.textContent = '';
+    function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+    if (!result) { output.appendChild(el('p', 'section-note', 'Nenhum módulo foi analisado ainda nesta sessão.')); return; }
+
+    var top = el('div', 'sum-top');
+    [['ok', 'verde(s)'], ['warn', 'amarelo(s)'], ['bad', 'vermelho(s)']].forEach(function (c) {
+      var box = el('div', 'sum-count'); box.appendChild(el('span', 'sem-badge ' + c[0], ICON[c[0]])); box.appendChild(el('span', 'sum-num', String(result.counts[c[0]]))); box.appendChild(el('span', 'sum-lab', c[1])); top.appendChild(box);
+    });
+    output.appendChild(top);
+    output.appendChild(el('p', 'section-note', 'de ' + result.total + ' sinais medidos nesta sessão. Veja abaixo quais são e a referência de cada um.'));
+
+    result.groups.forEach(function (g) {
+      output.appendChild(el('p', 'sum-group', g.title));
+      g.items.forEach(function (it) {
+        var row = el('div', 'sum-row');
+        row.appendChild(el('span', 'sem-badge ' + it.status, ICON[it.status]));
+        row.appendChild(el('span', 'sum-name', it.label));
+        row.appendChild(el('span', 'sum-val', it.valor));
+        row.appendChild(el('span', 'sum-ref', 'ref.: ' + it.ref));
+        output.appendChild(row);
+      });
+    });
+    output.appendChild(el('p', 'section-note', 'Este resumo não é uma nota e não mede convencimento, conteúdo ou carisma. As referências são de trabalho, ainda não calibradas com vídeos reais. Use como ponto de partida para conversa.'));
   });
 })();
 
@@ -2744,7 +2778,7 @@ function computeReadinessIndex(d) {
 
     // 01
     n++; body.push(heading(n, 'Formato do Acompanhamento'));
-    body.push(para(run(f.formatoTexto || ('Em ' + periodo.toLowerCase() + ', ' + (f.aluno || 'o(a) aluno(a)') + ' foi avaliado(a) com apoio da plataforma Ensaio (análise de voz, corpo, olhar, texto e imagem a partir de vídeo) e da observação fonoaudiológica.'))));
+    body.push(para(run(f.formatoTexto || ('Em ' + periodo.toLowerCase() + ', ' + (f.aluno || 'o(a) aluno(a)') + ' foi avaliado(a) com apoio da plataforma Ensaio (análise de voz, corpo, olhar e texto a partir de vídeo) e da observação fonoaudiológica.'))));
 
     // 02
     if (f.conteudo && f.conteudo.length) {
@@ -2759,7 +2793,7 @@ function computeReadinessIndex(d) {
     n++; body.push(heading(n, 'Metodologia de Avaliação'));
     body.push(para(run('A avaliação foi feita de forma ativa, em cada encontro, por meio de:')));
     [['Observação fonoaudiológica: ', 'análise de voz, corpo, linguagem e presença durante as falas e exercícios.'],
-     ['Análise assistida pela plataforma Ensaio: ', 'medições automáticas de voz, texto, movimento, olhar e imagem a partir do vídeo, usadas como ponto de partida para a conversa.'],
+     ['Análise assistida pela plataforma Ensaio: ', 'medições automáticas de voz, texto, movimento e olhar a partir do vídeo, usadas como ponto de partida para a conversa.'],
      ['Registro de vícios de linguagem: ', 'contagem das hesitações e muletas em cada encontro, para acompanhar a evolução.'],
      ['Tarefas entre encontros: ', 'exercícios combinados para a rotina, retomados no encontro seguinte.']
     ].forEach(function (b) { body.push(bullet([run(b[0], { b: 1, color: C.dark }), run(b[1])])); });
@@ -2770,20 +2804,23 @@ function computeReadinessIndex(d) {
     if (sv.length) { n++; body.push(heading(n, 'Saúde Vocal')); body.push(kvTable(sv)); }
 
     // 05 análise Ensaio
-    var groups = metricRows(d), idx = typeof computeReadinessIndex === 'function' ? computeReadinessIndex(d) : null;
+    var groups = metricRows(d), idx = typeof computeSignalSummary === 'function' ? computeSignalSummary(d) : null;
     if (groups.length || idx) {
       n++; body.push(heading(n, 'Análise do Ensaio'));
       if (idx) {
-        body.push(para([run('Índice de prontidão técnica: ', { b: 1, color: C.dark }), run(idx.overall + ' / 100', { b: 1, size: 26, color: C.dark })], { after: 60 }));
-        body.push(tbl2(head3(['Sinal', 'Pontuação'], [7000, 2600]), idx.items.map(function (it) {
-          return cell(para(run(it.label, { size: 19 }), { after: 0 }), 7000, { fill: C.gray }) + cell(para(run(String(Math.round(it.score)), { b: 1, color: C.dark, size: 19 }), { after: 0 }), 2600, { fill: C.gray });
-        }), [7000, 2600]));
+        body.push(para([run('Resumo dos sinais: ', { b: 1, color: C.dark }), run(pilotSummaryLine(idx), { b: 1, color: C.dark })], { after: 60 }));
+        var WORDS = { ok: '✓ bom', warn: '! atenção', bad: '✕ vale melhorar' }, WCOL = { ok: '3E6B44', warn: 'A5761F', bad: 'B03A2E' };
+        var rowsSig = [];
+        idx.groups.forEach(function (g) { g.items.forEach(function (it) { rowsSig.push([g.title + ' · ' + it.label, it.valor + '  (ref.: ' + it.ref + ')', it.status]); }); });
+        body.push(tbl2(head3(['Sinal', 'Resultado', 'Situação'], [3300, 4200, 2100]), rowsSig.map(function (r) {
+          return cell(para(run(r[0], { size: 18 }), { after: 0 }), 3300, { fill: C.gray }) + cell(para(run(r[1], { size: 18 }), { after: 0 }), 4200, { fill: C.gray }) + cell(para(run(WORDS[r[2]], { b: 1, size: 18, color: WCOL[r[2]] }), { after: 0 }), 2100, { fill: C.gray });
+        }), [3300, 4200, 2100]));
       }
       groups.forEach(function (gr) {
         body.push(para(run(gr.title, { b: 1, color: C.dark, size: 22 }), { before: 120, after: 80, keep: 1 }));
         body.push(kvTable(gr.rows.map(function (r) { return [r[0], String(r[1])]; })));
       });
-      body.push(para(run('Os números de texto, voz, imagem e movimento vêm de heurísticas que ainda não foram calibradas contra avaliação humana. Servem como ponto de partida para conversa, não como nota final.', { i: 1, size: 17, color: '5B5E51' })));
+      body.push(para(run('Os números de texto, voz e movimento vêm de heurísticas que ainda não foram calibradas contra avaliação humana. Servem como ponto de partida para conversa, não como nota final.', { i: 1, size: 17, color: '5B5E51' })));
     }
 
     // 06 observações
@@ -3088,19 +3125,8 @@ function computeReadinessIndex(d) {
     vRhythm: { ref: 'ref.: regular', tip: 'Compara a duração dos trechos entre as pausas. Irregular não é necessariamente ruim: pode ser ênfase intencional ou frases cortadas. Ouça de novo pra decidir.' },
     vMonotone: { ref: 'ref.: não', tip: 'Marca "sim" quando tom e volume ficam parados ao mesmo tempo.' }
   };
-  function band(v, ok, warn) { return ok(v) ? 'ok' : (warn(v) ? 'warn' : 'bad'); }
-  function status(id, d) {
-    switch (id) {
-      case 'vPitchVar': return d.variacaoPitch === 'alta' || d.variacaoPitch === 'média' ? 'ok' : (d.variacaoPitch === 'baixa' ? 'bad' : null);
-      case 'vPauses': return d.pausasPorMin === null || d.pausasPorMin === undefined ? null : band(d.pausasPorMin, function (v) { return v >= 8 && v <= 25; }, function (v) { return (v >= 4 && v < 8) || (v > 25 && v <= 32); });
-      case 'vDrops': return d.quedasPorMin === null || d.quedasPorMin === undefined ? null : band(d.quedasPorMin, function (v) { return v <= 2; }, function (v) { return v <= 4; });
-      case 'vLevel': return d.nivelVolume === 'adequado' ? 'ok' : (/demais/.test(d.nivelVolume || '') ? 'bad' : (d.nivelVolume ? 'warn' : null));
-      case 'vVolConsistency': return d.consistenciaVolume ? (d.consistenciaVolume.indexOf('variação') > -1 ? 'ok' : 'warn') : null;
-      case 'vRhythm': return !d.cadencia || d.cadencia.indexOf('poucas') > -1 ? null : (d.cadencia.indexOf('irregular') > -1 ? 'warn' : 'ok');
-      case 'vMonotone': return d.monotona ? (d.monotona === 'não' ? 'ok' : 'bad') : null;
-    }
-    return null;
-  }
+  var KEY = { vPitchVar: 'entonacao', vPauses: 'pausas', vDrops: 'quedas', vLevel: 'volume', vVolConsistency: 'varVolume', vRhythm: 'cadencia', vMonotone: 'monotonia' };
+  function status(id, d) { var r = pilotSignalStatus(KEY[id], { voz: d }); return r ? r.status : null; }
   var ICON = { ok: '✓', warn: '!', bad: '✕' };
   var WORD = { ok: 'bom', warn: 'atenção', bad: 'vale melhorar' };
 
@@ -3133,23 +3159,8 @@ function computeReadinessIndex(d) {
     mLateralPct: { ref: 'ref.: até 40% da largura', tip: 'Quanto o centro do movimento andou para os lados. Ficar no lugar é bom; passar de 40% é andar muito.' },
     mPendulum: { ref: 'ref.: sem balanço repetitivo', tip: 'Verifica se o corpo oscila de um lado pro outro em ritmo regular (efeito pêndulo).' }
   };
-  function status(id, d) {
-    if (id === 'mMotionLevel') {
-      var v = d.atividadeValor; if (v === undefined || v === null) return null;
-      if (v >= 3 && v <= 10) return 'ok'; if (v > 16) return 'bad'; return (v > 10 || v >= 1.5) ? 'warn' : 'warn';
-    }
-    if (id === 'mLateralPct') {
-      var p = d.deslocamentoLateralPct; if (p === undefined || p === null) return null;
-      return p <= 40 ? 'ok' : (p <= 65 ? 'warn' : 'bad');
-    }
-    if (id === 'mPendulum') {
-      var s = d.balancoRitmico || ''; if (!s) return null;
-      var m = s.match(/(\d+)% regular/);
-      if (m) return parseInt(m[1], 10) >= 75 ? 'bad' : 'warn';
-      return 'ok';
-    }
-    return null;
-  }
+  var KEY = { mMotionLevel: 'atividade', mLateralPct: 'lateral', mPendulum: 'balanco' };
+  function status(id, d) { var r = pilotSignalStatus(KEY[id], { movimento: d }); return r ? r.status : null; }
   var ICON = { ok: '✓', warn: '!', bad: '✕' }, WORD = { ok: 'bom', warn: 'atenção', bad: 'vale melhorar' };
   var EXPLAIN = [
     ['Atividade de movimento', 'Mede quanto do quadro muda de um instante pro outro: gestos, balanço, passos. “Alta” não quer dizer movimento brusco; quer dizer que há muita coisa se mexendo (ou a câmera tremendo). Média é o ideal. Muito baixa pode indicar corpo rígido; muito alta, agitação ou câmera na mão.'],
@@ -3240,8 +3251,7 @@ function computeReadinessIndex(d) {
     function go() {
       if (done) return; done = true;
       setTimeout(function () {
-        try { captureBtn.click(); } catch (e) {}
-        setTimeout(function () { try { if (!motionBtn.disabled) motionBtn.click(); } catch (e) {} }, 1800);
+        setTimeout(function () { try { if (!motionBtn.disabled) motionBtn.click(); } catch (e) {} }, 600);
       }, 600);
     }
     frameVideo.addEventListener('seeked', go, { once: true });
@@ -3264,7 +3274,7 @@ function computeReadinessIndex(d) {
   }
 
   // Índice e parecer logo que as análises locais terminam (recalculam no fim)
-  var MAP = [['box-texto', 'texto'], ['box-voz', 'voz'], ['box-mov', 'movimento'], ['box-olhar', 'olhar'], ['box-img', 'imagem']];
+  var MAP = [['box-texto', 'texto'], ['box-voz', 'voz'], ['box-mov', 'movimento'], ['box-olhar', 'olhar']];
   var chips = MAP.map(function (m) {
     var h = document.querySelector('#' + m[0] + ' h2'); if (!h) return null;
     var c = document.createElement('span'); c.className = 'chip-status'; c.textContent = 'aguardando'; h.insertBefore(c, h.querySelector('.chev'));
