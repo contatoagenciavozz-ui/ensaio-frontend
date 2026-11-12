@@ -324,6 +324,16 @@ a { color:var(--vague); }
 .site-footer { text-align:center; margin-top:40px; font-size:12px; color:var(--ink-faint); letter-spacing:.08em; }
 .site-footer b { color:var(--gold); font-weight:600; }
 
+.metric.has-sem { position:relative; padding-right:34px; }
+.sem-badge { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:13px; font-weight:800; line-height:1; }
+.metric .sem-badge { position:absolute; top:8px; right:2px; }
+.sem-badge.ok { background:rgba(111,207,151,.2); color:#6FCF97; border:1px solid #6FCF97; }
+.sem-badge.warn { background:rgba(232,185,90,.18); color:#E8B95A; border:1px solid #E8B95A; }
+.sem-badge.bad { background:rgba(255,99,99,.18); color:#FF7070; border:1px solid #FF7070; }
+.sem-badge.none { display:none; }
+.sem-ref { font-size:11px; color:var(--ink-faint); margin-top:3px; }
+.sem-legend { font-size:12px; color:var(--ink-faint); margin:12px 0 0; line-height:1.9; }
+.sem-legend .sem-badge { width:18px; height:18px; font-size:11px; vertical-align:middle; }
 #textoDicas { margin-top:6px; }
 .dica-summary { font-weight:600; margin:0 0 12px; }
 .dica-block { background:var(--bg); border:1px solid var(--rule); border-left:3px solid var(--blue); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
@@ -3062,6 +3072,54 @@ function computeReadinessIndex(d) {
     window.pilotRerenderText = function () { orig.apply(this, arguments); analyze(); };
   }
   analyze();
+})();
+
+// ---------- Semáforo da voz: ✓ verde, ! amarelo, ✕ vermelho + referência de cada medida ----------
+(function () {
+  var REF = {
+    vPitchVar: { ref: 'média ou alta = boa variação', tip: 'Entonação: o quanto o tom da voz sobe e desce. Alta ou média deixa a fala viva; baixa soa plana.' },
+    vPauses: { ref: 'ref.: 8 a 25 pausas/min', tip: 'Pausas de 0,3 s ou mais. Poucas (menos de 4/min) = fala corrida, sem respiro. Muitas (mais de 32/min) = fala picada ou hesitante.' },
+    vDrops: { ref: 'ref.: até 2 quedas/min', tip: 'A energia da voz despenca antes da pausa (a frase "morre"). Até 2 por minuto é aceitável; mais de 4 vale treinar o fim das frases.' },
+    vLevel: { ref: 'ref.: adequado', tip: 'Depende do ganho da gravação e da distância do microfone, não só de quão alto você falou.' },
+    vVolConsistency: { ref: 'ref.: com variação', tip: 'Variar o volume dá ênfase. Volume sempre igual cansa o ouvinte (mas gravações com compressor de áudio também achatam isso).' },
+    vRhythm: { ref: 'ref.: regular', tip: 'Compara a duração dos trechos entre as pausas. Irregular não é necessariamente ruim: pode ser ênfase intencional ou frases cortadas. Ouça de novo pra decidir.' },
+    vMonotone: { ref: 'ref.: não', tip: 'Marca "sim" quando tom e volume ficam parados ao mesmo tempo.' }
+  };
+  function band(v, ok, warn) { return ok(v) ? 'ok' : (warn(v) ? 'warn' : 'bad'); }
+  function status(id, d) {
+    switch (id) {
+      case 'vPitchVar': return d.variacaoPitch === 'alta' || d.variacaoPitch === 'média' ? 'ok' : (d.variacaoPitch === 'baixa' ? 'bad' : null);
+      case 'vPauses': return d.pausasPorMin === null || d.pausasPorMin === undefined ? null : band(d.pausasPorMin, function (v) { return v >= 8 && v <= 25; }, function (v) { return (v >= 4 && v < 8) || (v > 25 && v <= 32); });
+      case 'vDrops': return d.quedasPorMin === null || d.quedasPorMin === undefined ? null : band(d.quedasPorMin, function (v) { return v <= 2; }, function (v) { return v <= 4; });
+      case 'vLevel': return d.nivelVolume === 'adequado' ? 'ok' : (/demais/.test(d.nivelVolume || '') ? 'bad' : (d.nivelVolume ? 'warn' : null));
+      case 'vVolConsistency': return d.consistenciaVolume ? (d.consistenciaVolume.indexOf('variação') > -1 ? 'ok' : 'warn') : null;
+      case 'vRhythm': return !d.cadencia || d.cadencia.indexOf('poucas') > -1 ? null : (d.cadencia.indexOf('irregular') > -1 ? 'warn' : 'ok');
+      case 'vMonotone': return d.monotona ? (d.monotona === 'não' ? 'ok' : 'bad') : null;
+    }
+    return null;
+  }
+  var ICON = { ok: '✓', warn: '!', bad: '✕' };
+  var WORD = { ok: 'bom', warn: 'atenção', bad: 'vale melhorar' };
+
+  function decorate() {
+    var d = (window.pilotReportData || {}).voz; if (!d) return;
+    Object.keys(REF).forEach(function (id) {
+      var num = document.getElementById(id); if (!num) return;
+      var box = num.parentNode; box.classList.add('has-sem'); box.title = REF[id].tip;
+      var st = status(id, d), badge = box.querySelector('.sem-badge'), ref = box.querySelector('.sem-ref');
+      if (!badge) { badge = document.createElement('span'); box.appendChild(badge); }
+      if (!ref) { ref = document.createElement('div'); ref.className = 'sem-ref'; box.appendChild(ref); }
+      badge.className = 'sem-badge ' + (st || 'none'); badge.textContent = st ? ICON[st] : ''; badge.setAttribute('aria-label', st ? WORD[st] : '');
+      ref.textContent = REF[id].ref;
+    });
+    var res = document.getElementById('audioResults');
+    if (res && !document.getElementById('semLegend')) {
+      var lg = document.createElement('p'); lg.id = 'semLegend'; lg.className = 'sem-legend';
+      lg.innerHTML = '<span class="sem-badge ok">✓</span> bom &nbsp; <span class="sem-badge warn">!</span> atenção &nbsp; <span class="sem-badge bad">✕</span> vale melhorar. Passe o mouse (ou toque) em cada medida para ver o que ela significa. As referências são de trabalho, ainda não calibradas com vídeos reais.';
+      var ms = res.querySelectorAll('.metrics'); (ms[ms.length - 1] || res).insertAdjacentElement('afterend', lg);
+    }
+  }
+  setInterval(decorate, 800);
 })();
 
 // ---------- Fluxo em duas etapas + caixinhas que abrem depois do olhar e postura ----------
