@@ -2392,17 +2392,17 @@ function pilotSignalStatus(key, d) {
     case 'vicios': if (!t || t.muletasPor100 === null || t.muletasPor100 === undefined) return null; return res(band(t.muletasPor100, function (n) { return n <= 3; }, function (n) { return n <= 4.5; }), 'Vícios de linguagem', t.muletasPor100 + ' por 100 palavras', 'até 3');
     case 'vagueza': if (!t || t.vaguezaPor100 === null || t.vaguezaPor100 === undefined) return null; return res(band(t.vaguezaPor100, function (n) { return n <= 2; }, function (n) { return n <= 3; }), 'Vagueza', t.vaguezaPor100 + ' por 100 palavras', 'até 2');
     case 'verboFraco': if (!t || t.verboFracoPor100 === null || t.verboFracoPor100 === undefined) return null; return res(band(t.verboFracoPor100, function (n) { return n <= 2; }, function (n) { return n <= 3; }), 'Verbos fracos', t.verboFracoPor100 + ' por 100 palavras', 'até 2');
-    case 'entonacao': if (!v || !v.variacaoPitch || v.variacaoPitch === '—') return null; return res(v.variacaoPitch === 'baixa' ? 'bad' : 'ok', 'Entonação', v.variacaoPitch, 'média ou alta');
-    case 'pausas': if (!v || v.pausasPorMin === null || v.pausasPorMin === undefined) return null; return res(band(v.pausasPorMin, function (n) { return n >= 8 && n <= 25; }, function (n) { return (n >= 4 && n < 8) || (n > 25 && n <= 32); }), 'Pausas', v.pausasPorMin + ' por minuto', '8 a 25 por minuto');
-    case 'quedas': if (!v || v.quedasPorMin === null || v.quedasPorMin === undefined) return null; return res(band(v.quedasPorMin, function (n) { return n <= 2; }, function (n) { return n <= 4; }), 'Quedas de energia', v.quedasPorMin + ' por minuto', 'até 2 por minuto');
-    case 'volume': if (!v || !v.nivelVolume) return null; return res(v.nivelVolume === 'adequado' ? 'ok' : (/demais/.test(v.nivelVolume) ? 'bad' : 'warn'), 'Nível de volume', v.nivelVolume, 'adequado');
-    case 'varVolume': if (!v || !v.consistenciaVolume || v.consistenciaVolume === '—') return null; return res(v.consistenciaVolume.indexOf('variação') > -1 ? 'ok' : 'warn', 'Variação de volume', v.consistenciaVolume, 'com variação');
-    case 'cadencia': if (!v || !v.cadencia || v.cadencia.indexOf('poucas') > -1) return null; return res(v.cadencia.indexOf('irregular') > -1 ? 'warn' : 'ok', 'Cadência', v.cadencia, 'regular');
-    case 'monotonia': if (!v || !v.monotona) return null; return res(v.monotona === 'não' ? 'ok' : 'bad', 'Fala monótona', v.monotona, 'não');
+    case 'entonacao': if (!v || !v.variacaoPitch || v.variacaoPitch === '—') return null; return res(v.variacaoPitch === 'baixa' ? 'bad' : 'ok', 'Variação do tom da voz', { alta: 'bastante variação', 'média': 'alguma variação', baixa: 'pouca variação' }[v.variacaoPitch] || v.variacaoPitch, 'ter variação');
+    case 'pausas': if (!v || v.pausasPorMin === null || v.pausasPorMin === undefined) return null; return res(band(v.pausasPorMin, function (n) { return n >= 8 && n <= 25; }, function (n) { return (n >= 4 && n < 8) || (n > 25 && n <= 32); }), 'Pausas para respirar', v.pausasPorMin + ' por minuto', '8 a 25 por minuto');
+    case 'quedas': if (!v || v.quedasPorMin === null || v.quedasPorMin === undefined) return null; return res(band(v.quedasPorMin, function (n) { return n <= 2; }, function (n) { return n <= 4; }), 'Frases que perdem força no final', v.quedasPorMin + ' por minuto', 'até 2 por minuto');
+    case 'volume': if (!v || !v.nivelVolume) return null; return res(v.nivelVolume === 'adequado' ? 'ok' : (/demais/.test(v.nivelVolume) ? 'bad' : 'warn'), 'Volume da voz', v.nivelVolume === 'adequado' ? 'bom' : v.nivelVolume, 'volume bom');
+    case 'varVolume': if (!v || !v.consistenciaVolume || v.consistenciaVolume === '—') return null; return res(v.consistenciaVolume.indexOf('variação') > -1 ? 'ok' : 'warn', 'Variação do volume', v.consistenciaVolume.indexOf('variação') > -1 ? 'varia bem' : 'sempre igual', 'o volume variar');
+    case 'cadencia': if (!v || !v.cadencia || v.cadencia.indexOf('poucas') > -1) return null; return res(v.cadencia.indexOf('irregular') > -1 ? 'warn' : 'ok', 'Regularidade do ritmo', v.cadencia.indexOf('irregular') > -1 ? 'ritmo irregular' : 'ritmo constante', 'ritmo constante');
+    case 'monotonia': if (!v || !v.monotona) return null; return res(v.monotona === 'não' ? 'ok' : 'bad', 'Voz monótona?', v.monotona === 'não' ? 'não' : 'sim', 'não');
     case 'clareza': if (!v || !v.clarezaFala) return null; return res(v.clarezaFala === 'alta' ? 'ok' : (v.clarezaFala === 'média' ? 'warn' : 'bad'), 'Clareza de fala (sinal fraco)', v.clarezaFala, 'alta');
-    case 'atividade': if (!m || m.atividadeValor === undefined || m.atividadeValor === null) return null; x = m.atividadeValor; return res(x >= 3 && x <= 10 ? 'ok' : (x > 16 ? 'bad' : 'warn'), 'Atividade de movimento', m.atividade + ' (' + x + ')', 'média (3 a 10)');
-    case 'lateral': if (!m || m.deslocamentoLateralPct === undefined || m.deslocamentoLateralPct === null) return null; return res(band(m.deslocamentoLateralPct, function (n) { return n <= 40; }, function (n) { return n <= 65; }), 'Deslocamento lateral', m.deslocamentoLateralPct + '%', 'até 40% da largura');
-    case 'balanco': if (!m || !m.balancoRitmico) return null; x = (m.balancoRitmico.match(/(\d+)% regular/) || [])[1]; return res(x ? (parseInt(x, 10) >= 75 ? 'bad' : 'warn') : 'ok', 'Balanço rítmico', x ? 'provável pêndulo, ' + x + '% regular' : 'sem balanço repetitivo', 'sem balanço repetitivo');
+    case 'atividade': if (!m || m.atividadeValor === undefined || m.atividadeValor === null) return null; x = m.atividadeValor; return res(x >= 3 && x <= 10 ? 'ok' : (x > 16 ? 'bad' : 'warn'), 'Quanto você se mexe', { alta: 'bastante', 'média': 'na medida', baixa: 'pouco' }[m.atividade] + ' (' + x + ')', 'na medida (3 a 10)');
+    case 'lateral': if (!m || m.deslocamentoLateralPct === undefined || m.deslocamentoLateralPct === null) return null; return res(band(m.deslocamentoLateralPct, function (n) { return n <= 40; }, function (n) { return n <= 65; }), 'Quanto você andou para os lados', m.deslocamentoLateralPct + '% da largura do quadro', 'até 40%');
+    case 'balanco': if (!m || !m.balancoRitmico) return null; x = (m.balancoRitmico.match(/(\d+)% regular/) || [])[1]; return res(x ? (parseInt(x, 10) >= 75 ? 'bad' : 'warn') : 'ok', 'Balanço do corpo', x ? 'provável balanço repetido, ' + x + '% regular' : 'sem balanço repetitivo', 'sem balanço repetitivo');
     case 'contatoVisual': if (!o || o.contato_visual_estimado_pct === undefined || o.contato_visual_estimado_pct === null) return null; return res(band(o.contato_visual_estimado_pct, function (n) { return n >= 70; }, function (n) { return n >= 50; }), 'Contato visual', o.contato_visual_estimado_pct + '%', '70% ou mais');
     case 'olharBaixo': if (!o || o.olhou_para_baixo_pct === undefined || o.olhou_para_baixo_pct === null) return null; return res(band(o.olhou_para_baixo_pct, function (n) { return n <= 10; }, function (n) { return n <= 25; }), 'Olhou para baixo', o.olhou_para_baixo_pct + '%', 'até 10%');
     case 'desviou': if (!o || o.desviou_o_olhar_pct === undefined || o.desviou_o_olhar_pct === null) return null; return res(band(o.desviou_o_olhar_pct, function (n) { return n <= 15; }, function (n) { return n <= 30; }), 'Desviou o olhar', o.desviou_o_olhar_pct + '%', 'até 15%');
@@ -3241,14 +3241,32 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
 // ---------- Semáforo da voz: ✓ verde, ! amarelo, ✕ vermelho + referência de cada medida ----------
 (function () {
   var REF = {
-    vPitchVar: { ref: 'média ou alta = boa variação', tip: 'Entonação: o quanto o tom da voz sobe e desce. Alta ou média deixa a fala viva; baixa soa plana.' },
-    vPauses: { ref: 'ref.: 8 a 25 pausas/min', tip: 'Pausas de 0,3 s ou mais. Poucas (menos de 4/min) = fala corrida, sem respiro. Muitas (mais de 32/min) = fala picada ou hesitante.' },
-    vDrops: { ref: 'ref.: até 2 quedas/min', tip: 'A energia da voz despenca antes da pausa (a frase "morre"). Até 2 por minuto é aceitável; mais de 4 vale treinar o fim das frases.' },
-    vLevel: { ref: 'ref.: adequado', tip: 'Depende do ganho da gravação e da distância do microfone, não só de quão alto você falou.' },
-    vVolConsistency: { ref: 'ref.: com variação', tip: 'Variar o volume dá ênfase. Volume sempre igual cansa o ouvinte (mas gravações com compressor de áudio também achatam isso).' },
-    vRhythm: { ref: 'ref.: regular', tip: 'Compara a duração dos trechos entre as pausas. Irregular não é necessariamente ruim: pode ser ênfase intencional ou frases cortadas. Ouça de novo pra decidir.' },
-    vMonotone: { ref: 'ref.: não', tip: 'Marca "sim" quando tom e volume ficam parados ao mesmo tempo.' }
+    vPitchVar: { ref: 'ideal: ter variação', tip: 'O quanto sua voz sobe e desce.' },
+    vPauses: { ref: 'ideal: 8 a 25 por minuto', tip: 'Pequenos silêncios entre as ideias (de 0,3 s ou mais).' },
+    vDrops: { ref: 'ideal: até 2 por minuto', tip: 'Quando a voz "murcha" antes de uma pausa.' },
+    vLevel: { ref: 'ideal: volume bom', tip: 'Depende também do microfone e da distância.' },
+    vVolConsistency: { ref: 'ideal: o volume variar', tip: 'Falar mais forte nas ideias importantes dá ênfase.' },
+    vRhythm: { ref: 'ideal: ritmo constante', tip: 'Compara o tamanho dos trechos entre uma pausa e outra.' },
+    vMonotone: { ref: 'ideal: não', tip: 'Fica "sim" quando o tom e o volume ficam parados ao mesmo tempo.' }
   };
+  var PLAIN = {
+    vPitchVar: function (d) { return [{ alta: 'bastante variação', 'média': 'alguma variação', baixa: 'pouca variação' }[d.variacaoPitch], 'variação do tom da voz']; },
+    vPauses: function (d) { var k = d.pausasPorMin !== null && d.pausasPorMin !== undefined; return [k ? d.pausasPorMin + ' por min' : null, 'pausas para respirar']; },
+    vDrops: function (d) { var k = d.quedasPorMin !== null && d.quedasPorMin !== undefined; return [k ? d.quedasPorMin + ' por min' : null, 'frases que perdem força no final']; },
+    vLevel: function (d) { return [d.nivelVolume === 'adequado' ? 'bom' : d.nivelVolume, 'volume da voz']; },
+    vVolConsistency: function (d) { return [d.consistenciaVolume ? (d.consistenciaVolume.indexOf('variação') > -1 ? 'varia bem' : 'sempre igual') : null, 'variação do volume']; },
+    vRhythm: function (d) { return [d.cadencia ? (d.cadencia.indexOf('irregular') > -1 ? 'ritmo irregular' : (d.cadencia.indexOf('regular') > -1 ? 'ritmo constante' : d.cadencia)) : null, 'regularidade do ritmo']; },
+    vMonotone: function (d) { return [d.monotona ? (d.monotona === 'não' ? 'não' : 'sim') : null, 'voz monótona?']; }
+  };
+  var EXPLAIN = [
+    ['Variação do tom da voz', 'O quanto sua voz sobe e desce. Variar deixa a fala viva; uma voz “reta” cansa quem ouve.'],
+    ['Pausas para respirar', 'Pequenos silêncios entre as ideias. Poucos deixam a fala corrida; demais deixam a fala picada.'],
+    ['Frases que perdem força no final', 'Quando a voz “murcha” antes de uma pausa. O ideal é terminar as frases com energia.'],
+    ['Volume da voz', 'Se dá pra ouvir bem. Depende também do microfone e da distância dele.'],
+    ['Variação do volume', 'Falar mais forte nas ideias importantes ajuda a dar ênfase. Volume sempre igual cansa.'],
+    ['Regularidade do ritmo', '“Ritmo constante” quer dizer que a fala flui no mesmo passo. “Ritmo irregular” quer dizer que ora os trechos são curtos, ora longos. Pode ser de propósito, para dar ênfase, ou pode ser frase cortada. Ouça de novo para decidir.'],
+    ['Voz monótona?', 'Fica “sim” quando o tom e o volume ficam parados ao mesmo tempo. O ideal é “não”.']
+  ];
   var KEY = { vPitchVar: 'entonacao', vPauses: 'pausas', vDrops: 'quedas', vLevel: 'volume', vVolConsistency: 'varVolume', vRhythm: 'cadencia', vMonotone: 'monotonia' };
   function status(id, d) { var r = pilotSignalStatus(KEY[id], { voz: d }); return r ? r.status : null; }
   var ICON = { ok: '✓', warn: '!', bad: '✕' };
@@ -3259,6 +3277,8 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     Object.keys(REF).forEach(function (id) {
       var num = document.getElementById(id); if (!num) return;
       var box = num.parentNode; box.classList.add('has-sem'); box.title = REF[id].tip;
+      var pl = PLAIN[id] ? PLAIN[id](d) : [null, null], lab = box.querySelector('.lab');
+      if (pl[0]) num.textContent = pl[0]; if (pl[1] && lab) lab.textContent = pl[1];
       var st = status(id, d), badge = box.querySelector('.sem-badge'), ref = box.querySelector('.sem-ref');
       if (!badge) { badge = document.createElement('span'); }
       if (num.nextElementSibling !== badge) num.insertAdjacentElement('afterend', badge);
@@ -3268,9 +3288,12 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     });
     var res = document.getElementById('audioResults');
     if (res && !document.getElementById('semLegend')) {
-      var lg = document.createElement('p'); lg.id = 'semLegend'; lg.className = 'sem-legend';
-      lg.innerHTML = '<span class="sem-badge ok">✓</span> bom &nbsp; <span class="sem-badge warn">!</span> atenção &nbsp; <span class="sem-badge bad">✕</span> vale melhorar. Passe o mouse (ou toque) em cada medida para ver o que ela significa. As referências são de trabalho, ainda não calibradas com vídeos reais.';
-      var ms = res.querySelectorAll('.metrics'); (ms[ms.length - 1] || res).insertAdjacentElement('afterend', lg);
+      var ex = document.createElement('div'); ex.id = 'semLegend'; ex.className = 'sem-explain';
+      var lg = document.createElement('p'); lg.className = 'sem-legend';
+      lg.innerHTML = '<span class="sem-badge ok">✓</span> bom &nbsp; <span class="sem-badge warn">!</span> atenção &nbsp; <span class="sem-badge bad">✕</span> vale melhorar. Referências de trabalho, ainda não calibradas com vídeos reais.';
+      ex.appendChild(lg);
+      EXPLAIN.forEach(function (e) { var p = document.createElement('p'); var b = document.createElement('b'); b.textContent = e[0] + ': '; p.appendChild(b); p.appendChild(document.createTextNode(e[1])); ex.appendChild(p); });
+      var ms = res.querySelectorAll('.metrics'); (ms[ms.length - 1] || res).insertAdjacentElement('afterend', ex);
     }
   }
   setInterval(decorate, 800);
@@ -3279,27 +3302,30 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
 // ---------- Semáforo do movimento do corpo ----------
 (function () {
   var REF = {
-    mMotionLevel: { ref: 'ref.: média (3 a 10)', tip: 'Mede quanto do quadro muda de um instante pro outro. Média é a faixa de referência.' },
-    mLateralPct: { ref: 'ref.: até 40% da largura', tip: 'Quanto o centro do movimento andou para os lados. Ficar no lugar é bom; passar de 40% é andar muito.' },
-    mPendulum: { ref: 'ref.: sem balanço repetitivo', tip: 'Verifica se o corpo oscila de um lado pro outro em ritmo regular (efeito pêndulo).' }
+    mMotionLevel: { ref: 'ideal: na medida (3 a 10)', tip: 'Quanto do quadro se mexe de um instante pro outro.' },
+    mLateralPct: { ref: 'ideal: até 40% da largura', tip: 'Quanto você andou para os lados.' },
+    mPendulum: { ref: 'ideal: sem balanço repetido', tip: 'Se o corpo balança de um lado pro outro sempre no mesmo compasso.' }
+  };
+  var PLAIN = {
+    mMotionLevel: function (d) { return [d.atividade ? { alta: 'bastante', 'média': 'na medida', baixa: 'pouco' }[d.atividade] : null, 'quanto você se mexe']; },
+    mLateralPct: function (d) { return [null, 'quanto você andou para os lados (% da largura do quadro)']; },
+    mPendulum: function (d) { return [d.balancoRitmico ? (/(\d+)% regular/.test(d.balancoRitmico) ? 'balanço repetido' : 'sem balanço repetido') : null, 'balanço do corpo']; }
   };
   var KEY = { mMotionLevel: 'atividade', mLateralPct: 'lateral', mPendulum: 'balanco' };
   function status(id, d) { var r = pilotSignalStatus(KEY[id], { movimento: d }); return r ? r.status : null; }
   var ICON = { ok: '✓', warn: '!', bad: '✕' }, WORD = { ok: 'bom', warn: 'atenção', bad: 'vale melhorar' };
   var EXPLAIN = [
-    ['Atividade de movimento', 'Mede quanto do quadro muda de um instante pro outro: gestos, balanço, passos. “Alta” não quer dizer movimento brusco; quer dizer que há muita coisa se mexendo (ou a câmera tremendo). Média é o ideal. Muito baixa pode indicar corpo rígido; muito alta, agitação ou câmera na mão.'],
-    ['Deslocamento lateral', 'Quanto você andou para os lados, em % da largura do quadro. Ficar no lugar é bom (é a ancoragem). Até 40% é uso natural do espaço. Passar disso, indo e voltando de um lado ao outro, costuma distrair o público e pode sair do enquadramento. Andar com propósito e parar em pontos funciona; ficar indo e voltando, não.'],
-    ['Balanço rítmico', 'Verifica se o corpo oscila de um lado pro outro sempre no mesmo compasso (o “pêndulo”). “Sem balanço repetitivo” é o bom resultado. “Provável, X% regular” é alerta: o balanço constante costuma ser lido como nervosismo.']
+    ['Quanto você se mexe', 'Mede o quanto aparece de movimento no vídeo: gestos, balanço do corpo, passos. “Bastante” não quer dizer movimento brusco; quer dizer que tem muita coisa se mexendo (ou a câmera tremendo). O ideal é “na medida”. “Pouco” pode indicar corpo travado.'],
+    ['Quanto você andou para os lados', 'Quanto você andou da esquerda para a direita, em relação à largura da tela. Ficar firme no lugar é bom. Andar até 40% é uso natural do espaço. Passar disso, indo e voltando, costuma distrair quem assiste e pode tirar você do enquadramento. Andar com um objetivo e parar em pontos funciona; ficar indo e voltando não.'],
+    ['Balanço do corpo', 'Vê se o corpo balança de um lado pro outro sempre no mesmo compasso, como um pêndulo. “Sem balanço repetido” é o bom resultado. “Balanço repetido” é um alerta: esse movimento constante costuma ser lido como nervosismo.']
   ];
-
   function decorate() {
     var d = (window.pilotReportData || {}).movimento; if (!d) return;
-    var pend = document.getElementById('mPendulum');
-    if (pend && pend.textContent === 'movimento irregular') pend.textContent = 'sem balanço repetitivo';
-    if (pend && pend.textContent === 'sem padrão claro') pend.textContent = 'sem balanço repetitivo';
     Object.keys(REF).forEach(function (id) {
       var num = document.getElementById(id); if (!num) return;
       var box = num.parentNode; box.classList.add('has-sem'); box.title = REF[id].tip;
+      var pl = PLAIN[id] ? PLAIN[id](d) : [null, null], lab = box.querySelector('.lab');
+      if (pl[0]) num.textContent = pl[0]; if (pl[1] && lab) lab.textContent = pl[1];
       var st = status(id, d), badge = box.querySelector('.sem-badge'), ref = box.querySelector('.sem-ref');
       if (!badge) badge = document.createElement('span');
       if (num.nextElementSibling !== badge) num.insertAdjacentElement('afterend', badge);
