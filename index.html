@@ -324,6 +324,23 @@ a { color:var(--vague); }
 .site-footer { text-align:center; margin-top:40px; font-size:12px; color:var(--ink-faint); letter-spacing:.08em; }
 .site-footer b { color:var(--gold); font-weight:600; }
 
+#textoDicas { margin-top:6px; }
+.dica-summary { font-weight:600; margin:0 0 12px; }
+.dica-block { background:var(--bg); border:1px solid var(--rule); border-left:3px solid var(--blue); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+.dica-title { font-weight:700; font-size:14px; margin:0 0 4px; font-family:var(--font-serif); }
+.dica-sub { font-size:12px; color:var(--ink-faint); margin:0 0 8px; }
+.dica-item { font-size:13.5px; margin:6px 0; color:var(--ink); }
+.dica-ok { font-size:13.5px; margin:4px 0; color:var(--ok); }
+.dica-row { font-size:13.5px; margin:5px 0; line-height:1.5; }
+.dica-expr { font-weight:600; color:var(--filler); }
+.dica-arrow { color:var(--ink-soft); }
+.dica-ba { margin:10px 0; padding-top:8px; border-top:1px dashed var(--rule); }
+.dica-before { font-size:13px; color:var(--ink-soft); margin:0 0 4px; }
+.dica-after { font-size:13px; color:var(--ok); margin:0; }
+.dica-bank { margin:8px 0; background:var(--bg); border:1px solid var(--rule); border-radius:12px; padding:12px 16px; }
+.dica-bank summary { cursor:pointer; font-size:13px; font-weight:600; }
+.dica-phrase { font-size:13px; font-style:italic; margin:3px 0 3px 8px; color:var(--ink-soft); }
+.dica-foot { font-size:11.5px; color:var(--ink-faint); font-style:italic; }
 .dl-card > div { flex:1 1 320px; }
 .dl-card .status-line:empty { display:none; }
 .sub { font-family:var(--font-serif); font-size:16px; font-weight:700; margin:22px 0 6px; }
@@ -547,6 +564,8 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
     </div>
     <p class="hint">A duração é usada só para estimar o ritmo (palavras por minuto). Deixe em branco se não gravou o tempo.</p>
     <p class="err" id="durationError" role="alert"></p>
+    <h3 class="sub">Dicas para melhorar seu texto</h3>
+    <div id="textoDicas"></div>
     <div class="metrics">
       <div class="metric"><div class="num" id="mWords">0</div><div class="lab">palavras</div></div>
       <div class="metric m-hedge"><div class="num" id="mHedge">0</div><div class="lab">insegurança na fala</div></div>
@@ -2841,6 +2860,208 @@ function computeReadinessIndex(d) {
       status.textContent = Object.keys(d).length ? 'Relatório gerado. Confira o arquivo baixado.' : 'Baixado sem dados de análise (nenhum módulo rodou ainda nesta sessão).';
     } catch (e) { status.textContent = 'Não consegui gerar o arquivo: ' + e.message; }
   });
+})();
+
+// ---------- Dicas para melhorar o texto (por regras, sem IA e sem custo) ----------
+(function () {
+  var host = document.getElementById('textoDicas');
+  var ta = document.getElementById('transcript');
+  if (!host || !ta) return;
+
+  var L = '\\p{L}';
+  function R(src, flags) { return new RegExp(src, flags || 'giu'); }
+  var B = '(?<![\\p{L}\\p{N}])', E = '(?![\\p{L}\\p{N}])';
+
+  // expressão encontrada -> o que dizer no lugar. "auto" = dá pra reescrever a frase sozinho (só cortes e trocas seguras).
+  var TROCAS = [
+    { id: 'eu acho que', re: R(B + 'eu acho que' + E), alts: ['corte e afirme direto', 'defendo que…', 'minha posição é que…', 'os dados mostram que…'], auto: ['eu acho que\\s+', ''] },
+    { id: 'eu acredito que', re: R(B + 'eu acredito que' + E), alts: ['corte e afirme direto', 'na minha experiência,…', 'tenho convicção de que…'], auto: ['eu acredito que\\s+', ''] },
+    { id: 'talvez', re: R(B + 'talvez' + E), alts: ['decida: afirme ou corte a frase', 'uma possibilidade concreta é…'] },
+    { id: 'meio que', re: R(B + 'meio que' + E), alts: ['corte'], auto: ['meio que\\s+', ''] },
+    { id: 'de certa forma', re: R(B + 'de certa forma' + E), alts: ['corte'], auto: ['de certa forma,?\\s*', ''] },
+    { id: 'seria possível', re: R(B + 'seria possível' + E), alts: ['vamos…', 'proponho…'], auto: ['seria possível', 'vamos'] },
+    { id: 'a gente poderia', re: R(B + 'a gente poderia' + E), alts: ['vamos…', 'proponho que…'], auto: ['a gente poderia', 'vamos'] },
+    { id: 'né', re: R(B + 'né' + E), alts: ['corte e faça uma pausa', 'feche a frase com ponto final'], auto: [',?\\s*' + B + 'né\\??' + E, ''] },
+    { id: 'tipo', re: R(B + 'tipo(?!\\s+(?:de|d[oa]s?)' + E + ')' + E), alts: ['corte', 'por exemplo,…', 'como…'], auto: [B + 'tipo(?!\\s+(?:de|d[oa]s?)' + E + '),?\\s*', ''] },
+    { id: 'assim', re: R(B + 'assim' + E), alts: ['corte, se for só enchimento'] },
+    { id: 'então (no início)', re: R('(?:^|[.!?]\\s+)então,?' + E, 'giu'), alts: ['comece direto no ponto', 'por isso,…', 'portanto,…'], auto: ['^então,?\\s*', ''] },
+    { id: 'bom, (no início)', re: R('(?:^|[.!?]\\s+)bom,', 'giu'), alts: ['comece direto no ponto'], auto: ['^bom,\\s*', ''] },
+    { id: 'basicamente', re: R(B + 'basicamente' + E), alts: ['corte', 'em essência,…'], auto: ['basicamente,?\\s*', ''] },
+    { id: 'na verdade', re: R(B + 'na verdade' + E), alts: ['corte, se não houver contraste'] },
+    { id: 'digamos / vamos dizer', re: R(B + '(?:digamos|vamos dizer)' + E), alts: ['corte e diga o que quer dizer'], auto: ['(?:digamos|vamos dizer),?\\s*', ''] },
+    { id: 'sei lá', re: R(B + 'sei lá' + E), alts: ['corte, ou assuma: "não tenho esse dado agora"'] },
+    { id: 'a nível de', re: R(B + 'a nível de' + E), alts: ['em termos de…', 'no âmbito de…', 'corte'] },
+    { id: 'coisa(s)', re: R(B + 'coisas?' + E), alts: ['ponto', 'ideia', 'aspecto', 'o nome exato da coisa'] },
+    { id: 'significativo/a', re: R(B + 'significativ[oa]s?' + E), alts: ['troque por número: "cresceu 18%"', 'expressivo, relevante (com dado)'] },
+    { id: 'bastante', re: R(B + 'bastante' + E), alts: ['quantifique: "cerca de 40%"'] },
+    { id: 'vários / várias', re: R(B + 'vári[ao]s' + E), alts: ['diga o número exato'] },
+    { id: 'um monte de', re: R(B + 'um monte de' + E), alts: ['diga a quantidade: "doze", "mais de cem"'] },
+    { id: 'grande parte', re: R(B + 'grande parte' + E), alts: ['use a fração: "dois terços", "70%"'] },
+    { id: 'alto nível de', re: R(B + 'alto nível de' + E), alts: ['descreva o efeito concreto'] },
+    { id: 'a realização de', re: R(B + 'a realização de' + E), alts: ['use o verbo: "realizamos"'] },
+    { id: 'a implementação de', re: R(B + 'a implementação de' + E), alts: ['use o verbo: "implementamos"'] },
+    { id: 'houve um aumento', re: R(B + 'houve um aumento' + E), alts: ['diga quem fez: "aumentamos"'] },
+    { id: 'foi feito', re: R(B + 'foi feito' + E), alts: ['diga quem fez: "fizemos"'] },
+    { id: 'fizemos uma melhoria', re: R(B + 'fizemos uma melhoria' + E), alts: ['diga o que melhorou e quanto'] },
+    { id: 'conseguimos avançar', re: R(B + 'conseguimos avançar' + E), alts: ['diga em quê: "avançamos 3 etapas"'] }
+  ];
+
+  // palavras fracas -> mais fortes (só aparecem se o texto usar a palavra)
+  var FORTES = [
+    ['legal', 'relevante, inspirador, marcante'], ['bom', 'sólido, eficaz, valioso'], ['ruim', 'prejudicial, frágil, insuficiente'],
+    ['ótimo', 'excelente, decisivo'], ['tentar', 'buscar, propor, decidir'], ['mostrar', 'demonstrar, evidenciar, revelar'],
+    ['ajudar', 'apoiar, impulsionar, viabilizar'], ['fazer', 'realizar, construir, entregar'], ['falar', 'abordar, defender, apresentar'],
+    ['importante', 'fundamental, essencial, decisivo'], ['problema', 'desafio, gargalo, obstáculo'], ['muito', 'intensamente, de forma expressiva (ou um número)'],
+    ['grande', 'amplo, expressivo, de grande alcance'], ['melhor', 'mais eficaz, mais seguro, mais ágil (diga em quê)']
+  ];
+  var STOP = {}; ('que para com uma mais como mas foi ele ela seu sua dos das nos nas por isso pelo pela entre sobre quando onde muito também ainda depois antes porque essa esse esta este isto aquilo vamos temos tinha ser estar fazer tudo todos todas cada outro outra apenas desde até sem sob então assim aqui ali lá já só são está estão tem têm vai vão pode podem tinha fazem nosso nossa nossos nossas vocês você pessoas coisas coisa').split(' ').forEach(function (w) { STOP[w] = 1; });
+
+  var APOIO = {
+    'Abrir com impacto': ['Uma pergunta: [pergunta que o público se faz]?', 'Um dado: [número surpreendente] — e é sobre isso que eu vim falar.', 'Uma cena: imagine [situação concreta e curta].', 'Uma promessa: nos próximos [X] minutos você vai levar [benefício claro].'],
+    'Acolher a pergunta': ['Muito bom, obrigado(a) pela colocação.', 'Que bom que você trouxe esse ponto.', 'Essa é uma pergunta muito importante.', 'Eu entendo perfeitamente essa preocupação.'],
+    'Ganhar tempo para elaborar': ['Deixa eu explicar de uma forma bem simples…', 'Para que a sua audiência entenda melhor…', 'Vamos olhar isso por partes.', 'Esse ponto merece atenção, e eu explico por quê.'],
+    'Trazer exemplos e histórias': ['Deixa eu dar um exemplo prático.', 'Isso me lembra uma situação que vivemos recentemente…', 'Vou trazer aqui uma história que conecta bem com isso.'],
+    'Reforçar e concluir': ['O mais importante aqui é…', 'Se eu pudesse resumir em uma frase…', 'E é por isso que esse tema importa para as pessoas.', 'Minha proposta é simples: [ação]. Vamos começar hoje?']
+  };
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function tidy(s) { return cap(s.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:!?])/g, '$1').replace(/,\s*,/g, ',').replace(/^[,\s]+/, '').replace(/,\s*([.!?])/g, '$1').trim()); }
+  function sentences(text) { return text.split(/(?<=[.!?…])\s+|\n+/).map(function (s) { return s.trim(); }).filter(Boolean); }
+  function words(s) { return (s.match(/[\p{L}\p{N}'’-]+/gu) || []); }
+  function count(re, text) { var m = text.match(re); return m ? m.length : 0; }
+
+  function markedLine(sentence, re) {
+    var p = el('span'); var last = 0, m, rr = new RegExp(re.source, re.flags);
+    while ((m = rr.exec(sentence)) !== null) {
+      if (m[0] === '') { rr.lastIndex++; continue; }
+      p.appendChild(document.createTextNode(sentence.slice(last, m.index)));
+      var mk = el('mark', 'dica-mark', m[0]); p.appendChild(mk); last = m.index + m[0].length;
+    }
+    p.appendChild(document.createTextNode(sentence.slice(last)));
+    return p;
+  }
+
+  function block(title, sub) { var b = el('div', 'dica-block'); b.appendChild(el('p', 'dica-title', title)); if (sub) b.appendChild(el('p', 'dica-sub', sub)); host.appendChild(b); return b; }
+  function good(b, msg) { b.appendChild(el('p', 'dica-ok', '✓ ' + msg)); }
+  function note(b, msg) { b.appendChild(el('p', 'dica-item', msg)); }
+
+  function analyze() {
+    var text = (ta.value || '').trim();
+    host.textContent = '';
+    var wc = words(text).length;
+    if (wc < 25) { host.appendChild(el('p', 'section-note', 'Cole ou grave um texto com pelo menos umas 25 palavras para ver dicas de melhoria.')); return; }
+    var sents = sentences(text), found = 0;
+
+    // 1) trocas prontas
+    var rows = [];
+    TROCAS.forEach(function (t) { var n = count(t.re, text); if (n) rows.push({ t: t, n: n }); });
+    rows.sort(function (a, b) { return b.n - a.n; });
+    var b1 = block('Troque estas expressões', 'Do que mais aparece pro que menos aparece. O que está em "→" são opções, escolha a que combina com você.');
+    if (!rows.length) good(b1, 'Não encontrei expressões que enfraquecem a fala.');
+    rows.slice(0, 10).forEach(function (r) {
+      found++;
+      var line = el('div', 'dica-row');
+      line.appendChild(el('span', 'dica-expr', '"' + r.t.id + '"' + (r.n > 1 ? ' ×' + r.n : '')));
+      line.appendChild(el('span', 'dica-arrow', ' → ' + r.t.alts.join('  ·  ')));
+      b1.appendChild(line);
+    });
+
+    // 2) antes e depois
+    var ex = [];
+    sents.forEach(function (s) {
+      if (ex.length >= 5) return;
+      var after = s, changed = false;
+      TROCAS.forEach(function (t) { if (!t.auto) return; var re = new RegExp(t.auto[0], 'iu'); if (re.test(after)) { after = after.replace(new RegExp(t.auto[0], 'giu'), t.auto[1]); changed = true; } });
+      after = tidy(after);
+      if (changed && after.length > 8 && after !== s) ex.push({ before: s, after: after });
+    });
+    if (ex.length) {
+      var b2 = block('Antes e depois', 'Reescrita automática simples (só cortes e trocas seguras). Releia: o sentido pode pedir um ajuste seu.');
+      ex.forEach(function (e) {
+        found++;
+        var r = el('div', 'dica-ba');
+        var a = el('p', 'dica-before'); a.appendChild(el('b', null, 'Antes: ')); var mk = el('span'); mk.textContent = e.before; a.appendChild(mk);
+        var d = el('p', 'dica-after'); d.appendChild(el('b', null, 'Depois: ')); d.appendChild(document.createTextNode(e.after));
+        r.appendChild(a); r.appendChild(d); b2.appendChild(r);
+      });
+    }
+
+    // 3) abertura
+    var first = sents[0] || '', fw = words(first), b3 = block('Abertura', 'Os primeiros segundos decidem se o público escuta.');
+    var openProblems = [];
+    if (/^\s*(bom|então|ah+|é+|olha|bem|certo|tá|ok)[,\s]/iu.test(first)) openProblems.push('Começa com palavra de aquecimento ("' + fw[0] + '"). Entre direto no ponto.');
+    if (/^\s*(?:(?:bom|então|olha|bem|ah+|é+),?\s*)?(hoje\s+)?(eu\s+)?(vou|vamos|iremos)\s+(falar|apresentar|abordar|conversar)\b/iu.test(first)) openProblems.push('Abre anunciando o que vai fazer ("vou falar sobre…"). Abra com a ideia em si: uma pergunta, um dado ou uma cena.');
+    if (/^\s*(boa\s+(tarde|noite)|bom\s+dia)[,.!\s]*$/iu.test(first) && sents[1]) { /* cumprimento isolado: olha a 2ª frase */ var f2 = sents[1]; if (/^\s*(eu\s+)?(vou|vamos)\s+(falar|apresentar|abordar)/iu.test(f2)) openProblems.push('Depois do cumprimento, você anuncia o assunto. Troque por uma pergunta ou dado que prenda.'); }
+    if (fw.length > 30) openProblems.push('A primeira frase tem ' + fw.length + ' palavras. Abra com algo curto, de até uns 15.');
+    if (!openProblems.length) good(b3, 'A abertura entra direto no assunto.'); else { found += openProblems.length; openProblems.forEach(function (m) { note(b3, m); }); b3.appendChild(el('p', 'dica-sub', 'Modelos: ' + APOIO['Abrir com impacto'].join('   |   '))); }
+
+    // 4) fechamento
+    var last = sents[sents.length - 1] || '', b4 = block('Fechamento', 'A última frase é a que o público leva embora.');
+    var closeProblems = [];
+    if (/(\bera isso\b|\bé isso\b|\bé só isso\b|\bacho que é só\b|\bacho que era isso\b|\bé isso aí\b|\bse alguém tiver\b)/iu.test(last)) closeProblems.push('Termina de forma apagada ("' + last.slice(0, 50) + (last.length > 50 ? '…' : '') + '"). Feche com a mensagem principal em uma frase.');
+    if (/^\s*(muito\s+)?obrigad[oa][.!\s]*$/iu.test(last) && sents.length > 1) {
+      var prev = sents[sents.length - 2] || '';
+      if (!/(vamos|convido|peço|lembre|conto com|proponho|decida|comece|faça|façam|venham|participe|juntos)/iu.test(prev)) closeProblems.push('Termina só com agradecimento. Antes dele, resuma a ideia central ou convide o público a agir.');
+    } else if (!/(vamos|convido|peço|lembr|conto com|proponho|comece|façam|faça|juntos|importa|essencial|fundamental)/iu.test(sents.slice(-2).join(' '))) closeProblems.push('Não vi uma frase final de síntese ou convite à ação. Feche dizendo o que você quer que o público pense, sinta ou faça.');
+    if (!closeProblems.length) good(b4, 'Tem um fechamento com síntese ou convite.'); else { found += closeProblems.length; closeProblems.forEach(function (m) { note(b4, m); }); b4.appendChild(el('p', 'dica-sub', 'Modelos: ' + APOIO['Reforçar e concluir'].join('   |   '))); }
+
+    // 5) frases longas
+    var longs = sents.filter(function (s) { return words(s).length > 25; });
+    var b5 = block('Frases longas', 'Frase longa pede fôlego e perde o ouvinte. O ideal é falar em blocos de até uns 20 palavras.');
+    if (!longs.length) good(b5, 'Nenhuma frase passa de 25 palavras.');
+    longs.slice(0, 4).forEach(function (s) {
+      found++;
+      var w = words(s).length, r = el('div', 'dica-ba');
+      r.appendChild(el('p', 'dica-before', w + ' palavras: ' + (s.length > 170 ? s.slice(0, 170) + '…' : s)));
+      var cut = s.search(/[,;]\s+(mas|e|porque|que|pois|porém|então|ou)\s/i);
+      if (cut > 30 && cut < s.length - 30) r.appendChild(el('p', 'dica-after', 'Tente dividir depois de “' + s.slice(Math.max(0, cut - 28), cut + 1).trim() + '” e começar uma nova frase.'));
+      else r.appendChild(el('p', 'dica-after', 'Tente dividir em duas ou três frases, uma ideia em cada.'));
+      b5.appendChild(r);
+    });
+    if (longs.length > 4) note(b5, '+ ' + (longs.length - 4) + ' frase(s) longa(s) além dessas.');
+
+    // 6) conexão com o público
+    var b6 = block('Conexão com o público', 'O que faz o público sentir que a fala é com ele.');
+    var voce = count(R(B + '(?:você|vocês|voce|voces|nós|nos|nosso|nossa|nossos|nossas|vamos|a gente)' + E), text), eu = count(R(B + '(?:eu|meu|minha|meus|minhas)' + E), text);
+    var perg = (text.match(/\?/g) || []).length;
+    var hist = count(R('(?:por exemplo|imagine|imaginem|lembro|certa vez|uma vez|outro dia|conheci|conheço um|conta-se|a história de|vou contar)', 'giu'), text);
+    var cn = 0;
+    if (voce / wc * 100 < 1.2) { note(b6, 'Pouco “você / nós”: ' + voce + ' em ' + wc + ' palavras. Fale com o público, não sobre ele. Ex.: “você já sentiu…”, “vamos juntos…”.'); cn++; }
+    if (perg === 0) { note(b6, 'Nenhuma pergunta ao público. Uma pergunta retórica a cada trecho mantém a atenção.'); cn++; }
+    if (hist === 0 && wc > 80) { note(b6, 'Não achei exemplo nem história. Um caso concreto (“imagine…”, “por exemplo…”) ajuda o público a lembrar.'); cn++; }
+    if (eu > 0 && voce > 0 && eu > voce * 2) { note(b6, 'Você fala bem mais de si (“eu”) do que do público. Equilibre.'); cn++; }
+    if (!cn) good(b6, 'Boa conexão: fala com o público e usa perguntas ou exemplos.'); found += cn;
+
+    // 7) repetições e palavras mais fortes
+    var freq = {};
+    (text.toLowerCase().match(/[\p{L}]{6,}/gu) || []).forEach(function (w) { if (!STOP[w]) freq[w] = (freq[w] || 0) + 1; });
+    var reps = Object.keys(freq).filter(function (w) { return freq[w] >= 4 && freq[w] / wc * 100 >= 1.2; }).sort(function (a, b) { return freq[b] - freq[a]; }).slice(0, 5);
+    var b7 = block('Palavras repetidas e palavras mais fortes');
+    if (!reps.length) good(b7, 'Nenhuma palavra importante se repete demais.');
+    reps.forEach(function (w) { found++; note(b7, '“' + w + '” aparece ' + freq[w] + ' vezes. Varie ou troque por um pronome.'); });
+    var fortes = FORTES.filter(function (p) { return R(B + p[0] + E).test(text); });
+    if (fortes.length) { b7.appendChild(el('p', 'dica-sub', 'Palavras que podem ficar mais fortes:')); fortes.slice(0, 8).forEach(function (p) { found++; var r = el('div', 'dica-row'); r.appendChild(el('span', 'dica-expr', '“' + p[0] + '”')); r.appendChild(el('span', 'dica-arrow', ' → ' + p[1])); b7.appendChild(r); }); }
+
+    // 8) banco de frases
+    var d = el('details', 'dica-bank'); d.appendChild(el('summary', null, 'Banco de frases de apoio (abrir, conectar, concluir)'));
+    Object.keys(APOIO).forEach(function (k) { d.appendChild(el('p', 'dica-title', k)); APOIO[k].forEach(function (f) { d.appendChild(el('p', 'dica-phrase', '“' + f + '”')); }); });
+    host.appendChild(d);
+    host.appendChild(el('p', 'dica-foot', 'Dicas geradas por regras fixas (não é IA e não lê o sentido do texto). Use como pistas: a decisão final é sua e do professor.'));
+
+    var head = el('p', 'dica-summary', found ? 'Encontrei ' + found + ' pontos para melhorar neste texto.' : 'Não encontrei pontos críticos neste texto.');
+    host.insertBefore(head, host.firstChild);
+    window.pilotReportData = window.pilotReportData || {};
+    window.pilotReportData.textoDicas = { pontos: found };
+  }
+
+  var t;
+  ta.addEventListener('input', function () { clearTimeout(t); t = setTimeout(analyze, 500); });
+  if (typeof window.pilotRerenderText === 'function') {
+    var orig = window.pilotRerenderText;
+    window.pilotRerenderText = function () { orig.apply(this, arguments); analyze(); };
+  }
+  analyze();
 })();
 
 // ---------- Fluxo em duas etapas + caixinhas que abrem depois do olhar e postura ----------
