@@ -660,6 +660,37 @@ a { color:var(--vague); }
   </section>
 
   <section class="card">
+    <h2>Relatório em Word</h2>
+    <p class="section-note">Gera o relatório individual no modelo do Fala Musicalizada (.docx) com tudo que foi analisado nesta sessão. Preencha o que quiser; o que ficar em branco é omitido ou marcado pra completar depois.</p>
+    <style>.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wgrid .full{grid-column:1/-1}@media(max-width:620px){.wgrid{grid-template-columns:1fr}}.wgrid input,.wgrid textarea{width:100%;border:1px solid var(--rule);border-radius:12px;padding:10px 12px;background:var(--bg);color:var(--ink);font-family:var(--font-sans);font-size:14px}.wgrid label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px}</style>
+    <div class="wgrid">
+      <div><label for="wAluno">Aluno(a)</label><input id="wAluno" type="text"></div>
+      <div><label for="wPeriodo">Período (vazio = mês atual)</label><input id="wPeriodo" type="text" placeholder="Novembro de 2026"></div>
+      <div><label for="wFormato">Formato</label><input id="wFormato" type="text" placeholder="Individual · Media Training"></div>
+      <div><label for="wEncontros">Encontros</label><input id="wEncontros" type="text" placeholder="1"></div>
+      <div class="full"><label for="wObjetivo">Objetivo</label><input id="wObjetivo" type="text" placeholder="Media Training"></div>
+      <div class="full"><label for="wFormatoTexto">Formato do acompanhamento (texto livre; vazio = texto padrão)</label><textarea id="wFormatoTexto" rows="2"></textarea></div>
+      <div class="full"><label for="wConteudo">Conteúdo abordado (um encontro por linha)</label><textarea id="wConteudo" rows="2" placeholder="Prática de voz e oratória"></textarea></div>
+      <div class="full"><details><summary style="cursor:pointer;font-size:13px;color:var(--ink-soft)">Saúde vocal (opcional)</summary>
+        <div class="wgrid" style="margin-top:10px">
+          <div><label for="wAgua">Consumo de água por dia</label><input id="wAgua" type="text" placeholder="1 a 2 L"></div>
+          <div><label for="wSono">Qualidade do sono</label><input id="wSono" type="text"></div>
+          <div><label for="wHoras">Horas de sono por noite</label><input id="wHoras" type="text"></div>
+          <div><label for="wRouquidao">Rouquidão</label><input id="wRouquidao" type="text"></div>
+          <div class="full"><label for="wQueixa">Queixa sobre a voz</label><input id="wQueixa" type="text"></div>
+        </div></details></div>
+      <div class="full"><label for="wFortes">Pontos fortes extras (um por linha; somam aos do parecer automático)</label><textarea id="wFortes" rows="2"></textarea></div>
+      <div class="full"><label for="wDesenvolver">Para desenvolver, extras (um por linha)</label><textarea id="wDesenvolver" rows="2"></textarea></div>
+      <div class="full"><label for="wLink">Link do material (Google Drive)</label><input id="wLink" type="text" placeholder="https://drive.google.com/..."></div>
+      <div class="full"><label for="wParecer">Parecer final</label><textarea id="wParecer" rows="4"></textarea></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="frame-btn" id="downloadWordBtn" type="button" style="margin-top:0">Baixar relatório em Word</button>
+    </div>
+    <p class="status-line" id="wordStatus"></p>
+  </section>
+
+  <section class="card">
     <h2>Salvar e comparar</h2>
     <p class="section-note">Salve o relatório desta sessão com um nome, e depois compare duas sessões salvas para ver se algo melhorou. Fica guardado neste navegador, neste dispositivo — não sincroniza com outro computador ou celular, e some se limpar os dados do site.</p>
     <div class="row">
@@ -2501,6 +2532,284 @@ function computeReadinessIndex(d) {
     html += '</tbody></table></div>';
     html += '<p class="section-note" style="margin-top:12px">Δ mostra a diferença numérica onde faz sentido comparar. Direção "boa" depende da métrica e do que você está treinando.</p>';
     output.innerHTML = html;
+  });
+})();
+
+// ---------- Relatório em Word (.docx gerado no navegador, sem bibliotecas) ----------
+(function () {
+  var C = { dark: '0E5E7E', light: '4FC3F0', tint: 'EAF7FD', gray: 'F4F6F8', ink: '2B2B2B' };
+  var enc = new TextEncoder();
+
+  function esc(s) { return String(s === undefined || s === null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  // --- zip (sem compressão) ---
+  var crcTable = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(b) { var c = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c = crcTable[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function zip(files) {
+    var chunks = [], central = [], offset = 0;
+    function u16(v) { return [v & 255, (v >>> 8) & 255]; }
+    function u32(v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; }
+    files.forEach(function (f) {
+      var name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+      var head = [0x50, 0x4b, 3, 4].concat(u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0));
+      chunks.push(new Uint8Array(head), name, data);
+      central.push(new Uint8Array([0x50, 0x4b, 1, 2].concat(u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset))), name);
+      offset += head.length + name.length + data.length;
+    });
+    var cdSize = 0; central.forEach(function (c) { cdSize += c.length; });
+    var end = new Uint8Array([0x50, 0x4b, 5, 6, 0, 0, 0, 0].concat(u16(files.length), u16(files.length), u32(cdSize), u32(offset), u16(0)));
+    return new Blob(chunks.concat(central, [end]), { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  }
+
+  // --- helpers de XML do Word ---
+  function run(text, o) {
+    o = o || {};
+    var rpr = '<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>' + (o.b ? '<w:b/>' : '') + (o.i ? '<w:i/>' : '') +
+      '<w:color w:val="' + (o.color || C.ink) + '"/><w:sz w:val="' + (o.size || 20) + '"/>' + (o.u ? '<w:u w:val="single"/>' : '');
+    return '<w:r><w:rPr>' + rpr + '</w:rPr><w:t xml:space="preserve">' + esc(text) + '</w:t></w:r>';
+  }
+  function para(runs, o) {
+    o = o || {};
+    var ppr = (o.keep ? '<w:keepNext/>' : '') + (o.border ? '<w:pBdr><w:bottom w:val="single" w:sz="8" w:space="2" w:color="' + C.light + '"/></w:pBdr>' : '') +
+      (o.shade ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.shade + '"/>' : '') +
+      '<w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after === undefined ? 100 : o.after) + '" w:line="' + (o.line || 276) + '" w:lineRule="auto"/>' +
+      (o.ind ? '<w:ind w:left="' + o.ind + '" w:hanging="' + (o.hang || 0) + '"/>' : '') + (o.jc ? '<w:jc w:val="' + o.jc + '"/>' : '');
+    return '<w:p><w:pPr>' + ppr + '</w:pPr>' + (Array.isArray(runs) ? runs.join('') : runs) + '</w:p>';
+  }
+  function cell(content, w, o) {
+    o = o || {};
+    var tcpr = '<w:tcW w:w="' + w + '" w:type="dxa"/>' + (o.span ? '<w:gridSpan w:val="' + o.span + '"/>' : '') +
+      '<w:tcBorders>' + (o.leftBar ? '<w:left w:val="single" w:sz="36" w:space="0" w:color="' + o.leftBar + '"/>' : '') +
+      '<w:bottom w:val="single" w:sz="4" w:space="0" w:color="FFFFFF"/></w:tcBorders>' +
+      (o.fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.fill + '"/>' : '') +
+      '<w:tcMar><w:top w:w="90" w:type="dxa"/><w:left w:w="160" w:type="dxa"/><w:bottom w:w="90" w:type="dxa"/><w:right w:w="160" w:type="dxa"/></w:tcMar><w:vAlign w:val="center"/>';
+    return '<w:tc><w:tcPr>' + tcpr + '</w:tcPr>' + content + '</w:tc>';
+  }
+  function table(rows, widths) {
+    var grid = widths.map(function (w) { return '<w:gridCol w:w="' + w + '"/>'; }).join('');
+    return '<w:tbl><w:tblPr><w:tblW w:w="' + widths.reduce(function (a, b) { return a + b; }, 0) + '" w:type="dxa"/><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>' + grid + '</w:tblGrid>' +
+      rows.map(function (r) { return '<w:tr><w:trPr><w:cantSplit/></w:trPr>' + r + '</w:tr>'; }).join('') + '</w:tbl>' + para('', { after: 60 });
+  }
+  var W = 9600;
+  function heading(n, title) {
+    return para([run(pad(n) + '  ', { b: 1, color: C.light, size: 22 }), run(title, { b: 1, color: C.dark, size: 26 })], { before: 280, after: 140, border: 1, keep: 1 });
+  }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function kvTable(pairs) {
+    return table(pairs.map(function (p) {
+      return cell(para(run(p[0], { b: 1, color: C.dark, size: 19 }), { after: 0 }), 2600, { fill: C.gray, leftBar: C.light }) +
+        cell(para(run(p[1], { size: 19 }), { after: 0 }), W - 2600, { fill: C.gray });
+    }), [2600, W - 2600]);
+  }
+  function bullet(runs) { return para([run('•  ', { color: C.light, b: 1 })].concat(runs), { ind: 360, hang: 260, shade: C.tint, after: 40 }); }
+  function head3(labels, widths) {
+    return '<w:tr>' + labels.map(function (l, i) { return cell(para(run(l, { b: 1, color: 'FFFFFF', size: 19 }), { after: 0, keep: 1 }), widths[i], { fill: C.dark }); }).join('') + '</w:tr>';
+  }
+  function tbl2(headRow, rows, widths) {
+    var grid = widths.map(function (w) { return '<w:gridCol w:w="' + w + '"/>'; }).join('');
+    return '<w:tbl><w:tblPr><w:tblW w:w="' + widths.reduce(function (a, b) { return a + b; }, 0) + '" w:type="dxa"/><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>' + grid + '</w:tblGrid>' +
+      headRow + rows.map(function (r) { return '<w:tr><w:trPr><w:cantSplit/></w:trPr>' + r + '</w:tr>'; }).join('') + '</w:tbl>' + para('', { after: 60 });
+  }
+
+  // --- conteúdo fixo do modelo ---
+  var DICAS = [
+    ['Respiração antes de falar', 'Antes de uma apresentação, faça três ciclos de respiração diafragmática (inspire em 4, segure em 2, solte em 6). Isso ajuda a acalmar a resposta emocional.'],
+    ['Exercícios fonoaudiológicos', 'Pratique os exercícios apresentados diariamente, por poucos minutos, e observe a evolução na voz ao longo das semanas.'],
+    ['Presença antes de começar', 'Ao entrar em cena, pare, firme os pés, olhe para o público e respire antes da primeira frase. Esse instante transmite domínio.'],
+    ['Olhar que acolhe', 'Distribua o olhar pela plateia e sustente-o por alguns segundos em cada pessoa ou grupo, como se conversasse individualmente.'],
+    ['Pratique em público', 'Aproveite reuniões e encontros do dia a dia para falar. Quanto mais exposição, menor a timidez e maior a confiança.']
+  ];
+  var FRASES = [
+    ['Acolher a pergunta', ['Muito bom, obrigado(a) pela colocação.', 'Que bom que você trouxe esse ponto.', 'Essa é uma pergunta muito importante.', 'Eu entendo perfeitamente essa preocupação.']],
+    ['Ganhar tempo para elaborar', ['Deixa eu explicar de uma forma bem simples…', 'Para que a sua audiência entenda melhor…', 'Vamos olhar isso por partes.', 'Esse ponto merece atenção, e eu explico por quê.']],
+    ['Trazer exemplos e histórias', ['Vou trazer aqui uma história muito boa, que conecta bem com isso.', 'Deixa eu dar um exemplo prático.', 'Isso me lembra uma situação que vivemos recentemente…']],
+    ['Reforçar e concluir', ['O mais importante aqui é…', 'Se eu pudesse resumir em uma frase…', 'Sabe, eu acredito que…', 'E é por isso que esse tema importa para as pessoas.']]
+  ];
+
+  // --- dados da plataforma → linhas da seção de análise ---
+  function metricRows(d) {
+    var g = [];
+    function add(title, rows) { rows = rows.filter(function (r) { return r[1] !== null && r[1] !== undefined && r[1] !== '' && r[1] !== 'undefined%'; }); if (rows.length) g.push({ title: title, rows: rows }); }
+    function per(v, p) { return v + (p !== null && p !== undefined ? ' (' + p + '/100 palavras)' : ''); }
+    if (d.texto) add('Texto', [
+      ['Palavras', d.texto.palavras],
+      ['Ritmo estimado', d.texto.wpm ? d.texto.wpm + ' palavras/min (' + d.texto.ritmoFaixa + '); referência 130–160' : null],
+      ['Insegurança na fala', d.texto.hedging !== undefined ? per(d.texto.hedging, d.texto.hedgingPor100) : null],
+      ['Vícios de linguagem', d.texto.muletas !== undefined ? per(d.texto.muletas, d.texto.muletasPor100) : null],
+      ['Vagueza', d.texto.vagueza !== undefined ? per(d.texto.vagueza, d.texto.vaguezaPor100) : null],
+      ['Verbo fraco', d.texto.verboFraco !== undefined ? per(d.texto.verboFraco, d.texto.verboFracoPor100) : null]
+    ].concat((function () {
+      var out = [];
+      if (d.texto.detalhe && d.texto.detalhe.filler && d.texto.detalhe.filler.length) out.push(['Vícios mais frequentes', d.texto.detalhe.filler.slice(0, 8).map(function (e) { return '"' + e.frase + '" ' + e.vezes + 'x'; }).join('; ')]);
+      return out;
+    })()));
+    if (d.voz) add('Voz', [
+      ['Duração analisada', d.voz.duracao], ['Nível de volume', d.voz.nivelVolume], ['Consistência de volume', d.voz.consistenciaVolume],
+      ['Cadência', d.voz.cadencia], ['Fala monótona', d.voz.monotona], ['Entonação', d.voz.variacaoPitch],
+      ['Pausas', d.voz.pausas !== undefined ? d.voz.pausas + (d.voz.pausasPorMin !== null && d.voz.pausasPorMin !== undefined ? ' (' + d.voz.pausasPorMin + '/min)' : '') : null],
+      ['Clareza de fala (sinal fraco)', d.voz.clarezaFala]
+    ]);
+    if (d.movimento) add('Movimento corporal', [
+      ['Atividade de movimento', d.movimento.atividade], ['Deslocamento lateral', d.movimento.deslocamentoLateralPct !== undefined ? d.movimento.deslocamentoLateralPct + '% — ' + d.movimento.deslocamentoLabel : null],
+      ['Balanço rítmico', d.movimento.balancoRitmico]
+    ]);
+    if (d.olhar) {
+      var o = d.olhar, r = [];
+      function pct(v) { return v === undefined || v === null ? null : v + '%'; }
+      r.push(['Contato visual', pct(o.contato_visual_estimado_pct)], ['Olhou para baixo', pct(o.olhou_para_baixo_pct)], ['Desviou o olhar', pct(o.desviou_o_olhar_pct)]);
+      if (o.expressao_facial) r.push(['Expressão facial', o.expressao_facial.classificacao]);
+      if (o.piscadas_por_minuto_estimado && o.piscadas_por_minuto_estimado.valor !== null && o.piscadas_por_minuto_estimado.valor !== undefined) r.push(['Piscadas por minuto (estimativa)', o.piscadas_por_minuto_estimado.valor]);
+      if (o.mao_perto_do_rosto && o.mao_perto_do_rosto.total_episodios) r.push(['Mão perto do rosto', o.mao_perto_do_rosto.total_episodios + ' episódio(s), baixa confiança']);
+      add('Olhar e postura', r);
+    }
+    if (d.imagem && d.imagem.checks) add('Imagem e vestuário', d.imagem.checks.map(function (c) { return [c.title, (c.ok ? 'ok' : 'atenção') + ' — ' + c.sub]; }));
+    return g;
+  }
+
+  function buildDoc(f, d) {
+    var body = [], n = 0;
+    var now = new Date();
+    var meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    var periodo = f.periodo || (meses[now.getMonth()].charAt(0).toUpperCase() + meses[now.getMonth()].slice(1) + ' de ' + now.getFullYear());
+    var nome = f.aluno || 'Aluno(a)';
+
+    // capa
+    body.push(table([cell(
+      para([run('FALA ', { size: 22, color: 'FFFFFF' }), run('MUSICALIZADA', { b: 1, size: 22, color: C.light })], { after: 80, before: 120 }) +
+      para(run('Relatório Individual', { b: 1, size: 44, color: 'FFFFFF' }), { after: 60 }) +
+      para(run('Acompanhamento em Comunicação e Oratória', { size: 24, color: 'FFFFFF' }), { after: 120 }), W, { fill: C.dark })], [W]));
+    body.push(kvTable([['Aluno(a)', nome], ['Período', periodo], ['Formato', f.formato || '—'], ['Encontros', f.encontros || '—'], ['Objetivo', f.objetivo || '—']]));
+
+    // 01
+    n++; body.push(heading(n, 'Formato do Acompanhamento'));
+    body.push(para(run(f.formatoTexto || ('Em ' + periodo.toLowerCase() + ', ' + nome + ' foi avaliado(a) com apoio da plataforma Ensaio (análise de voz, corpo, olhar, texto e imagem a partir de vídeo) e da observação fonoaudiológica.'))));
+
+    // 02
+    if (f.conteudo && f.conteudo.length) {
+      n++; body.push(heading(n, 'Conteúdo Abordado'));
+      body.push(table(f.conteudo.map(function (l, i) {
+        return cell(para(run('Encontro ' + (i + 1), { b: 1, color: C.dark, size: 19 }), { after: 0 }), 2000, { fill: C.gray, leftBar: C.light }) +
+          cell(para(run(l, { size: 19 }), { after: 0 }), W - 2000, { fill: C.gray });
+      }), [2000, W - 2000]));
+    }
+
+    // 03
+    n++; body.push(heading(n, 'Metodologia de Avaliação'));
+    body.push(para(run('A avaliação foi feita de forma ativa, em cada encontro, por meio de:')));
+    [['Observação fonoaudiológica: ', 'análise de voz, corpo, linguagem e presença durante as falas e exercícios.'],
+     ['Análise assistida pela plataforma Ensaio: ', 'medições automáticas de voz, texto, movimento, olhar e imagem a partir do vídeo, usadas como ponto de partida para a conversa.'],
+     ['Registro de vícios de linguagem: ', 'contagem das hesitações e muletas em cada encontro, para acompanhar a evolução.'],
+     ['Tarefas entre encontros: ', 'exercícios combinados para a rotina, retomados no encontro seguinte.']
+    ].forEach(function (b) { body.push(bullet([run(b[0], { b: 1, color: C.dark }), run(b[1])])); });
+    body.push(para('', { after: 60 }));
+
+    // 04 saúde vocal
+    var sv = f.saude.filter(function (p) { return p[1]; });
+    if (sv.length) { n++; body.push(heading(n, 'Saúde Vocal')); body.push(kvTable(sv)); }
+
+    // 05 análise Ensaio
+    var groups = metricRows(d), idx = typeof computeReadinessIndex === 'function' ? computeReadinessIndex(d) : null;
+    if (groups.length || idx) {
+      n++; body.push(heading(n, 'Análise do Ensaio'));
+      if (idx) {
+        body.push(para([run('Índice de prontidão técnica: ', { b: 1, color: C.dark }), run(idx.overall + ' / 100', { b: 1, size: 26, color: C.dark })], { after: 60 }));
+        body.push(tbl2(head3(['Sinal', 'Pontuação'], [7000, 2600]), idx.items.map(function (it) {
+          return cell(para(run(it.label, { size: 19 }), { after: 0 }), 7000, { fill: C.gray }) + cell(para(run(String(Math.round(it.score)), { b: 1, color: C.dark, size: 19 }), { after: 0 }), 2600, { fill: C.gray });
+        }), [7000, 2600]));
+      }
+      groups.forEach(function (gr) {
+        body.push(para(run(gr.title, { b: 1, color: C.dark, size: 22 }), { before: 120, after: 80, keep: 1 }));
+        body.push(kvTable(gr.rows.map(function (r) { return [r[0], String(r[1])]; })));
+      });
+      body.push(para(run('Os números de texto, voz, imagem e movimento vêm de heurísticas que ainda não foram calibradas contra avaliação humana. Servem como ponto de partida para conversa, não como nota final.', { i: 1, size: 17, color: '5B5E51' })));
+    }
+
+    // 06 observações
+    var pf = [], pd = [];
+    try { (generateParecer(d) || []).forEach(function (gr) { gr.items.forEach(function (it) { (it.tone === 'forte' ? pf : pd).push(it.text); }); }); } catch (e) {}
+    if (f.fortes) pf = f.fortes.split('\n').filter(Boolean).concat(pf);
+    if (f.desenvolver) pd = f.desenvolver.split('\n').filter(Boolean).concat(pd);
+    if (pf.length || pd.length) {
+      n++; body.push(heading(n, 'Observações sobre o Aluno'));
+      if (pf.length) { body.push(para(run('Pontos fortes', { b: 1, color: C.dark }), { after: 40, keep: 1 })); pf.forEach(function (t) { body.push(bullet([run(t)])); }); body.push(para('', { after: 60 })); }
+      if (pd.length) { body.push(para(run('Para continuar desenvolvendo', { b: 1, color: C.dark }), { after: 40, keep: 1 })); pd.forEach(function (t) { body.push(bullet([run(t)])); }); body.push(para('', { after: 60 })); }
+    }
+
+    // 07 dicas
+    n++; body.push(heading(n, 'Dicas e Exercícios'));
+    body.push(tbl2(head3(['#', 'Dica', 'Como praticar'], [600, 2600, 6400]), DICAS.map(function (x, i) {
+      return cell(para(run(String(i + 1), { b: 1, color: C.light, size: 26 }), { after: 0, jc: 'center' }), 600, { fill: i % 2 ? 'FFFFFF' : C.gray }) +
+        cell(para(run(x[0], { b: 1, color: C.dark, size: 19 }), { after: 0 }), 2600, { fill: i % 2 ? 'FFFFFF' : C.gray }) +
+        cell(para(run(x[1], { size: 19 }), { after: 0 }), 6400, { fill: i % 2 ? 'FFFFFF' : C.gray });
+    }), [600, 2600, 6400]));
+
+    // 08 frases
+    n++; body.push(heading(n, 'Frases de Conexão'));
+    body.push(para(run('Para entrevistas de rádio, TV e podcast. Essas frases ajudam a acolher a pergunta e aproximar o público. Também dão alguns segundos de processamento para elaborar uma resposta mais completa, sem deixar silêncios desconfortáveis.')));
+    body.push(tbl2(head3(['Objetivo', 'Frases de conexão'], [2600, 7000]), FRASES.map(function (x, i) {
+      return cell(para(run(x[0], { b: 1, color: C.dark, size: 19 }), { after: 0 }), 2600, { fill: i % 2 ? 'FFFFFF' : C.gray }) +
+        cell(x[1].map(function (fr) { return para(run('“' + fr + '”', { i: 1, size: 19 }), { after: 30 }); }).join(''), 7000, { fill: i % 2 ? 'FFFFFF' : C.gray });
+    }), [2600, 7000]));
+    body.push(para([run('Dica: ', { b: 1, color: C.dark, size: 19 }), run('use as frases com naturalidade e varie entre elas, para que não virem um vício de linguagem.', { size: 19 })]));
+
+    // 09
+    n++; body.push(heading(n, 'Próximos Passos'));
+    body.push(table([cell(
+      para(run('Material complementar', { b: 1, color: C.dark }), { after: 60 }) +
+      para(run('Os vídeos com instruções e os exercícios estão disponíveis no link abaixo:'), { after: 60 }) +
+      (f.link ? '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr><w:hyperlink r:id="rIdLink">' + run('▶  Acessar vídeos e exercícios', { b: 1, color: C.dark, u: 1 }) + '</w:hyperlink></w:p>' : para(run('[Link do material a completar.]', { i: 1 }), { after: 0 })),
+      W, { fill: C.tint, leftBar: C.light })], [W]));
+
+    // 10
+    n++; body.push(heading(n, 'Parecer Final'));
+    body.push(table([cell(para(run(f.parecer || '[Parecer final a completar.]'), { after: 0 }), W, { fill: C.gray, leftBar: C.light })], [W]));
+
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>' +
+      body.join('') + '<w:sectPr><w:footerReference w:type="default" r:id="rIdFoot"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1000" w:right="1150" w:bottom="1100" w:left="1150" w:header="500" w:footer="500" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  }
+
+  function build(f, d) {
+    var NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+    var footer = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ' + NS + '><w:p><w:pPr><w:jc w:val="right"/></w:pPr>' +
+      run('FALA ', { size: 16, color: '8C8D80' }) + run('MUSICALIZADA', { b: 1, size: 16, color: C.light }) + run('  |  ', { size: 16, color: '8C8D80' }) +
+      '<w:r><w:rPr><w:sz w:val="16"/><w:color w:val="8C8D80"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:sz w:val="16"/><w:color w:val="8C8D80"/></w:rPr><w:t>1</w:t></w:r><w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r></w:p></w:ftr>';
+    var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles ' + NS + '><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="20"/><w:lang w:val="pt-BR"/></w:rPr></w:rPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>';
+    var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+      '<Relationship Id="rIdFoot" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>' +
+      (f.link ? '<Relationship Id="rIdLink" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="' + esc(f.link) + '" TargetMode="External"/>' : '') + '</Relationships>';
+    return zip([
+      { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>' },
+      { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+      { name: 'word/document.xml', data: buildDoc(f, d) },
+      { name: 'word/_rels/document.xml.rels', data: rels },
+      { name: 'word/styles.xml', data: styles },
+      { name: 'word/footer1.xml', data: footer }
+    ]);
+  }
+
+  var btn = document.getElementById('downloadWordBtn');
+  if (!btn) return;
+  function val(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+  btn.addEventListener('click', function () {
+    var d = window.pilotReportData || {};
+    var status = document.getElementById('wordStatus');
+    var f = {
+      aluno: val('wAluno'), periodo: val('wPeriodo'), formato: val('wFormato'), encontros: val('wEncontros'), objetivo: val('wObjetivo'),
+      formatoTexto: val('wFormatoTexto'), conteudo: val('wConteudo').split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+      saude: [['Consumo de água por dia', val('wAgua')], ['Qualidade do sono', val('wSono')], ['Horas de sono por noite', val('wHoras')], ['Rouquidão', val('wRouquidao')], ['Queixa sobre a voz', val('wQueixa')]],
+      fortes: val('wFortes'), desenvolver: val('wDesenvolver'), link: val('wLink'), parecer: val('wParecer')
+    };
+    if (f.link && !/^https?:\/\//i.test(f.link)) f.link = 'https://' + f.link;
+    try {
+      var blob = build(f, d);
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Relatorio_FalaMusicalizada_' + (f.aluno || 'aluno').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.docx';
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+      status.textContent = Object.keys(d).length ? 'Relatório gerado. Confira o arquivo baixado.' : 'Baixado sem dados de análise (nenhum módulo rodou ainda nesta sessão).';
+    } catch (e) { status.textContent = 'Não consegui gerar o arquivo: ' + e.message; }
   });
 })();
 </script>
