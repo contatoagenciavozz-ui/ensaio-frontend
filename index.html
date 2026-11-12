@@ -323,6 +323,39 @@ select:focus, textarea:focus, input:focus { outline:2px solid var(--blue); outli
 a { color:var(--vague); }
 .site-footer { text-align:center; margin-top:40px; font-size:12px; color:var(--ink-faint); letter-spacing:.08em; }
 .site-footer b { color:var(--gold); font-weight:600; }
+
+.dl-card > div { flex:1 1 320px; }
+.dl-card .status-line:empty { display:none; }
+.sub { font-family:var(--font-serif); font-size:16px; font-weight:700; margin:22px 0 6px; }
+.acc-banner { margin:0 0 14px; padding:12px 16px; border-radius:12px; font-size:13px; background:rgba(59,130,246,.12); border:1px solid rgba(59,130,246,.35); color:var(--ink-soft); }
+.acc-banner.ready { background:rgba(111,207,151,.12); border-color:rgba(111,207,151,.4); }
+.acc-banner.pulse { animation:pulse .6s; }
+@keyframes pulse { 0%,100%{transform:none} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+section.acc { padding:0; }
+.acc-head { display:flex; align-items:center; margin:0 !important; padding:20px 24px; cursor:pointer; user-select:none; }
+.acc-head .chev { margin-left:auto; font-size:18px; color:var(--ink-faint); transition:transform .2s; }
+section.acc.open .acc-head .chev { transform:rotate(180deg); }
+section.acc.locked .acc-head { cursor:not-allowed; opacity:.6; }
+.acc-body { max-height:0; overflow:hidden; visibility:hidden; padding:0 24px; }
+section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visible; padding:0 24px 24px; }
+.upload-zone { display:block; }
+#etapa2 .upload-zone { border:2px dashed var(--wine-2); background:rgba(122,18,48,.12); border-radius:16px; padding:34px 20px; }
+#etapa2 .upload-zone:hover { background:rgba(122,18,48,.22); border-color:var(--gold); }
+#etapa2 .upload-zone .uz-title { font-size:16px; font-weight:600; }
+#etapa2 .upload-zone .uz-title::before { content:'\2191'; display:flex; align-items:center; justify-content:center; width:44px; height:44px; margin:0 auto 12px; border-radius:50%; background:linear-gradient(135deg,var(--wine-2),var(--wine)); color:#fff; font-size:22px; }
+.ctxgrid { display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+@media (max-width:620px){ .ctxgrid { grid-template-columns:1fr; } }
+/* ===== Etapas e resultados ===== */
+.stepnum { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--wine-2),var(--wine)); color:#fff; font-size:14px; margin-right:10px; vertical-align:2px; }
+.results-hidden { display:none; }
+.results-hidden.show { display:block; }
+.results-title { font-family:var(--font-serif); font-weight:800; font-size:26px; margin:34px 0 14px; letter-spacing:-.01em; }
+.results-hint { text-align:center; color:var(--ink-faint); font-size:13px; margin:26px 0; }
+.dl-card { display:flex; gap:18px; align-items:center; justify-content:space-between; flex-wrap:wrap; border-top-color:var(--blue); }
+.dl-card .frame-btn { background:linear-gradient(135deg,#2563eb,var(--blue)); border-color:var(--blue); }
+.chip-status { font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:.04em; padding:3px 10px; border-radius:999px; margin-left:10px; vertical-align:3px; background:var(--rule); color:var(--ink-faint); }
+.chip-status.ok { background:rgba(111,207,151,.16); color:var(--ok); }
+.chip-status.run { background:rgba(59,130,246,.18); color:var(--vague); }
 </style>
 </head>
 <body>
@@ -337,14 +370,16 @@ a { color:var(--vague); }
   <header class="top">
     <p class="kicker">Ensaio · piloto</p>
     <h1 style="margin-top:16px">Ensaie sua fala <em>antes de subir ao palco</em></h1>
-    <p class="lede">Cole a transcrição do seu discurso. O texto é lido na hora, sem sair do navegador, e cada trecho que pode enfraquecer sua fala fica marcado com uma sugestão de reescrita.</p>
+    <p class="lede">Duas etapas: conte o contexto da sua fala e suba o vídeo. A plataforma analisa voz, texto, corpo, olhar e roupa, mostra cada resultado em uma caixinha e gera o relatório em Word.</p>
   </header>
 
   <section class="card">
-    <h2>Contexto da apresentação</h2>
-    <p class="section-note">Vale pra análise inteira (voz, corpo, texto, imagem), não só pra foto — preencha uma vez por sessão. Tudo opcional.</p>
+    <h2><span class="stepnum">1</span> Preencha o contexto da sua fala</h2>
+    <p class="section-note">Isso vale pra análise inteira (voz, corpo, texto e roupa). Preencha antes de subir o vídeo. Tudo é opcional.</p>
 
-    <label class="field-label" for="occasionSelect" style="margin-top:14px">Ocasião</label>
+<div class="ctxgrid" style="margin-top:14px">
+<div>
+    <label class="field-label" for="occasionSelect">Ocasião</label>
     <select id="occasionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
       <option value="">Não especificado</option>
       <option value="entrevista">Entrevista em vídeo</option>
@@ -360,7 +395,9 @@ a { color:var(--vague); }
       <option value="cerimonia">Cerimônia / evento social</option>
       <option value="outra_ocasiao">Outra</option>
     </select>
+</div>
 
+<div>
     <label class="field-label" for="professionSelect">Profissão / papel</label>
     <select id="professionSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
       <option value="">Não especificado</option>
@@ -382,7 +419,9 @@ a { color:var(--vague); }
       <option value="estudante">Estudante</option>
       <option value="outra_profissao">Outra</option>
     </select>
+</div>
 
+<div>
     <label class="field-label" for="audienceSelect">Público</label>
     <select id="audienceSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
       <option value="">Não especificado</option>
@@ -404,14 +443,18 @@ a { color:var(--vague); }
       <option value="diretoria">Diretoria / liderança executiva (C-level, presidentes, supervisores)</option>
       <option value="outro_publico">Outro</option>
     </select>
+</div>
 
+<div>
     <label class="field-label" for="formatSelect">Tipo de apresentação</label>
     <select id="formatSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px; margin-bottom:12px">
       <option value="">Não especificado</option>
       <option value="presencial">Presencial</option>
       <option value="virtual">Virtual (câmera/webcam)</option>
     </select>
+</div>
 
+<div>
     <label class="field-label" for="toneSelect">Tom do discurso</label>
     <select id="toneSelect" style="width:100%; border:1px solid var(--rule); border-radius:8px; padding:10px 12px; background:var(--bg); color:var(--ink); font-family:var(--font-sans); font-size:14px">
       <option value="">Não especificado</option>
@@ -423,6 +466,8 @@ a { color:var(--vague); }
       <option value="tecnico">Técnico / analítico</option>
       <option value="outro_tom">Outro</option>
     </select>
+</div>
+</div>
 
     <details style="margin-top:14px">
       <summary style="cursor:pointer; font-size:13px; color:var(--ink-soft)">Personalizar recomendação de cor de roupa (opcional)</summary>
@@ -453,7 +498,45 @@ a { color:var(--vague); }
     </details>
   </section>
 
-  <section class="card">
+  <section class="card" id="etapa2">
+    <h2><span class="stepnum">2</span> Suba seu vídeo</h2>
+    <p class="section-note">É só enviar um vídeo da sua fala. A plataforma analisa voz, texto, corpo, olhar e roupa sozinha e mostra tudo logo abaixo, em Resultados. A leitura do servidor pode levar alguns minutos.</p>
+    <label class="upload-zone" id="audioUploadZone">
+      <input type="file" id="audioFile" accept="audio/*,video/*">
+      <div class="uz-title">Clique para escolher um arquivo de áudio ou vídeo</div>
+      <div class="uz-sub">mp3, wav, m4a, mp4, webm — até ~300MB. Áudio/pitch analisado no navegador; transcrição e rosto/corpo vão pro servidor</div>
+    </label>
+    <div class="file-chip" id="audioChip" style="display:none">
+      <span id="audioChipName"></span>
+      <button id="audioClear" type="button">remover</button>
+    </div>
+    <div class="progress-track" id="audioProgress"><div class="progress-fill" id="audioProgressFill"></div></div>
+    <p class="status-line" id="audioStatus"></p>
+    <div id="backendStatusBox" style="display:none; padding:14px 16px; border:1px solid var(--rule); border-radius:8px; background:var(--bg)">
+      <p class="status-line" id="backendStatus" style="margin:0"></p>
+      <div class="progress-track" id="backendProgress" style="display:block; margin-top:10px"><div class="progress-fill" id="backendProgressFill" style="width:15%; animation:none"></div></div>
+    </div>
+    <details style="margin-top:14px"><summary style="cursor:pointer;font-size:13px;color:var(--ink-soft)">Só tenho o texto (sem vídeo)</summary>
+      <p class="section-note" style="margin-top:8px">Abre os resultados para você colar a transcrição na caixa Texto.</p>
+      <button class="frame-btn" id="textOnlyBtn" type="button" style="margin-top:0">Abrir só a análise de texto</button>
+    </details>
+  </section>
+
+  <div id="resultsArea">
+  <h2 class="results-title">Resultados</h2>
+  <section class="card dl-card" id="box-word">
+    <div>
+      <h2 style="margin:0 0 4px">Relatório em Word</h2>
+      <p class="section-note" style="margin:0">Baixa o relatório individual com tudo que foi analisado. Nome do aluno, link e parecer final saem como "[a completar]" para você preencher no Word.</p>
+      <p class="status-line" id="wordStatus"></p>
+    </div>
+    <button class="frame-btn" id="downloadWordBtn" type="button" style="margin-top:0">Baixar relatório em Word</button>
+  </section>
+
+  <p class="acc-banner" id="accBanner"></p>
+  <section class="card res" id="box-texto">
+    <h2>Texto</h2>
+    <p class="section-note">Preenche sozinho com a transcrição do vídeo. Você também pode colar ou corrigir o texto aqui.</p>
     <label class="field-label" for="transcript">Transcrição do discurso</label>
     <textarea id="transcript" placeholder="Cole aqui o texto da sua fala, ou suba um vídeo no módulo de voz abaixo que a transcrição preenche sozinha..."></textarea>
     <div class="row">
@@ -464,9 +547,6 @@ a { color:var(--vague); }
     </div>
     <p class="hint">A duração é usada só para estimar o ritmo (palavras por minuto). Deixe em branco se não gravou o tempo.</p>
     <p class="err" id="durationError" role="alert"></p>
-  </section>
-
-  <section class="card">
     <div class="metrics">
       <div class="metric"><div class="num" id="mWords">0</div><div class="lab">palavras</div></div>
       <div class="metric m-hedge"><div class="num" id="mHedge">0</div><div class="lab">insegurança na fala</div></div>
@@ -482,10 +562,7 @@ a { color:var(--vague); }
       <div class="pace-labels"><span>80 wpm</span><span>zona confortável: 130–160</span><span>200 wpm</span></div>
     </div>
     <div id="phraseBreakdown" style="margin-top:18px"></div>
-  </section>
-
-  <section class="card">
-    <h2>Leitura anotada</h2>
+    <h3 class="sub">Leitura anotada</h3>
     <p class="section-note">Passe o texto pelos olhos de quem está assistindo. Clique em um trecho marcado para ver a sugestão.</p>
     <div id="reading"><span class="empty-state">Cole um texto acima para ver a leitura anotada.</span></div>
     <div class="legend">
@@ -494,29 +571,15 @@ a { color:var(--vague); }
       <span class="cat-vague"><i></i>vagueza</span>
       <span class="cat-weak"><i></i>verbo fraco</span>
     </div>
-  </section>
-
-  <section class="card">
-    <h2>Notas do editor</h2>
+    <h3 class="sub">Notas do editor</h3>
     <p class="section-note" id="notesEmpty">Nenhum trecho marcado ainda.</p>
     <ul class="notes-list" id="notesList"></ul>
   </section>
 
-  <section class="card">
-    <h2>Módulo de voz</h2>
-    <p class="section-note">Suba um áudio ou vídeo da fala. A análise roda no seu navegador — pitch, energia e pausas são calculados de verdade, nada é enviado a um servidor.</p>
+  <section class="card res" id="box-voz">
+    <h2>Voz</h2>
+    <p class="section-note">Pitch, energia e pausas são calculados no seu navegador, nada disso é enviado a um servidor.</p>
 
-    <label class="upload-zone" id="audioUploadZone">
-      <input type="file" id="audioFile" accept="audio/*,video/*">
-      <div class="uz-title">Clique para escolher um arquivo de áudio ou vídeo</div>
-      <div class="uz-sub">mp3, wav, m4a, mp4, webm — até ~300MB. Áudio/pitch analisado no navegador; transcrição e rosto/corpo vão pro servidor</div>
-    </label>
-    <div class="file-chip" id="audioChip" style="display:none">
-      <span id="audioChipName"></span>
-      <button id="audioClear" type="button">remover</button>
-    </div>
-    <div class="progress-track" id="audioProgress"><div class="progress-fill" id="audioProgressFill"></div></div>
-    <p class="status-line" id="audioStatus"></p>
 
     <div id="audioResults" style="display:none">
       <audio class="player" id="audioPlayer" controls></audio>
@@ -546,35 +609,9 @@ a { color:var(--vague); }
     </div>
   </section>
 
-  <section class="card">
-    <h2>Módulo de imagem</h2>
-    <p class="section-note">Checagens técnicas de roupa (contraste com o fundo, estouro de brilho, risco de moiré) mais a cor dominante detectada, comparada com o que costuma combinar com o tom do seu discurso (selecionado lá em cima, em "Contexto da apresentação"). Calculado por pixel, sem modelo de segmentação.</p>
-
-    <div id="videoFrameSection" style="display:none; margin-top:14px">
-      <div class="video-frame-wrap">
-        <video class="frame-source" id="frameVideo" muted playsinline></video>
-      </div>
-      <input type="range" class="scrub" id="frameScrub" min="0" max="100" value="0" step="0.1">
-      <button class="frame-btn" id="captureFrameBtn" type="button">Analisar este quadro</button>
-    </div>
-
-    <label class="upload-zone" id="photoUploadZone" style="margin-top:14px">
-      <input type="file" id="photoFile" accept="image/*">
-      <div class="uz-title" id="photoUploadTitle">Ou envie uma foto do look</div>
-      <div class="uz-sub">jpg, png — analisado localmente</div>
-    </label>
-
-    <canvas class="frame-canvas" id="frameCanvas"></canvas>
-    <p class="status-line" id="imageStatus"></p>
-
-    <div id="imageResults" style="display:none; margin-top:16px">
-      <ul class="check-list" id="imageChecks"></ul>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>Linguagem corporal — movimento</h2>
-    <p class="section-note">Sinais que dá pra medir por diferença de pixel entre quadros, sem localizar partes do corpo. Requer um vídeo carregado acima.</p>
+  <section class="card res" id="box-mov">
+    <h2>Movimento do corpo</h2>
+    <p class="section-note">Sinais medidos por diferença de pixel entre quadros. Roda sozinho depois do upload; o botão abaixo serve pra repetir.</p>
     <button class="frame-btn" id="motionBtn" type="button" disabled>Analisar movimento no vídeo</button>
     <p class="status-line" id="motionStatus"></p>
     <div class="progress-track" id="motionProgress"><div class="progress-fill" id="motionProgressFill"></div></div>
@@ -611,13 +648,9 @@ a { color:var(--vague); }
     </p>
   </section>
 
-  <section class="card">
-    <h2>Contato visual, olhar e transcrição</h2>
-    <p class="section-note">Isso roda no servidor (transcrição + landmarks de rosto e corpo) — some sozinho quando você sobe um vídeo no módulo de voz acima. Não precisa mexer aqui, a não ser que o servidor esteja fora do ar.</p>
-    <div id="backendStatusBox" style="display:none; padding:14px 16px; border:1px solid var(--rule); border-radius:8px; background:var(--bg)">
-      <p class="status-line" id="backendStatus" style="margin:0"></p>
-      <div class="progress-track" id="backendProgress" style="display:block; margin-top:10px"><div class="progress-fill" id="backendProgressFill" style="width:15%; animation:none"></div></div>
-    </div>
+  <section class="card res" id="box-olhar">
+    <h2>Olhar e postura</h2>
+    <p class="section-note">Contato visual, olhar para baixo, mãos e expressão. Vem do servidor, junto com a transcrição.</p>
     <ul class="check-list" id="landmarksChecks" style="margin-top:8px"></ul>
 
     <details style="margin-top:16px">
@@ -630,7 +663,33 @@ a { color:var(--vague); }
     </details>
   </section>
 
-  <section class="card">
+  <section class="card res" id="box-img">
+    <h2>Roupa e imagem</h2>
+    <p class="section-note">Checagens técnicas de roupa (contraste com o fundo, estouro de brilho, risco de moiré) mais a cor dominante detectada, comparada com o que costuma combinar com o tom do seu discurso (selecionado lá em cima, em "Contexto da apresentação"). Calculado por pixel, sem modelo de segmentação.</p>
+
+    <div id="videoFrameSection" style="display:none; margin-top:14px">
+      <div class="video-frame-wrap">
+        <video class="frame-source" id="frameVideo" muted playsinline></video>
+      </div>
+      <input type="range" class="scrub" id="frameScrub" min="0" max="100" value="0" step="0.1">
+      <button class="frame-btn" id="captureFrameBtn" type="button">Analisar este quadro</button>
+    </div>
+
+    <label class="upload-zone" id="photoUploadZone" style="margin-top:14px">
+      <input type="file" id="photoFile" accept="image/*">
+      <div class="uz-title" id="photoUploadTitle">Ou envie uma foto do look</div>
+      <div class="uz-sub">jpg, png — analisado localmente</div>
+    </label>
+
+    <canvas class="frame-canvas" id="frameCanvas"></canvas>
+    <p class="status-line" id="imageStatus"></p>
+
+    <div id="imageResults" style="display:none; margin-top:16px">
+      <ul class="check-list" id="imageChecks"></ul>
+    </div>
+  </section>
+
+  <section class="card res" id="box-idx">
     <h2>Índice de prontidão técnica</h2>
     <p class="section-note">Média simples dos sinais mensuráveis disponíveis nesta sessão — peso igual pra cada um, fórmula não calibrada contra plateia real. Mede aderência aos padrões técnicos (ritmo, contato visual, vícios de linguagem etc.), não "quanto a pessoa convence" — conteúdo, carisma e contexto não entram nessa conta.</p>
     <div class="row">
@@ -639,17 +698,7 @@ a { color:var(--vague); }
     <div id="indexOutput" style="display:none; margin-top:18px"></div>
   </section>
 
-  <section class="card">
-    <h2>Relatório</h2>
-    <p class="section-note">Junta o que foi analisado nesta sessão — texto, voz, imagem, movimento e, se carregado, o olhar.</p>
-    <div class="row">
-      <button class="frame-btn" id="generateReportBtn" type="button" style="margin-top:0">Gerar relatório</button>
-      <button class="frame-btn" id="copyReportBtn" type="button" style="margin-top:0; display:none; background:var(--surface); color:var(--ink); border-color:var(--rule)">Copiar</button>
-    </div>
-    <pre id="reportOutput" style="display:none; white-space:pre-wrap; font-family:var(--font-sans); font-size:14px; line-height:1.7; background:var(--bg); border:1px solid var(--rule); border-radius:8px; padding:18px; margin-top:14px"></pre>
-  </section>
-
-  <section class="card">
+  <section class="card res" id="box-par">
     <h2>Parecer automático</h2>
     <p class="section-note">Traduz os números em frases prontas — um primeiro parecer pro aluno ler sozinho. É gerado por modelo de frase (regras fixas), não por uma IA lendo o conjunto — não conecta padrões entre categorias sozinho. Trate como rascunho, não veredito final.</p>
     <div class="row">
@@ -659,38 +708,17 @@ a { color:var(--vague); }
     <div id="parecerOutput" style="display:none; margin-top:14px"></div>
   </section>
 
-  <section class="card">
-    <h2>Relatório em Word</h2>
-    <p class="section-note">Gera o relatório individual no modelo do Fala Musicalizada (.docx) com tudo que foi analisado nesta sessão. Preencha o que quiser; o que ficar em branco é omitido ou marcado pra completar depois.</p>
-    <style>.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wgrid .full{grid-column:1/-1}@media(max-width:620px){.wgrid{grid-template-columns:1fr}}.wgrid input,.wgrid textarea{width:100%;border:1px solid var(--rule);border-radius:12px;padding:10px 12px;background:var(--bg);color:var(--ink);font-family:var(--font-sans);font-size:14px}.wgrid label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px}</style>
-    <div class="wgrid">
-      <div><label for="wAluno">Aluno(a)</label><input id="wAluno" type="text"></div>
-      <div><label for="wPeriodo">Período (vazio = mês atual)</label><input id="wPeriodo" type="text" placeholder="Novembro de 2026"></div>
-      <div><label for="wFormato">Formato</label><input id="wFormato" type="text" placeholder="Individual · Media Training"></div>
-      <div><label for="wEncontros">Encontros</label><input id="wEncontros" type="text" placeholder="1"></div>
-      <div class="full"><label for="wObjetivo">Objetivo</label><input id="wObjetivo" type="text" placeholder="Media Training"></div>
-      <div class="full"><label for="wFormatoTexto">Formato do acompanhamento (texto livre; vazio = texto padrão)</label><textarea id="wFormatoTexto" rows="2"></textarea></div>
-      <div class="full"><label for="wConteudo">Conteúdo abordado (um encontro por linha)</label><textarea id="wConteudo" rows="2" placeholder="Prática de voz e oratória"></textarea></div>
-      <div class="full"><details><summary style="cursor:pointer;font-size:13px;color:var(--ink-soft)">Saúde vocal (opcional)</summary>
-        <div class="wgrid" style="margin-top:10px">
-          <div><label for="wAgua">Consumo de água por dia</label><input id="wAgua" type="text" placeholder="1 a 2 L"></div>
-          <div><label for="wSono">Qualidade do sono</label><input id="wSono" type="text"></div>
-          <div><label for="wHoras">Horas de sono por noite</label><input id="wHoras" type="text"></div>
-          <div><label for="wRouquidao">Rouquidão</label><input id="wRouquidao" type="text"></div>
-          <div class="full"><label for="wQueixa">Queixa sobre a voz</label><input id="wQueixa" type="text"></div>
-        </div></details></div>
-      <div class="full"><label for="wFortes">Pontos fortes extras (um por linha; somam aos do parecer automático)</label><textarea id="wFortes" rows="2"></textarea></div>
-      <div class="full"><label for="wDesenvolver">Para desenvolver, extras (um por linha)</label><textarea id="wDesenvolver" rows="2"></textarea></div>
-      <div class="full"><label for="wLink">Link do material (Google Drive)</label><input id="wLink" type="text" placeholder="https://drive.google.com/..."></div>
-      <div class="full"><label for="wParecer">Parecer final</label><textarea id="wParecer" rows="4"></textarea></div>
+  <section class="card res" id="box-rel">
+    <h2>Resumo em texto</h2>
+    <p class="section-note">Junta o que foi analisado nesta sessão — texto, voz, imagem, movimento e, se carregado, o olhar.</p>
+    <div class="row">
+      <button class="frame-btn" id="generateReportBtn" type="button" style="margin-top:0">Gerar relatório</button>
+      <button class="frame-btn" id="copyReportBtn" type="button" style="margin-top:0; display:none; background:var(--surface); color:var(--ink); border-color:var(--rule)">Copiar</button>
     </div>
-    <div class="row" style="margin-top:14px">
-      <button class="frame-btn" id="downloadWordBtn" type="button" style="margin-top:0">Baixar relatório em Word</button>
-    </div>
-    <p class="status-line" id="wordStatus"></p>
+    <pre id="reportOutput" style="display:none; white-space:pre-wrap; font-family:var(--font-sans); font-size:14px; line-height:1.7; background:var(--bg); border:1px solid var(--rule); border-radius:8px; padding:18px; margin-top:14px"></pre>
   </section>
 
-  <section class="card">
+  <section class="card res" id="box-sav">
     <h2>Salvar e comparar</h2>
     <p class="section-note">Salve o relatório desta sessão com um nome, e depois compare duas sessões salvas para ver se algo melhorou. Fica guardado neste navegador, neste dispositivo — não sincroniza com outro computador ou celular, e some se limpar os dados do site.</p>
     <div class="row">
@@ -710,6 +738,8 @@ a { color:var(--vague); }
 
     <div id="comparisonOutput" style="display:none; margin-top:20px"></div>
   </section>
+
+  </div>
 
   <footer class="foot">
     Piloto — texto, gráficos de voz e checagem de imagem rodam no seu navegador. Vídeo/áudio enviado no módulo de voz também vai pro servidor de análise (transcrição e leitura de rosto/corpo).
@@ -2671,18 +2701,18 @@ function computeReadinessIndex(d) {
     var now = new Date();
     var meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
     var periodo = f.periodo || (meses[now.getMonth()].charAt(0).toUpperCase() + meses[now.getMonth()].slice(1) + ' de ' + now.getFullYear());
-    var nome = f.aluno || 'Aluno(a)';
+    var nome = f.aluno || '[a completar]';
 
     // capa
     body.push(table([cell(
       para([run('FALA ', { size: 22, color: 'FFFFFF' }), run('MUSICALIZADA', { b: 1, size: 22, color: C.light })], { after: 80, before: 120 }) +
       para(run('Relatório Individual', { b: 1, size: 44, color: 'FFFFFF' }), { after: 60 }) +
       para(run('Acompanhamento em Comunicação e Oratória', { size: 24, color: 'FFFFFF' }), { after: 120 }), W, { fill: C.dark })], [W]));
-    body.push(kvTable([['Aluno(a)', nome], ['Período', periodo], ['Formato', f.formato || '—'], ['Encontros', f.encontros || '—'], ['Objetivo', f.objetivo || '—']]));
+    body.push(kvTable([['Aluno(a)', nome], ['Período', periodo], ['Formato', f.formato || '[a completar]'], ['Encontros', f.encontros || '[a completar]'], ['Objetivo', f.objetivo || '[a completar]']]));
 
     // 01
     n++; body.push(heading(n, 'Formato do Acompanhamento'));
-    body.push(para(run(f.formatoTexto || ('Em ' + periodo.toLowerCase() + ', ' + nome + ' foi avaliado(a) com apoio da plataforma Ensaio (análise de voz, corpo, olhar, texto e imagem a partir de vídeo) e da observação fonoaudiológica.'))));
+    body.push(para(run(f.formatoTexto || ('Em ' + periodo.toLowerCase() + ', ' + (f.aluno || 'o(a) aluno(a)') + ' foi avaliado(a) com apoio da plataforma Ensaio (análise de voz, corpo, olhar, texto e imagem a partir de vídeo) e da observação fonoaudiológica.'))));
 
     // 02
     if (f.conteudo && f.conteudo.length) {
@@ -2811,6 +2841,105 @@ function computeReadinessIndex(d) {
       status.textContent = Object.keys(d).length ? 'Relatório gerado. Confira o arquivo baixado.' : 'Baixado sem dados de análise (nenhum módulo rodou ainda nesta sessão).';
     } catch (e) { status.textContent = 'Não consegui gerar o arquivo: ' + e.message; }
   });
+})();
+
+// ---------- Fluxo em duas etapas + caixinhas que abrem depois do olhar e postura ----------
+(function () {
+  var area = document.getElementById('resultsArea');
+  if (!area) return;
+  var banner = document.getElementById('accBanner');
+  var fileInput = document.getElementById('audioFile');
+  var frameVideo = document.getElementById('frameVideo');
+  var captureBtn = document.getElementById('captureFrameBtn');
+  var motionBtn = document.getElementById('motionBtn');
+  var state = 'wait'; // wait | running | ready
+
+  // monta as caixinhas (acordeão): o título fica visível, o conteúdo abre no clique
+  var boxes = Array.prototype.slice.call(area.querySelectorAll('section.res'));
+  boxes.forEach(function (box) {
+    var h = box.querySelector('h2'); if (!h) return;
+    var body = document.createElement('div'); body.className = 'acc-body';
+    while (h.nextSibling) body.appendChild(h.nextSibling);
+    box.appendChild(body);
+    box.classList.add('acc', 'locked');
+    h.classList.add('acc-head'); h.setAttribute('role', 'button'); h.tabIndex = 0;
+    var chev = document.createElement('span'); chev.className = 'chev'; chev.textContent = '▾'; h.appendChild(chev);
+    function tog() { toggle(box); }
+    h.addEventListener('click', tog);
+    h.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tog(); } });
+  });
+  function toggle(box) {
+    if (state !== 'ready') { banner.classList.remove('pulse'); void banner.offsetWidth; banner.classList.add('pulse'); return; }
+    box.classList.toggle('open');
+    window.dispatchEvent(new Event('resize'));
+  }
+  function setState(s, msg) {
+    state = s;
+    banner.textContent = msg;
+    banner.className = 'acc-banner' + (s === 'ready' ? ' ready' : '');
+    boxes.forEach(function (b) { b.classList.toggle('locked', s !== 'ready'); if (s !== 'ready') b.classList.remove('open'); });
+    boxes.forEach(function (b) { var c = b.querySelector('.chev'); if (c) c.textContent = s === 'ready' ? '▾' : '🔒'; });
+  }
+  setState('wait', 'Suba um vídeo na Etapa 2. As caixinhas abrem quando a análise de olhar e postura terminar.');
+
+  document.getElementById('textOnlyBtn').addEventListener('click', function () {
+    setState('ready', 'Modo só texto: cole a transcrição na caixinha Texto. As outras ficam vazias sem vídeo.');
+    var t = document.getElementById('box-texto'); if (t) { t.classList.add('open'); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+
+  // Upload: captura um quadro pra roupa e depois mede o movimento
+  fileInput.addEventListener('change', function () {
+    var f = fileInput.files && fileInput.files[0];
+    if (!f) return;
+    setState('running', 'Analisando seu vídeo… as caixinhas abrem quando a análise de olhar e postura terminar (pode levar alguns minutos).');
+    window.pilotAutoPending = true; window.pilotEarlyDone = false; window.pilotAudioOnly = f.type.indexOf('video') !== 0;
+    if (window.pilotAudioOnly) return;
+    var done = false;
+    function go() {
+      if (done) return; done = true;
+      setTimeout(function () {
+        try { captureBtn.click(); } catch (e) {}
+        setTimeout(function () { try { if (!motionBtn.disabled) motionBtn.click(); } catch (e) {} }, 1800);
+      }, 600);
+    }
+    frameVideo.addEventListener('seeked', go, { once: true });
+    setTimeout(go, 6000);
+  });
+
+  // Fim da análise do servidor (olhar e postura): libera as caixinhas
+  if (typeof runBackendAnalysis === 'function') {
+    var orig = runBackendAnalysis;
+    runBackendAnalysis = async function (file) {
+      try { await orig(file); } finally {
+        window.pilotAutoPending = false;
+        ['generateIndexBtn', 'generateParecerBtn'].forEach(function (id) { var b = document.getElementById(id); if (b) try { b.click(); } catch (e) {} });
+        var d = window.pilotReportData || {};
+        setState('ready', d.olhar
+          ? 'Análise concluída. Clique na caixinha que quiser ver.'
+          : 'A análise de olhar e postura não foi concluída (servidor indisponível), mas as outras caixinhas estão liberadas. Clique na que quiser ver.');
+      }
+    };
+  }
+
+  // Índice e parecer logo que as análises locais terminam (recalculam no fim)
+  var MAP = [['box-texto', 'texto'], ['box-voz', 'voz'], ['box-mov', 'movimento'], ['box-olhar', 'olhar'], ['box-img', 'imagem']];
+  var chips = MAP.map(function (m) {
+    var h = document.querySelector('#' + m[0] + ' h2'); if (!h) return null;
+    var c = document.createElement('span'); c.className = 'chip-status'; c.textContent = 'aguardando'; h.insertBefore(c, h.querySelector('.chev'));
+    return { el: c, key: m[1] };
+  }).filter(Boolean);
+  setInterval(function () {
+    var d = window.pilotReportData || {};
+    if (!window.pilotEarlyDone && (d.movimento || (d.voz && window.pilotAudioOnly))) {
+      window.pilotEarlyDone = true;
+      ['generateIndexBtn', 'generateParecerBtn'].forEach(function (id) { var b = document.getElementById(id); if (b) try { b.click(); } catch (e) {} });
+    }
+    chips.forEach(function (c) {
+      var has = !!d[c.key];
+      c.el.className = 'chip-status' + (has ? ' ok' : (window.pilotAutoPending ? ' run' : ''));
+      c.el.textContent = has ? 'pronto' : (window.pilotAutoPending ? 'analisando…' : 'aguardando');
+    });
+  }, 1000);
 })();
 </script>
 </body>
