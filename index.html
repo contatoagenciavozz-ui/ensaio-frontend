@@ -1913,9 +1913,7 @@ function renderLandmarksData(data, checksList) {
     ['Olhou para baixo', data.olhou_para_baixo_pct],
     ['Desviou o olhar', data.desviou_o_olhar_pct],
     ['Mão esquerda na linha da cintura', data.mao_na_linha_da_cintura_esquerda_pct],
-    ['Mão direita na linha da cintura', data.mao_na_linha_da_cintura_direita_pct],
-    ['Mão esquerda em movimento', data.mao_esquerda_em_movimento_pct],
-    ['Mão direita em movimento', data.mao_direita_em_movimento_pct]
+    ['Mão direita na linha da cintura', data.mao_na_linha_da_cintura_direita_pct]
   ].filter(function (r) { return r[1] !== undefined && r[1] !== null; });
 
   if (data.expressao_facial && data.expressao_facial.classificacao) {
@@ -2313,7 +2311,7 @@ function generateParecer(d) {
 
   if (d.movimento) {
     var items = [];
-    if (d.movimento.atividade) items.push({ tone: 'neutral', text: 'Quanto você se mexe: ' + ({ alta: 'bastante', 'média': 'na medida', baixa: 'pouco' })[d.movimento.atividade] + '.' });
+    if (d.movimento.atividade) items.push({ tone: 'neutral', text: 'Quanto você se mexe: ' + pilotAtividadeLabel(d.movimento.atividadeValor) + '.' });
     if (d.movimento.deslocamentoLateralPct !== undefined) items.push({ tone: 'neutral', text: 'Quanto você andou para os lados: ' + d.movimento.deslocamentoLateralPct + '% da largura do quadro.' });
     if (d.movimento.balancoRitmico && d.movimento.balancoRitmico.indexOf('provável') > -1) items.push({ tone: 'atencao', text: 'Padrão de balanço repetitivo detectado (' + d.movimento.balancoRitmico + ') — esse tipo de movimento costuma ser lido pela plateia como sinal de nervosismo.' });
     if (items.length) groups.push({ title: 'Movimento corporal', items: items });
@@ -2329,7 +2327,7 @@ function generateParecer(d) {
     if (d.olhar.olhou_para_baixo_pct) items.push({ tone: d.olhar.olhou_para_baixo_pct > 25 ? 'atencao' : 'neutral', text: 'Olhou para baixo em ' + d.olhar.olhou_para_baixo_pct + '% do tempo.' + (d.olhar.olhou_para_baixo_pct > 25 ? ' Olhar frequente para baixo costuma ser lido como insegurança ou falta de conexão — pode ser slide ou anotação, vale conferir o vídeo.' : '') });
     if (d.olhar.desviou_o_olhar_pct) items.push({ tone: 'neutral', text: 'Desviou o olhar lateralmente em ' + d.olhar.desviou_o_olhar_pct + '% do tempo.' });
     if (d.olhar.mao_na_linha_da_cintura_esquerda_pct !== undefined) items.push({ tone: 'neutral', text: 'Mãos na linha da cintura: ' + d.olhar.mao_na_linha_da_cintura_esquerda_pct + '% (esq) / ' + d.olhar.mao_na_linha_da_cintura_direita_pct + '% (dir).' });
-    if (d.olhar.mao_esquerda_em_movimento_pct !== undefined) items.push({ tone: 'neutral', text: 'Mãos em movimento: ' + d.olhar.mao_esquerda_em_movimento_pct + '% (esq) / ' + d.olhar.mao_direita_em_movimento_pct + '% (dir).' });
+    var gs = pilotSignalStatus('gestos', d); if (gs) items.push({ tone: gs.status === 'ok' ? 'forte' : 'atencao', text: 'Gestos das mãos: ' + gs.valor + '.' + (gs.status === 'ok' ? '' : ' Mãos quase paradas deixam a fala dura; mãos sempre se mexendo distraem. O ideal é gesto que acompanha a ideia, com pausas entre eles.') });
     if (d.olhar.expressao_facial && d.olhar.expressao_facial.classificacao) items.push({ tone: 'neutral', text: 'Expressão predominante: ' + d.olhar.expressao_facial.classificacao + ' — confira se combina com o tom do conteúdo (expressão incoerente com a mensagem tende a soar artificial).' });
     if (d.olhar.piscadas_por_minuto_estimado && d.olhar.piscadas_por_minuto_estimado.valor !== null) items.push({ tone: 'neutral', text: '~' + d.olhar.piscadas_por_minuto_estimado.valor + ' piscadas/min estimadas (baixa confiança, provável subcontagem).' });
     if (d.olhar.mao_perto_do_rosto && d.olhar.mao_perto_do_rosto.total_episodios) items.push({ tone: 'atencao', text: d.olhar.mao_perto_do_rosto.total_episodios + ' episódio(s) de possível mão cobrindo o rosto. Mão no rosto costuma criar ruído visual e tirar o foco da mensagem — confira o vídeo.' });
@@ -2382,30 +2380,32 @@ function generateParecer(d) {
 
 // ---------- Resumo dos sinais (semáforo; substitui o antigo índice numérico) ----------
 // Fonte única das regras de verde / amarelo / vermelho (referências de trabalho, ainda não calibradas).
+function pilotAtividadeLabel(x) { return x < 3 ? 'pouco' : (x <= 7 ? 'na medida' : (x <= 8.5 ? 'bastante' : 'muito')); }
 function pilotSignalStatus(key, d) {
   function band(v, okFn, warnFn) { return okFn(v) ? 'ok' : (warnFn(v) ? 'warn' : 'bad'); }
   function res(status, label, valor, ref) { return { status: status, label: label, valor: valor, ref: ref }; }
   var t = d.texto, v = d.voz, m = d.movimento, o = d.olhar, x;
   switch (key) {
-    case 'ritmoFala': if (!t || !t.wpm) return null; return res(band(t.wpm, function (n) { return n >= 130 && n <= 160; }, function (n) { return n >= 110 && n <= 180; }), 'Ritmo de fala', t.wpm + ' palavras/min', '130 a 160');
+    case 'ritmoFala': if (!t || !t.wpm) return null; var en = (document.getElementById('toneSelect') || {}).value === 'energetico'; return res(band(t.wpm, function (n) { return n >= 130 && n <= (en ? 185 : 160); }, function (n) { return n >= 110 && n <= (en ? 195 : 180); }), 'Ritmo de fala', t.wpm + ' palavras/min', en ? '130 a 185 (tom energético)' : '130 a 160');
     case 'inseguranca': if (!t || t.hedgingPor100 === null || t.hedgingPor100 === undefined) return null; return res(band(t.hedgingPor100, function (n) { return n <= 3; }, function (n) { return n <= 4.5; }), 'Insegurança na fala', t.hedgingPor100 + ' por 100 palavras', 'até 3');
     case 'vicios': if (!t || t.muletasPor100 === null || t.muletasPor100 === undefined) return null; return res(band(t.muletasPor100, function (n) { return n <= 3; }, function (n) { return n <= 4.5; }), 'Vícios de linguagem', t.muletasPor100 + ' por 100 palavras', 'até 3');
     case 'vagueza': if (!t || t.vaguezaPor100 === null || t.vaguezaPor100 === undefined) return null; return res(band(t.vaguezaPor100, function (n) { return n <= 2; }, function (n) { return n <= 3; }), 'Vagueza', t.vaguezaPor100 + ' por 100 palavras', 'até 2');
     case 'verboFraco': if (!t || t.verboFracoPor100 === null || t.verboFracoPor100 === undefined) return null; return res(band(t.verboFracoPor100, function (n) { return n <= 2; }, function (n) { return n <= 3; }), 'Verbos fracos', t.verboFracoPor100 + ' por 100 palavras', 'até 2');
     case 'entonacao': if (!v || !v.variacaoPitch || v.variacaoPitch === '—') return null; return res(v.variacaoPitch === 'baixa' ? 'bad' : 'ok', 'Variação do tom da voz', { alta: 'bastante variação', 'média': 'alguma variação', baixa: 'pouca variação' }[v.variacaoPitch] || v.variacaoPitch, 'ter variação');
     case 'pausas': if (!v || v.pausasPorMin === null || v.pausasPorMin === undefined) return null; return res(band(v.pausasPorMin, function (n) { return n >= 8 && n <= 25; }, function (n) { return (n >= 4 && n < 8) || (n > 25 && n <= 32); }), 'Pausas para respirar', v.pausasPorMin + ' por minuto', '8 a 25 por minuto');
-    case 'quedas': if (!v || v.quedasPorMin === null || v.quedasPorMin === undefined) return null; return res(band(v.quedasPorMin, function (n) { return n <= 2; }, function (n) { return n <= 4; }), 'Frases que perdem força no final', v.quedasPorMin + ' por minuto', 'até 2 por minuto');
+    case 'quedas': if (!v || v.quedasPorMin === null || v.quedasPorMin === undefined) return null; return res(band(v.quedasPorMin, function (n) { return n <= 2; }, function (n) { return n <= 6; }), 'Frases que perdem força no final', v.quedasPorMin + ' por minuto', 'até 2 por minuto');
     case 'volume': if (!v || !v.nivelVolume) return null; return res(v.nivelVolume === 'adequado' ? 'ok' : (/demais/.test(v.nivelVolume) ? 'bad' : 'warn'), 'Volume da voz', v.nivelVolume === 'adequado' ? 'bom' : v.nivelVolume, 'volume bom');
     case 'varVolume': if (!v || !v.consistenciaVolume || v.consistenciaVolume === '—') return null; return res(v.consistenciaVolume.indexOf('variação') > -1 ? 'ok' : 'warn', 'Variação do volume', v.consistenciaVolume.indexOf('variação') > -1 ? 'varia bem' : 'sempre igual', 'o volume variar');
-    case 'cadencia': if (!v || !v.cadencia || v.cadencia.indexOf('poucas') > -1) return null; return res(v.cadencia.indexOf('irregular') > -1 ? 'warn' : 'ok', 'Regularidade do ritmo', v.cadencia.indexOf('irregular') > -1 ? 'ritmo irregular' : 'ritmo constante', 'ritmo constante');
+    case 'cadencia': return null; // só informação: a medida não acompanhou a avaliação humana nos testes
     case 'monotonia': if (!v || !v.monotona) return null; return res(v.monotona === 'não' ? 'ok' : 'bad', 'Voz monótona?', v.monotona === 'não' ? 'não' : 'sim', 'não');
     case 'clareza': if (!v || !v.clarezaFala) return null; return res(v.clarezaFala === 'alta' ? 'ok' : (v.clarezaFala === 'média' ? 'warn' : 'bad'), 'Clareza de fala (sinal fraco)', v.clarezaFala, 'alta');
-    case 'atividade': if (!m || m.atividadeValor === undefined || m.atividadeValor === null) return null; x = m.atividadeValor; return res(x >= 3 && x <= 10 ? 'ok' : (x > 16 ? 'bad' : 'warn'), 'Quanto você se mexe', { alta: 'bastante', 'média': 'na medida', baixa: 'pouco' }[m.atividade] + ' (' + x + ')', 'na medida (3 a 10)');
+    case 'atividade': if (!m || m.atividadeValor === undefined || m.atividadeValor === null) return null; x = m.atividadeValor; return res(x >= 3 && x <= 7 ? 'ok' : (x > 8.5 ? 'bad' : 'warn'), 'Quanto você se mexe', pilotAtividadeLabel(x) + ' (' + x + ')', 'na medida (3 a 7)');
     case 'lateral': if (!m || m.deslocamentoLateralPct === undefined || m.deslocamentoLateralPct === null) return null; return res(band(m.deslocamentoLateralPct, function (n) { return n <= 40; }, function (n) { return n <= 65; }), 'Quanto você andou para os lados', m.deslocamentoLateralPct + '% da largura do quadro', 'até 40%');
     case 'balanco': if (!m || !m.balancoRitmico) return null; x = (m.balancoRitmico.match(/(\d+)% regular/) || [])[1]; return res(x ? (parseInt(x, 10) >= 75 ? 'bad' : 'warn') : 'ok', 'Balanço do corpo', x ? 'provável balanço repetido, ' + x + '% regular' : 'sem balanço repetitivo', 'sem balanço repetitivo');
     case 'contatoVisual': if (!o || o.contato_visual_estimado_pct === undefined || o.contato_visual_estimado_pct === null) return null; return res(band(o.contato_visual_estimado_pct, function (n) { return n >= 70; }, function (n) { return n >= 50; }), 'Contato visual', o.contato_visual_estimado_pct + '%', '70% ou mais');
     case 'olharBaixo': if (!o || o.olhou_para_baixo_pct === undefined || o.olhou_para_baixo_pct === null) return null; return res(band(o.olhou_para_baixo_pct, function (n) { return n <= 10; }, function (n) { return n <= 25; }), 'Olhou para baixo', o.olhou_para_baixo_pct + '%', 'até 10%');
     case 'desviou': if (!o || o.desviou_o_olhar_pct === undefined || o.desviou_o_olhar_pct === null) return null; return res(band(o.desviou_o_olhar_pct, function (n) { return n <= 15; }, function (n) { return n <= 30; }), 'Desviou o olhar', o.desviou_o_olhar_pct + '%', 'até 15%');
+    case 'gestos': if (!o) return null; var gv = [o.mao_esquerda_em_movimento_pct, o.mao_direita_em_movimento_pct].filter(function (n) { return typeof n === 'number'; }); if (!gv.length) return null; x = Math.round(gv.reduce(function (a, b) { return a + b; }, 0) / gv.length); return res(x >= 20 && x <= 70 ? 'ok' : ((x >= 8 && x < 20) || (x > 70 && x <= 85) ? 'warn' : 'bad'), 'Gestos das mãos', 'em movimento ' + x + '% do tempo', '20% a 70% do tempo');
     case 'rosto': if (!o || !o.mao_perto_do_rosto || !o.mao_perto_do_rosto.total_episodios) return null; x = o.mao_perto_do_rosto.total_episodios; return res(x <= 2 ? 'warn' : 'bad', 'Mão perto do rosto (baixa confiança)', x + ' episódio(s)', 'nenhum');
   }
   return null;
@@ -2414,7 +2414,7 @@ function pilotSignalStatus(key, d) {
 var PILOT_SIGNAL_GROUPS = [
   ['Texto', ['ritmoFala', 'inseguranca', 'vicios', 'vagueza', 'verboFraco']],
   ['Voz', ['entonacao', 'pausas', 'quedas', 'volume', 'varVolume', 'cadencia', 'monotonia', 'clareza']],
-  ['Corpo', ['atividade', 'lateral', 'balanco']],
+  ['Corpo', ['atividade', 'lateral', 'balanco', 'gestos']],
   ['Olhar e postura', ['contatoVisual', 'olharBaixo', 'desviou', 'rosto']]
 ];
 
@@ -2821,9 +2821,10 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       ['Clareza da fala (sinal fraco)', d.voz.clarezaFala]
     ]);
     if (d.movimento) add('Movimento corporal', [
-      ['Quanto você se mexe', d.movimento.atividade ? ({ alta: 'bastante', 'média': 'na medida (ideal)', baixa: 'pouco' })[d.movimento.atividade] : null],
+      ['Quanto você se mexe', d.movimento.atividadeValor !== undefined && d.movimento.atividadeValor !== null ? pilotAtividadeLabel(d.movimento.atividadeValor) + (pilotAtividadeLabel(d.movimento.atividadeValor) === 'na medida' ? ' (ideal)' : '') : null],
       ['Quanto você andou para os lados', d.movimento.deslocamentoLateralPct !== undefined ? d.movimento.deslocamentoLateralPct + '% da largura do quadro (ideal: até 40%)' : null],
-      ['Balanço do corpo', d.movimento.balancoRitmico ? (/\d+% regular/.test(d.movimento.balancoRitmico) ? 'balanço repetido, como um pêndulo' : 'sem balanço repetido (bom)') : null]
+      ['Balanço do corpo', d.movimento.balancoRitmico ? (/\d+% regular/.test(d.movimento.balancoRitmico) ? 'balanço repetido, como um pêndulo' : 'sem balanço repetido (bom)') : null],
+      ['Gestos das mãos', (function () { var g = pilotSignalStatus('gestos', d); return g ? g.valor + ' (ideal: ' + g.ref + ')' : null; })()]
     ]);
     if (d.olhar) {
       var o = d.olhar, r = [];
@@ -3253,7 +3254,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     vDrops: { ref: 'ideal: até 2 por minuto', tip: 'Quando a voz "murcha" antes de uma pausa.' },
     vLevel: { ref: 'ideal: volume bom', tip: 'Depende também do microfone e da distância.' },
     vVolConsistency: { ref: 'ideal: o volume variar', tip: 'Falar mais forte nas ideias importantes dá ênfase.' },
-    vRhythm: { ref: 'ideal: ritmo constante', tip: 'Compara o tamanho dos trechos entre uma pausa e outra.' },
+    vRhythm: { ref: 'só informação (sem nota)', tip: 'Compara o tamanho dos trechos entre uma pausa e outra.' },
     vMonotone: { ref: 'ideal: não', tip: 'Fica "sim" quando o tom e o volume ficam parados ao mesmo tempo.' }
   };
   var PLAIN = {
@@ -3271,7 +3272,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     ['Frases que perdem força no final', 'Quando a voz “murcha” antes de uma pausa. O ideal é terminar as frases com energia.'],
     ['Volume da voz', 'Se dá pra ouvir bem. Depende também do microfone e da distância dele.'],
     ['Variação do volume', 'Falar mais forte nas ideias importantes ajuda a dar ênfase. Volume sempre igual cansa.'],
-    ['Regularidade do ritmo', '“Ritmo constante” quer dizer que a fala flui no mesmo passo. “Ritmo irregular” quer dizer que ora os trechos são curtos, ora longos. Pode ser de propósito, para dar ênfase, ou pode ser frase cortada. Ouça de novo para decidir.'],
+    ['Regularidade do ritmo', '“Ritmo constante” quer dizer que a fala flui no mesmo passo. “Ritmo irregular” quer dizer que ora os trechos são curtos, ora longos. Pode ser de propósito, para dar ênfase, ou pode ser frase cortada. Esta medida não recebe nota nem entra no resumo, porque ainda não acompanha bem o que se ouve.'],
     ['Voz monótona?', 'Fica “sim” quando o tom e o volume ficam parados ao mesmo tempo. O ideal é “não”.']
   ];
   var KEY = { vPitchVar: 'entonacao', vPauses: 'pausas', vDrops: 'quedas', vLevel: 'volume', vVolConsistency: 'varVolume', vRhythm: 'cadencia', vMonotone: 'monotonia' };
@@ -3309,12 +3310,12 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
 // ---------- Semáforo do movimento do corpo ----------
 (function () {
   var REF = {
-    mMotionLevel: { ref: 'ideal: na medida (3 a 10)', tip: 'Quanto do quadro se mexe de um instante pro outro.' },
+    mMotionLevel: { ref: 'ideal: na medida (3 a 7)', tip: 'Quanto do quadro se mexe de um instante pro outro.' },
     mLateralPct: { ref: 'ideal: até 40% da largura', tip: 'Quanto você andou para os lados.' },
     mPendulum: { ref: 'ideal: sem balanço repetido', tip: 'Se o corpo balança de um lado pro outro sempre no mesmo compasso.' }
   };
   var PLAIN = {
-    mMotionLevel: function (d) { return [d.atividade ? { alta: 'bastante', 'média': 'na medida', baixa: 'pouco' }[d.atividade] : null, 'quanto você se mexe']; },
+    mMotionLevel: function (d) { return [d.atividadeValor !== undefined && d.atividadeValor !== null ? pilotAtividadeLabel(d.atividadeValor) : null, 'quanto você se mexe']; },
     mLateralPct: function (d) { return [null, 'quanto você andou para os lados (% da largura do quadro)']; },
     mPendulum: function (d) { return [d.balancoRitmico ? (/(\d+)% regular/.test(d.balancoRitmico) ? 'balanço repetido' : 'sem balanço repetido') : null, 'balanço do corpo']; }
   };
@@ -3322,7 +3323,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
   function status(id, d) { var r = pilotSignalStatus(KEY[id], { movimento: d }); return r ? r.status : null; }
   var ICON = { ok: '✓', warn: '!', bad: '✕' }, WORD = { ok: 'bom', warn: 'atenção', bad: 'vale melhorar' };
   var EXPLAIN = [
-    ['Quanto você se mexe', 'Mede o quanto aparece de movimento no vídeo: gestos, balanço do corpo, passos. “Bastante” não quer dizer movimento brusco; quer dizer que tem muita coisa se mexendo (ou a câmera tremendo). O ideal é “na medida”. “Pouco” pode indicar corpo travado.'],
+    ['Quanto você se mexe', 'Mede o quanto aparece de movimento no vídeo: gestos, balanço do corpo, passos. Acima de uns 7 aparece “bastante” ou “muito”: tem muita coisa se mexendo (ou a câmera tremendo). O ideal é “na medida” (3 a 7). “Pouco” pode indicar corpo travado.'],
     ['Quanto você andou para os lados', 'Quanto você andou da esquerda para a direita, em relação à largura da tela. Ficar firme no lugar é bom. Andar até 40% é uso natural do espaço. Passar disso, indo e voltando, costuma distrair quem assiste e pode tirar você do enquadramento. Andar com um objetivo e parar em pontos funciona; ficar indo e voltando não.'],
     ['Balanço do corpo', 'Vê se o corpo balança de um lado pro outro sempre no mesmo compasso, como um pêndulo. “Sem balanço repetido” é o bom resultado. “Balanço repetido” é um alerta: esse movimento constante costuma ser lido como nervosismo.']
   ];
@@ -3350,6 +3351,31 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       var ms = res.querySelector('.metrics'); ms.insertAdjacentElement('afterend', ex);
     }
   }
+
+  // ---------- Gestos das mãos (paradas ou em movimento) ----------
+  function renderGestos() {
+    var res = document.getElementById('motionResults'); if (!res) return;
+    var o = (window.pilotReportData || {}).olhar; if (!o) return;
+    var box = document.getElementById('gestosBox');
+    if (!box) {
+      box = document.createElement('div'); box.id = 'gestosBox'; box.className = 'sem-explain';
+      var anchor = document.getElementById('motionExplain') || res.querySelector('.metrics');
+      anchor.insertAdjacentElement('afterend', box);
+    }
+    var g = pilotSignalStatus('gestos', { olhar: o });
+    var fora = o.maos_fora_do_quadro && o.maos_fora_do_quadro.esquerda_nunca_visivel && o.maos_fora_do_quadro.direita_nunca_visivel;
+    var h = '<p><b>Gestos das mãos</b></p>';
+    if (g) {
+      h += '<p><span class="sem-badge ' + g.status + '">' + ICON[g.status] + '</span> ' + g.valor + ' <span class="sem-ref">ideal: ' + g.ref + '</span></p>';
+    } else if (fora) {
+      h += '<p>Suas mãos não aparecem no vídeo, então não dá para avaliar os gestos.</p>';
+    } else {
+      h += '<p>Não consegui medir os gestos neste vídeo.</p>';
+    }
+    h += '<p>Mostra por quanto tempo as mãos ficaram se mexendo. Mãos coladas ao corpo ou ao púlpito o tempo todo deixam a fala dura; mãos sempre se mexendo distraem. O ideal é gesto que acompanha a ideia, com pausas entre um e outro. Mede só o movimento, não se o gesto faz sentido. Referência ainda não calibrada.</p>';
+    if (box.getAttribute('data-h') !== h) { box.innerHTML = h; box.setAttribute('data-h', h); }
+  }
+  setInterval(renderGestos, 1000);
   setInterval(decorate, 800);
 })();
 
