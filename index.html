@@ -415,7 +415,7 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
 
   <section class="card" id="seusDados">
     <h2>Seus dados</h2>
-    <p class="section-note">Seu nome e contato aparecem no relatório em Word. Ficam só neste navegador: não são enviados a nenhum servidor.</p>
+    <p class="section-note">Seu nome e contato aparecem no relatório em Word. Eles só são enviados à Agência Voz se você marcar a autorização abaixo.</p>
     <div class="ctxgrid" style="margin-top:12px">
       <div><label class="field-label" for="userName">Nome</label><input id="userName" type="text" autocomplete="name" placeholder="Seu nome completo" style="width:100%; border:1px solid var(--rule); background:var(--bg); color:var(--ink); padding:10px 12px; font-family:var(--font-sans); font-size:14px; margin-bottom:12px"></div>
       <div><label class="field-label" for="userContact">Contato (WhatsApp ou e-mail)</label><input id="userContact" type="text" autocomplete="tel" placeholder="(61) 90000-0000 ou voce@email.com" style="width:100%; border:1px solid var(--rule); background:var(--bg); color:var(--ink); padding:10px 12px; font-family:var(--font-sans); font-size:14px; margin-bottom:12px"></div>
@@ -3014,9 +3014,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
   var btn = document.getElementById('downloadWordBtn');
   if (!btn) return;
   function val(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
-  btn.addEventListener('click', function () {
-    var d = window.pilotReportData || {};
-    var status = document.getElementById('wordStatus');
+  function collectFields() {
     var f = {
       aluno: val('userName'), contato: val('userContact'), periodo: val('wPeriodo'), formato: val('wFormato'), encontros: val('wEncontros'), objetivo: val('wObjetivo'),
       formatoTexto: val('wFormatoTexto'), conteudo: val('wConteudo').split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
@@ -3024,11 +3022,22 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       fortes: val('wFortes'), desenvolver: val('wDesenvolver'), link: val('wLink'), parecer: val('wParecer')
     };
     if (f.link && !/^https?:\/\//i.test(f.link)) f.link = 'https://' + f.link;
+    return f;
+  }
+  function reportFileName(f) { return 'Relatorio_FalaMusicalizada_' + (f.aluno || 'aluno').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.docx'; }
+  // Usado também pelo envio automático ao Google Drive (módulo de coleta).
+  window.pilotBuildReport = function () {
+    var f = collectFields(), d = window.pilotReportData || {};
+    return { blob: build(f, d), name: reportFileName(f), f: f, d: d };
+  };
+  btn.addEventListener('click', function () {
+    var d = window.pilotReportData || {};
+    var status = document.getElementById('wordStatus');
     try {
-      var blob = build(f, d);
+      var r = window.pilotBuildReport();
       var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'Relatorio_FalaMusicalizada_' + (f.aluno || 'aluno').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.docx';
+      a.href = URL.createObjectURL(r.blob);
+      a.download = r.name;
       document.body.appendChild(a); a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
       status.textContent = Object.keys(d).length ? 'Relatório gerado. Confira o arquivo baixado.' : 'Baixado sem dados de análise (nenhum módulo rodou ainda nesta sessão).';
@@ -3377,6 +3386,58 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
   }
   setInterval(renderGestos, 1000);
   setInterval(decorate, 800);
+})();
+
+// ---------- Envio do relatório ao Google Drive (só com autorização da pessoa) ----------
+(function () {
+  // Cole aqui o endereço do app da Web do Google (veja o passo a passo). Vazio = não envia nada.
+  var COLETA_URL = 'https://script.google.com/macros/s/AKfycbzM_Mdi6-uadLQ-2qP6-enCF5ASUr_G2HRFZQiwcaorSTCAbyut1XhgnpAw5dh76dif/exec';
+  var COLETA_TOKEN = 'ensaio-9f3k2a7x';
+  var card = document.getElementById('seusDados'); if (!card) return;
+  var box = document.createElement('div'); box.style.marginTop = '4px';
+  box.innerHTML = '<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-soft);line-height:1.5;cursor:pointer">' +
+    '<input type="checkbox" id="coletaOk" style="margin-top:3px;flex:none">' +
+    '<span>Autorizo o envio do meu relatório e dos resultados desta análise à Agência Voz, para acompanhar minha evolução. O vídeo não é enviado. Posso pedir a exclusão a qualquer momento.</span></label>' +
+    '<p class="status-line" id="coletaStatus" style="margin-top:8px"></p>';
+  card.appendChild(box);
+  var ok = document.getElementById('coletaOk'), st = document.getElementById('coletaStatus');
+  var sent = false, busy = false, firstReadyAt = 0;
+  var KEYS = ['ritmoFala', 'inseguranca', 'vicios', 'vagueza', 'verboFraco', 'entonacao', 'pausas', 'quedas', 'volume', 'varVolume', 'cadencia', 'monotonia', 'clareza', 'atividade', 'lateral', 'balanco', 'gestos', 'contatoVisual', 'olharBaixo', 'desviou', 'rosto'];
+  var NOMES = { ok: 'Bom', warn: 'Atenção', bad: 'Ruim' };
+  function val(id) { var e = document.getElementById(id); return e ? (e.value || '').trim() : ''; }
+  function sel(id) { var e = document.getElementById(id); return e && e.selectedIndex >= 0 ? e.options[e.selectedIndex].text : ''; }
+  function b64(blob) {
+    return blob.arrayBuffer().then(function (buf) {
+      var bytes = new Uint8Array(buf), out = '';
+      for (var i = 0; i < bytes.length; i += 0x8000) out += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      return btoa(out);
+    });
+  }
+  function enviar() {
+    if (sent || busy || !COLETA_URL || !ok.checked) return;
+    if (!val('userName')) { st.textContent = 'Preencha seu nome para enviar o relatório.'; return; }
+    busy = true; st.textContent = 'Enviando…';
+    var r;
+    try { r = window.pilotBuildReport(); } catch (e) { busy = false; st.textContent = 'Não consegui preparar o relatório para envio.'; return; }
+    var sinais = [];
+    KEYS.forEach(function (k) { var x = pilotSignalStatus(k, r.d); if (x) sinais.push({ chave: k, label: x.label, valor: x.valor, ref: x.ref, status: k === 'rosto' ? x.status : x.status, nota: NOMES[x.status] }); });
+    var file = (document.getElementById('audioFile') || {}).files; file = file && file[0] ? file[0].name : '';
+    b64(r.blob).then(function (docx) {
+      var payload = { token: COLETA_TOKEN, versao: 1, quando: new Date().toISOString(), nome: val('userName'), contato: val('userContact'), consentimento: true,
+        video: file, tom: sel('toneSelect'), publico: sel('audienceSelect'), formato: sel('formatSelect'), arquivo: r.name, docx: docx, sinais: sinais };
+      return fetch(COLETA_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+    }).then(function () { sent = true; busy = false; st.textContent = 'Relatório enviado à Agência Voz. Obrigado!'; })
+      .catch(function () { busy = false; st.textContent = 'Não consegui enviar agora. Seu relatório em Word continua disponível para baixar.'; });
+  }
+  ok.addEventListener('change', function () { if (ok.checked) enviar(); else if (!sent) st.textContent = ''; });
+  // Envia sozinho quando a análise termina (caixinhas liberadas) e a pessoa autorizou.
+  setInterval(function () {
+    if (sent || busy || !ok.checked || !COLETA_URL) return;
+    var b = document.getElementById('accBanner'), d = window.pilotReportData || {};
+    if (!b || !b.classList.contains('ready') || !d.olhar) { firstReadyAt = 0; return; }
+    if (!firstReadyAt) firstReadyAt = Date.now();
+    if (Date.now() - firstReadyAt > 6000) enviar();   // espera o resumo e o parecer serem gerados
+  }, 2000);
 })();
 
 // ---------- Fluxo em duas etapas + caixinhas que abrem depois do olhar e postura ----------
