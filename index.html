@@ -379,6 +379,11 @@ section.acc.locked .acc-head { cursor:not-allowed; opacity:.6; }
 .acc-body { max-height:0; overflow:hidden; visibility:hidden; padding:0 24px; }
 section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visible; padding:0 24px 24px; }
 .upload-zone { display:block; }
+#etapa2 .rec-tips { border:1px solid var(--rule); border-radius:12px; padding:14px 18px; margin:0 0 16px; background:var(--bg); }
+#etapa2 .rec-tips .rec-title { margin:0 0 8px; font-weight:600; font-size:14px; }
+#etapa2 .rec-tips ul { margin:0; padding-left:18px; font-size:13.5px; line-height:1.6; color:var(--ink-soft); }
+#etapa2 .rec-tips li { margin:3px 0; }
+#etapa2 .rec-tips b { color:var(--ink); }
 #etapa2 .upload-zone { border:2px dashed var(--wine-2); background:rgba(122,18,48,.12); border-radius:16px; padding:34px 20px; }
 #etapa2 .upload-zone:hover { background:rgba(122,18,48,.22); border-color:var(--gold); }
 #etapa2 .upload-zone .uz-title { font-size:16px; font-weight:600; }
@@ -550,6 +555,19 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
   <section class="card" id="etapa2">
     <h2><span class="stepnum">2</span> Suba seu vídeo</h2>
     <p class="section-note">É só enviar um vídeo da sua fala. A plataforma analisa voz, texto, corpo e olhar sozinha e mostra tudo logo abaixo, em Resultados. A leitura do servidor pode levar alguns minutos.</p>
+    <div class="rec-tips">
+      <p class="rec-title">Antes de gravar</p>
+      <ul>
+        <li><b>Duração:</b> no máximo 1 minuto.</li>
+        <li><b>Enquadramento:</b> da cintura para cima, com um pouco de espaço acima da cabeça. Suas mãos precisam aparecer no quadro quando você gesticular.</li>
+        <li><b>Distância:</b> fique a uns 1,5 a 2 metros da câmera, para os braços caberem sem sair da imagem.</li>
+        <li><b>Luz:</b> de frente para uma janela ou lâmpada. Evite luz forte atrás de você, que escurece o rosto.</li>
+        <li><b>Câmera:</b> na altura dos olhos e parada (apoiada ou em tripé). Pode gravar com o celular na vertical ou na horizontal.</li>
+        <li><b>Som e fundo:</b> lugar silencioso, fundo simples, voz em volume normal.</li>
+        <li><b>Mãos livres:</b> evite segurar papel, copo ou celular. A plataforma pode confundir o objeto com um gesto.</li>
+      </ul>
+    </div>
+    <p class="status-line" id="gravacaoAviso" style="display:none"></p>
     <label class="upload-zone" id="audioUploadZone">
       <input type="file" id="audioFile" accept="audio/*,video/*">
       <div class="uz-title">Clique para escolher um arquivo de áudio ou vídeo</div>
@@ -3548,29 +3566,34 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
 
   function capture(lista, src) {
     return new Promise(function (resolve) {
-      var out = {}, jobs = [], i = 0, v = document.createElement('video'), c = document.createElement('canvas'), done = false;
+      var out = {}, jobs = [], i = 0, v = document.createElement('video'), c = document.createElement('canvas'), done = false, jobTimer = null, erro = '';
       lista.forEach(function (g) { g.eps.forEach(function (e) { jobs.push({ k: g.chave, t: (e.inicio_s + e.fim_s) / 2 }); }); });
-      jobs = jobs.slice(0, 12);
-      function finish() { if (done) return; done = true; resolve(out); }
-      v.muted = true; v.playsInline = true; v.preload = 'auto';
-      v.addEventListener('error', finish);
-      v.addEventListener('loadedmetadata', next);
-      v.addEventListener('seeked', function () {
+      jobs = jobs.slice(0, 12).sort(function (a, b) { return a.t - b.t; });   // em ordem de tempo: buscar para frente é mais rápido
+      function finish() { if (done) return; done = true; clearTimeout(jobTimer); window.pilotGestosErro = erro; resolve(out); }
+      function shot() {
         var j = jobs[i];
         try {
+          if (!v.videoWidth || !v.videoHeight) { erro = erro || 'o navegador não conseguiu abrir os quadros deste vídeo (formato)'; return; }
           var w = 480, h = Math.round(w * v.videoHeight / v.videoWidth);
           c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h);
           (out[j.k] = out[j.k] || []).push({ t: j.t, url: c.toDataURL('image/jpeg', 0.72), w: w, h: h });
-        } catch (e) {}
-        i++; next();
-      });
+        } catch (e) { erro = erro || 'falha ao desenhar o quadro'; }
+      }
+      function advance() { clearTimeout(jobTimer); i++; next(); }
+      v.muted = true; v.playsInline = true; v.preload = 'auto';
+      v.addEventListener('error', function () { erro = erro || 'o navegador não conseguiu abrir este vídeo (formato)'; finish(); });
+      v.addEventListener('loadeddata', function () { if (i === 0) next(); });
+      v.addEventListener('seeked', function () { shot(); advance(); });
       function next() {
         if (i >= jobs.length) return finish();
-        var t = jobs[i].t; if (v.duration) t = Math.min(t, Math.max(0, v.duration - 0.05));
+        var t = jobs[i].t; if (v.duration && isFinite(v.duration)) t = Math.min(t, Math.max(0, v.duration - 0.05));
+        if (Math.abs(v.currentTime - t) < 0.02) t = t + 0.05;      // evita o caso em que o navegador não dispara "seeked"
+        jobTimer = setTimeout(function () { erro = erro || 'tempo esgotado ao buscar o quadro'; advance(); }, 15000);
         v.currentTime = t;
       }
-      setTimeout(finish, 30000);
+      setTimeout(finish, 120000);
       v.src = src;
+      try { v.load(); } catch (e) {}
     });
   }
 
@@ -3578,7 +3601,18 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     var gi = window.pilotGestosImgs || {}, o = (window.pilotReportData || {}).olhar; if (!o) return;
     var lista = pilotGestosLista(o), titles = document.querySelectorAll('.check-item .ct-title');
     lista.forEach(function (g) {
-      var imgs = gi[g.chave]; if (!imgs || !imgs.length) return;
+      var imgs = gi[g.chave];
+      if (!imgs || !imgs.length) {
+        if (!window.pilotGestosReady) return;
+        Array.prototype.forEach.call(titles, function (el) {
+          if (el.textContent.indexOf(g.nome) !== 0) return;
+          var bx = el.parentNode; if (bx.querySelector('.gesto-thumbs')) return;
+          var d0 = document.createElement('div'); d0.className = 'gesto-thumbs';
+          d0.innerHTML = '<div class="gesto-priv">Não consegui gerar a imagem deste momento (' + (window.pilotGestosErro || 'motivo desconhecido') + '). Confira no vídeo, ' + g.trechos + '.</div>';
+          bx.appendChild(d0);
+        });
+        return;
+      }
       Array.prototype.forEach.call(titles, function (el) {
         if (el.textContent.indexOf(g.nome) !== 0) return;
         var box = el.parentNode; if (box.querySelector('.gesto-thumbs')) return;
@@ -3603,6 +3637,28 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     } else if (!busy) inject();
   }
   setInterval(tick, 1500);
+})();
+
+// ---------- Aviso de duração: o ideal é até 1 minuto (não bloqueia, só avisa) ----------
+(function () {
+  var inp = document.getElementById('audioFile'), av = document.getElementById('gravacaoAviso');
+  if (!inp || !av) return;
+  inp.addEventListener('change', function () {
+    av.style.display = 'none'; av.textContent = '';
+    var f = inp.files && inp.files[0]; if (!f) return;
+    var m = document.createElement(f.type.indexOf('audio') === 0 ? 'audio' : 'video'), url = URL.createObjectURL(f);
+    m.preload = 'metadata';
+    m.onloadedmetadata = function () {
+      var d = m.duration; URL.revokeObjectURL(url);
+      if (d && isFinite(d) && d > 65) {
+        var min = Math.floor(d / 60), seg = Math.round(d % 60);
+        av.textContent = 'Seu arquivo tem ' + (min ? min + ' min ' : '') + seg + ' s. O ideal é até 1 minuto: vídeos longos demoram mais para analisar. Você pode continuar mesmo assim.';
+        av.style.display = 'block';
+      }
+    };
+    m.onerror = function () { URL.revokeObjectURL(url); };
+    m.src = url;
+  });
 })();
 
 // ---------- Fluxo em duas etapas + caixinhas que abrem depois do olhar e postura ----------
