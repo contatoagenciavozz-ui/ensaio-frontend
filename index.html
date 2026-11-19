@@ -1951,6 +1951,7 @@ function renderLandmarksData(data, checksList) {
   if (data.formato_de_mao_incomum && data.formato_de_mao_incomum.total_episodios) {
     weakSignals.push(data.formato_de_mao_incomum.total_episodios + ' episódio(s) de formato de mão fora do padrão conhecido — revisar manualmente, não é classificação do que é');
   }
+  pilotGestosLista(data).forEach(function (g) { weakSignals.push(g.nome + ' — ' + g.trechos + ' (' + g.vezes + 'x)'); });
   if (data.quadros_com_rosto_detectado === 0) {
     weakSignals.push('rosto não detectado em nenhum quadro — provavelmente o enquadramento está aberto demais (corpo inteiro); tente um plano mais fechado pra medir contato visual e expressão');
   }
@@ -2193,6 +2194,7 @@ async function runBackendAnalysis(file) {
       if (d.olhar.formato_de_mao_incomum && d.olhar.formato_de_mao_incomum.total_episodios) {
         parts.push(line('formato de mão fora do padrão (revisar, não é veredito)', d.olhar.formato_de_mao_incomum.total_episodios + ' episódio(s)'));
       }
+      pilotGestosLista(d.olhar).forEach(function (g) { parts.push(line(g.nome + ' (baixa confiança, confira o vídeo)', g.trechos + ' — ' + g.vezes + 'x')); });
       parts.push('');
     }
 
@@ -2380,6 +2382,21 @@ function generateParecer(d) {
 
 // ---------- Resumo dos sinais (semáforo; substitui o antigo índice numérico) ----------
 // Fonte única das regras de verde / amarelo / vermelho (referências de trabalho, ainda não calibradas).
+// ---------- Gestos específicos (OK, indicador, pirâmide, dedo do meio, mão na cintura, piscada) ----------
+function pilotFmtT(t) { t = Math.max(0, Math.round(t)); var m = Math.floor(t / 60), s2 = t % 60; return m + ':' + (s2 < 10 ? '0' : '') + s2; }
+function pilotGestosLista(o) {
+  var g = o && o.gestos_especificos && o.gestos_especificos.gestos; if (!g) return [];
+  var ORDEM = ['dedo_do_meio', 'piramide', 'ok', 'indicador_levantado', 'apontando', 'mao_na_cintura', 'piscada'], out = [];
+  ORDEM.forEach(function (k) {
+    var x = g[k]; if (!x || !x.total_episodios) return;
+    var trechos = (x.episodios || []).slice(0, 4).map(function (e) { return e.fim_s - e.inicio_s >= 1 ? pilotFmtT(e.inicio_s) + ' a ' + pilotFmtT(e.fim_s) : 'em ' + pilotFmtT(e.inicio_s); }).join(', ');
+    if (x.total_episodios > 4) trechos += ' e mais ' + (x.total_episodios - 4);
+    var nome = k === 'dedo_do_meio' ? 'Possível gesto ofensivo (dedo do meio levantado)' : 'Possível ' + x.descricao;
+    out.push({ chave: k, nome: nome, vezes: x.total_episodios, pct: x.pct_dos_quadros, trechos: trechos });
+  });
+  return out;
+}
+
 function pilotAtividadeLabel(x) { return x < 3 ? 'pouco' : (x <= 7 ? 'na medida' : (x <= 8.5 ? 'bastante' : 'muito')); }
 function pilotSignalStatus(key, d) {
   function band(v, okFn, warnFn) { return okFn(v) ? 'ok' : (warnFn(v) ? 'warn' : 'bad'); }
@@ -2515,7 +2532,9 @@ function computeEvaluationText(d, nome) {
   var goods = [], seen = {};
   oks.forEach(function (it) { var g = good(it); if (g && goods.length < 3) { goods.push(g); } });
   if (goods.length) t += ' Dentro da faixa: ' + goods.join('; ') + '.';
-  if (!needs.length) t += ' Nada fora da faixa nesta gravação; o próximo passo é testar um contexto mais difícil, como plateia maior ou tempo mais curto.';
+  var gl = pilotGestosLista(O).filter(function (g) { return g.chave === 'dedo_do_meio'; });
+  if (gl.length) t += ' Atenção: a plataforma detectou um possível gesto ofensivo (' + gl[0].trechos + '). Revise esse trecho do vídeo; pode ser um falso alarme.';
+  if (!needs.length && !gl.length) t += ' Nada fora da faixa nesta gravação; o próximo passo é testar um contexto mais difícil, como plateia maior ou tempo mais curto.';
   return { texto: t, ratio: ratio, fortes: goods, dicas: needs.slice(0, 3).map(function (i) { return i.label; }) };
 }
 
@@ -2870,6 +2889,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       if (o.expressao_facial) r.push(['Expressão facial', o.expressao_facial.classificacao]);
       if (o.piscadas_por_minuto_estimado && o.piscadas_por_minuto_estimado.valor !== null && o.piscadas_por_minuto_estimado.valor !== undefined) r.push(['Piscadas por minuto (estimativa)', o.piscadas_por_minuto_estimado.valor]);
       if (o.mao_perto_do_rosto && o.mao_perto_do_rosto.total_episodios) r.push(['Mão perto do rosto', o.mao_perto_do_rosto.total_episodios + ' episódio(s), baixa confiança']);
+      pilotGestosLista(o).forEach(function (g) { r.push([g.nome, g.trechos + ' (' + g.vezes + 'x). Baixa confiança: confira o vídeo']); });
       add('Olhar e postura', r);
     }
     if (d.imagem && d.imagem.checks) add('Imagem e vestuário', d.imagem.checks.map(function (c) { return [c.title, (c.ok ? 'ok' : 'atenção') + ' — ' + c.sub]; }));
