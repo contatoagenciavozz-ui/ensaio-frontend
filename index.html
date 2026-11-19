@@ -2389,10 +2389,16 @@ function pilotGestosLista(o) {
   var ORDEM = ['dedo_do_meio', 'piramide', 'ok', 'indicador_levantado', 'apontando', 'mao_na_cintura', 'piscada'], out = [];
   ORDEM.forEach(function (k) {
     var x = g[k]; if (!x || !x.total_episodios) return;
-    var trechos = (x.episodios || []).slice(0, 4).map(function (e) { return e.fim_s - e.inicio_s >= 1 ? pilotFmtT(e.inicio_s) + ' a ' + pilotFmtT(e.fim_s) : 'em ' + pilotFmtT(e.inicio_s); }).join(', ');
-    if (x.total_episodios > 4) trechos += ' e mais ' + (x.total_episodios - 4);
-    var nome = k === 'dedo_do_meio' ? 'Possível gesto ofensivo (dedo do meio levantado)' : 'Possível ' + x.descricao;
-    out.push({ chave: k, nome: nome, vezes: x.total_episodios, pct: x.pct_dos_quadros, trechos: trechos });
+    // junta trechos separados por menos de 1,5 s (a mesma mão tremendo vira um só)
+    var eps = [];
+    (x.episodios || []).forEach(function (e) {
+      var last = eps[eps.length - 1];
+      if (last && e.inicio_s - last.fim_s <= 1.5) last.fim_s = Math.max(last.fim_s, e.fim_s); else eps.push({ inicio_s: e.inicio_s, fim_s: e.fim_s });
+    });
+    var trechos = eps.slice(0, 4).map(function (e) { return e.fim_s - e.inicio_s >= 1 ? pilotFmtT(e.inicio_s) + ' a ' + pilotFmtT(e.fim_s) : 'em ' + pilotFmtT(e.inicio_s); }).join(', ');
+    if (eps.length > 4) trechos += ' e mais ' + (eps.length - 4);
+    var nome = k === 'dedo_do_meio' ? 'Possível gesto considerado obsceno (dedo do meio levantado)' : (k === 'ok' ? 'Possível gesto considerado obsceno (conhecido como “OK”)' : 'Possível ' + x.descricao);
+    out.push({ chave: k, nome: nome, ofensivo: k === 'dedo_do_meio' || k === 'ok', vezes: eps.length, pct: x.pct_dos_quadros, trechos: trechos });
   });
   return out;
 }
@@ -2532,8 +2538,8 @@ function computeEvaluationText(d, nome) {
   var goods = [], seen = {};
   oks.forEach(function (it) { var g = good(it); if (g && goods.length < 3) { goods.push(g); } });
   if (goods.length) t += ' Dentro da faixa: ' + goods.join('; ') + '.';
-  var gl = pilotGestosLista(O).filter(function (g) { return g.chave === 'dedo_do_meio'; });
-  if (gl.length) t += ' Atenção: a plataforma detectou um possível gesto ofensivo (' + gl[0].trechos + '). Revise esse trecho do vídeo; pode ser um falso alarme.';
+  var gl = pilotGestosLista(O).filter(function (g) { return g.ofensivo; });
+  if (gl.length) t += ' Atenção: a plataforma detectou ' + gl.map(function (g) { return g.nome.charAt(0).toLowerCase() + g.nome.slice(1) + ' em ' + g.trechos.replace(/^em /, ''); }).join('; ') + '. Revise o trecho no vídeo; pode ser um falso alarme.';
   if (!needs.length && !gl.length) t += ' Nada fora da faixa nesta gravação; o próximo passo é testar um contexto mais difícil, como plateia maior ou tempo mais curto.';
   return { texto: t, ratio: ratio, fortes: goods, dicas: needs.slice(0, 3).map(function (i) { return i.label; }) };
 }
