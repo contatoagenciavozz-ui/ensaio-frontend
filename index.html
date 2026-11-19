@@ -3484,9 +3484,13 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
   box.innerHTML = '<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-soft);line-height:1.5;cursor:pointer">' +
     '<input type="checkbox" id="coletaOk" style="margin-top:3px;flex:none">' +
     '<span>Autorizo o envio do meu relatório e dos resultados desta análise à Agência Voz, para acompanhar minha evolução. O vídeo não é enviado. Posso pedir a exclusão a qualquer momento.</span></label>' +
+    '<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-soft);line-height:1.5;cursor:pointer;margin-top:10px">' +
+    '<input type="checkbox" id="coletaImgs" style="margin-top:3px;flex:none">' +
+    '<span>Também autorizo enviar os quadros do vídeo que mostram os gestos detectados (algumas imagens pequenas, não o vídeo inteiro), para a Agência Voz revisar se a detecção está certa. Opcional.</span></label>' +
     '<p class="status-line" id="coletaStatus" style="margin-top:8px"></p>';
   card.appendChild(box);
-  var ok = document.getElementById('coletaOk'), st = document.getElementById('coletaStatus');
+  var ok = document.getElementById('coletaOk'), imgs = document.getElementById('coletaImgs'), st = document.getElementById('coletaStatus');
+  var waitImgsFrom = 0;
   var sent = false, busy = false, firstReadyAt = 0;
   var KEYS = ['ritmoFala', 'inseguranca', 'vicios', 'vagueza', 'verboFraco', 'entonacao', 'pausas', 'quedas', 'volume', 'varVolume', 'cadencia', 'monotonia', 'clareza', 'atividade', 'lateral', 'balanco', 'gestos', 'contatoVisual', 'olharBaixo', 'desviou', 'rosto'];
   var NOMES = { ok: 'Bom', warn: 'Atenção', bad: 'Ruim' };
@@ -3502,20 +3506,26 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
   function enviar() {
     if (sent || busy || !COLETA_URL || !ok.checked) return;
     if (!val('userName')) { st.textContent = 'Preencha seu nome para enviar o relatório.'; return; }
+    // com a caixa das imagens marcada, espera as miniaturas ficarem prontas (até 40 s)
+    if (imgs.checked && !window.pilotGestosReady) {
+      if (!waitImgsFrom) waitImgsFrom = Date.now();
+      if (Date.now() - waitImgsFrom < 40000) { st.textContent = 'Preparando as imagens dos gestos…'; return; }
+    }
     busy = true; st.textContent = 'Enviando…';
     var r;
-    try { r = window.pilotBuildReport({ semImagens: true }); } catch (e) { busy = false; st.textContent = 'Não consegui preparar o relatório para envio.'; return; }
+    try { r = window.pilotBuildReport({ semImagens: !imgs.checked }); } catch (e) { busy = false; st.textContent = 'Não consegui preparar o relatório para envio.'; return; }
     var sinais = [];
     KEYS.forEach(function (k) { var x = pilotSignalStatus(k, r.d); if (x) sinais.push({ chave: k, label: x.label, valor: x.valor, ref: x.ref, status: k === 'rosto' ? x.status : x.status, nota: NOMES[x.status] }); });
     var file = (document.getElementById('audioFile') || {}).files; file = file && file[0] ? file[0].name : '';
     b64(r.blob).then(function (docx) {
-      var payload = { token: COLETA_TOKEN, versao: 1, quando: new Date().toISOString(), nome: val('userName'), contato: val('userContact'), consentimento: true,
+      var payload = { token: COLETA_TOKEN, versao: 2, imagens: !!imgs.checked, quando: new Date().toISOString(), nome: val('userName'), contato: val('userContact'), consentimento: true,
         video: file, tom: sel('toneSelect'), publico: sel('audienceSelect'), formato: sel('formatSelect'), arquivo: r.name, docx: docx, sinais: sinais };
       return fetch(COLETA_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-    }).then(function () { sent = true; busy = false; st.textContent = 'Relatório enviado à Agência Voz. Obrigado!'; })
+    }).then(function () { sent = true; busy = false; imgs.disabled = true; ok.disabled = true; st.textContent = 'Relatório enviado à Agência Voz' + (imgs.checked ? ' (com as imagens dos gestos)' : '') + '. Obrigado!'; })
       .catch(function () { busy = false; st.textContent = 'Não consegui enviar agora. Seu relatório em Word continua disponível para baixar.'; });
   }
-  ok.addEventListener('change', function () { if (ok.checked) enviar(); else if (!sent) st.textContent = ''; });
+  ok.addEventListener('change', function () { if (ok.checked) { if (!(window.pilotReportData || {}).olhar) { st.textContent = 'Autorização registrada. O envio acontece quando a análise terminar.'; } else enviar(); } else if (!sent) st.textContent = ''; });
+  imgs.addEventListener('change', function () { if (imgs.checked && !ok.checked) { ok.checked = true; ok.dispatchEvent(new Event('change')); } });
   // Envia sozinho quando a análise termina (caixinhas liberadas) e a pessoa autorizou.
   setInterval(function () {
     if (sent || busy || !ok.checked || !COLETA_URL) return;
@@ -3584,11 +3594,12 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     var o = (window.pilotReportData || {}).olhar;
     if (!o || !o.gestos_especificos) return;
     var sig = signature(o);
+    if (!sig) window.pilotGestosReady = true;   // nenhum gesto detectado: nada a esperar
     if (sig && sig !== lastSig && !busy) {
       var fv = document.getElementById('frameVideo'), src = fv && (fv.currentSrc || fv.src);
-      if (!src || window.pilotAudioOnly) { lastSig = sig; return; }
-      busy = true; lastSig = sig;
-      capture(pilotGestosLista(o), src).then(function (out) { window.pilotGestosImgs = out; busy = false; inject(); }).catch(function () { busy = false; });
+      if (!src || window.pilotAudioOnly) { lastSig = sig; window.pilotGestosReady = true; return; }
+      busy = true; lastSig = sig; window.pilotGestosReady = false;
+      capture(pilotGestosLista(o), src).then(function (out) { window.pilotGestosImgs = out; busy = false; window.pilotGestosReady = true; inject(); }).catch(function () { busy = false; window.pilotGestosReady = true; });
     } else if (!busy) inject();
   }
   setInterval(tick, 1500);
