@@ -1951,7 +1951,7 @@ function renderLandmarksData(data, checksList) {
   if (data.formato_de_mao_incomum && data.formato_de_mao_incomum.total_episodios) {
     weakSignals.push(data.formato_de_mao_incomum.total_episodios + ' episódio(s) de formato de mão fora do padrão conhecido — revisar manualmente, não é classificação do que é');
   }
-  pilotGestosLista(data).forEach(function (g) { weakSignals.push(g.nome + ' — ' + g.trechos + ' (' + g.vezes + 'x)'); });
+  pilotGestosLista(data).forEach(function (g) { weakSignals.push(g.nome + ' — ' + g.trechos); });
   if (data.quadros_com_rosto_detectado === 0) {
     weakSignals.push('rosto não detectado em nenhum quadro — provavelmente o enquadramento está aberto demais (corpo inteiro); tente um plano mais fechado pra medir contato visual e expressão');
   }
@@ -2194,7 +2194,7 @@ async function runBackendAnalysis(file) {
       if (d.olhar.formato_de_mao_incomum && d.olhar.formato_de_mao_incomum.total_episodios) {
         parts.push(line('formato de mão fora do padrão (revisar, não é veredito)', d.olhar.formato_de_mao_incomum.total_episodios + ' episódio(s)'));
       }
-      pilotGestosLista(d.olhar).forEach(function (g) { parts.push(line(g.nome + ' (baixa confiança, confira o vídeo)', g.trechos + ' — ' + g.vezes + 'x')); });
+      pilotGestosLista(d.olhar).forEach(function (g) { parts.push(line(g.nome + ' (baixa confiança, confira o vídeo)', g.trechos)); });
       parts.push('');
     }
 
@@ -2389,14 +2389,12 @@ function pilotGestosLista(o) {
   var ORDEM = ['dedo_do_meio', 'piramide', 'ok', 'indicador_levantado', 'apontando', 'mao_na_cintura', 'piscada'], out = [];
   ORDEM.forEach(function (k) {
     var x = g[k]; if (!x || !x.total_episodios) return;
-    // junta trechos separados por menos de 1,5 s (a mesma mão tremendo vira um só)
-    var eps = [];
-    (x.episodios || []).forEach(function (e) {
-      var last = eps[eps.length - 1];
-      if (last && e.inicio_s - last.fim_s <= 1.5) last.fim_s = Math.max(last.fim_s, e.fim_s); else eps.push({ inicio_s: e.inicio_s, fim_s: e.fim_s });
-    });
-    var trechos = eps.slice(0, 4).map(function (e) { return e.fim_s - e.inicio_s >= 1 ? pilotFmtT(e.inicio_s) + ' a ' + pilotFmtT(e.fim_s) : 'em ' + pilotFmtT(e.inicio_s); }).join(', ');
-    if (eps.length > 4) trechos += ' e mais ' + (eps.length - 4);
+    // um só momento por gesto: o melhor que o servidor indicou (ou o trecho mais longo)
+    var best = x.melhor_momento;
+    if (!best) (x.episodios || []).forEach(function (e) { if (!best || (e.fim_s - e.inicio_s) > (best.fim_s - best.inicio_s)) best = e; });
+    if (!best) return;
+    var eps = [{ inicio_s: best.inicio_s, fim_s: best.fim_s }];
+    var trechos = 'em ' + pilotFmtT((best.inicio_s + best.fim_s) / 2);
     var nome = k === 'dedo_do_meio' ? 'Possível gesto considerado obsceno (dedo do meio levantado)' : (k === 'ok' ? 'Possível gesto considerado obsceno (conhecido como “OK”)' : (k === 'piramide' ? 'Possível gesto considerado obsceno (pirâmide de mãos, pontas dos dedos juntas)' : 'Possível ' + x.descricao));
     out.push({ chave: k, eps: eps.slice(0, 3), nome: nome, ofensivo: k === 'dedo_do_meio' || k === 'ok' || k === 'piramide', vezes: eps.length, pct: x.pct_dos_quadros, trechos: trechos });
   });
@@ -2429,6 +2427,7 @@ function pilotSignalStatus(key, d) {
     case 'olharBaixo': if (!o || o.olhou_para_baixo_pct === undefined || o.olhou_para_baixo_pct === null) return null; return res(band(o.olhou_para_baixo_pct, function (n) { return n <= 10; }, function (n) { return n <= 25; }), 'Olhou para baixo', o.olhou_para_baixo_pct + '%', 'até 10%');
     case 'desviou': if (!o || o.desviou_o_olhar_pct === undefined || o.desviou_o_olhar_pct === null) return null; return res(band(o.desviou_o_olhar_pct, function (n) { return n <= 15; }, function (n) { return n <= 30; }), 'Desviou o olhar', o.desviou_o_olhar_pct + '%', 'até 15%');
     case 'gestos': if (!o) return null; var gv = [o.mao_esquerda_em_movimento_pct, o.mao_direita_em_movimento_pct].filter(function (n) { return typeof n === 'number'; }); if (!gv.length) return null; x = Math.round(gv.reduce(function (a, b) { return a + b; }, 0) / gv.length); return res(x >= 20 && x <= 70 ? 'ok' : ((x >= 8 && x < 20) || (x > 70 && x <= 85) ? 'warn' : 'bad'), 'Gestos das mãos', 'em movimento ' + x + '% do tempo', '20% a 70% do tempo');
+    case 'obsceno': var ob = pilotGestosLista(o).filter(function (g) { return g.ofensivo; }); if (!ob.length) return null; return res('bad', 'Gesto considerado obsceno', 'detectado ' + ob.map(function (g) { return g.trechos.replace(/^em /, ''); }).join(', '), 'nenhum');
     case 'rosto': if (!o || !o.mao_perto_do_rosto || !o.mao_perto_do_rosto.total_episodios) return null; x = o.mao_perto_do_rosto.total_episodios; return res(x <= 2 ? 'warn' : 'bad', 'Mão perto do rosto (baixa confiança)', x + ' episódio(s)', 'nenhum');
   }
   return null;
@@ -2438,7 +2437,7 @@ var PILOT_SIGNAL_GROUPS = [
   ['Texto', ['ritmoFala', 'inseguranca', 'vicios', 'vagueza', 'verboFraco']],
   ['Voz', ['entonacao', 'pausas', 'quedas', 'volume', 'varVolume', 'cadencia', 'monotonia', 'clareza']],
   ['Corpo', ['atividade', 'lateral', 'balanco', 'gestos']],
-  ['Olhar e postura', ['contatoVisual', 'olharBaixo', 'desviou', 'rosto']]
+  ['Olhar e postura', ['contatoVisual', 'olharBaixo', 'desviou', 'rosto', 'obsceno']]
 ];
 
 function computeSignalSummary(d) {
@@ -2486,6 +2485,7 @@ function computeEvaluationText(d, nome) {
       case 'contatoVisual': return 'Seu contato visual ficou em ' + O.contato_visual_estimado_pct + '% do tempo, abaixo dos 70% de referência. Escolha um ponto na câmera ou na plateia e volte a ele ao fechar cada ideia.';
       case 'olharBaixo': return 'Você olhou para baixo em ' + O.olhou_para_baixo_pct + '% do tempo. Se era roteiro ou slide, conheça melhor o conteúdo para olhar menos; se não era, ajuste a altura da câmera.';
       case 'desviou': return 'Seu olhar desviou para os lados em ' + O.desviou_o_olhar_pct + '% do tempo. Confira a posição da câmera, porque ela também influencia essa medida.';
+      case 'obsceno': return 'A plataforma detectou ' + pilotGestosLista(O).filter(function (g) { return g.ofensivo; }).map(function (g) { return g.nome.charAt(0).toLowerCase() + g.nome.slice(1) + ' ' + g.trechos; }).join('; ') + '. Se foi mesmo, é um gesto que costuma pesar contra a fala. Revise o quadro no vídeo; pode ser um falso alarme.';
       case 'rosto': return 'A mão passou perto do rosto em ' + O.mao_perto_do_rosto.total_episodios + ' momento(s); revise o vídeo para ver se cobre a boca ou o rosto.';
     }
     return null;
@@ -2514,7 +2514,7 @@ function computeEvaluationText(d, nome) {
     }
     return null;
   }
-  var PRIO = ['quedas', 'ritmoFala', 'pausas', 'contatoVisual', 'olharBaixo', 'inseguranca', 'vicios', 'monotonia', 'entonacao', 'varVolume', 'volume', 'gestos', 'balanco', 'atividade', 'lateral', 'desviou', 'vagueza', 'verboFraco', 'rosto'];
+  var PRIO = ['obsceno', 'quedas', 'ritmoFala', 'pausas', 'contatoVisual', 'olharBaixo', 'inseguranca', 'vicios', 'monotonia', 'entonacao', 'varVolume', 'volume', 'gestos', 'balanco', 'atividade', 'lateral', 'desviou', 'vagueza', 'verboFraco', 'rosto'];
   function pr(it) { var i = PRIO.indexOf(it.key); return i < 0 ? 99 : i; }
   var all = []; sum.groups.forEach(function (g) { g.items.forEach(function (it) { if (it.key !== 'clareza') all.push(it); }); });
   var n = all.length; if (!n) return null;
@@ -2526,7 +2526,7 @@ function computeEvaluationText(d, nome) {
 
   var nm = nome ? nome + ', nesta' : 'Nesta';
   var t = nm + ' gravação, ' + oks.length + ' de ' + n + ' sinais ficaram dentro da faixa de referência';
-  t += needs.length ? ' e ' + needs.length + ' pedem ajuste.' : '.';
+  t += needs.length ? ' e ' + needs.length + (needs.length === 1 ? ' pede ajuste.' : ' pedem ajuste.') : '.';
 
   if (needs.length) {
     var picks = needs.slice(0, 3), parts = [];
@@ -2538,9 +2538,7 @@ function computeEvaluationText(d, nome) {
   var goods = [], seen = {};
   oks.forEach(function (it) { var g = good(it); if (g && goods.length < 3) { goods.push(g); } });
   if (goods.length) t += ' Dentro da faixa: ' + goods.join('; ') + '.';
-  var gl = pilotGestosLista(O).filter(function (g) { return g.ofensivo; });
-  if (gl.length) t += ' Atenção: a plataforma detectou ' + gl.map(function (g) { return g.nome.charAt(0).toLowerCase() + g.nome.slice(1) + ' em ' + g.trechos.replace(/^em /, ''); }).join('; ') + '. Revise o trecho no vídeo; pode ser um falso alarme.';
-  if (!needs.length && !gl.length) t += ' Nada fora da faixa nesta gravação; o próximo passo é testar um contexto mais difícil, como plateia maior ou tempo mais curto.';
+  if (!needs.length) t += ' Nada fora da faixa nesta gravação; o próximo passo é testar um contexto mais difícil, como plateia maior ou tempo mais curto.';
   return { texto: t, ratio: ratio, fortes: goods, dicas: needs.slice(0, 3).map(function (i) { return i.label; }) };
 }
 
@@ -2908,7 +2906,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
       if (o.expressao_facial) r.push(['Expressão facial', o.expressao_facial.classificacao]);
       if (o.piscadas_por_minuto_estimado && o.piscadas_por_minuto_estimado.valor !== null && o.piscadas_por_minuto_estimado.valor !== undefined) r.push(['Piscadas por minuto (estimativa)', o.piscadas_por_minuto_estimado.valor]);
       if (o.mao_perto_do_rosto && o.mao_perto_do_rosto.total_episodios) r.push(['Mão perto do rosto', o.mao_perto_do_rosto.total_episodios + ' episódio(s), baixa confiança']);
-      pilotGestosLista(o).forEach(function (g) { r.push([g.nome, g.trechos + ' (' + g.vezes + 'x). Baixa confiança: confira o vídeo']); });
+      pilotGestosLista(o).forEach(function (g) { r.push([g.nome, g.trechos + '. Baixa confiança: confira o vídeo']); });
       add('Olhar e postura', r);
     }
     if (d.imagem && d.imagem.checks) add('Imagem e vestuário', d.imagem.checks.map(function (c) { return [c.title, (c.ok ? 'ok' : 'atenção') + ' — ' + c.sub]; }));
