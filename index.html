@@ -415,7 +415,7 @@ section.acc.open .acc-body { max-height:none; overflow:visible; visibility:visib
 
   <section class="card" id="seusDados">
     <h2>Seus dados</h2>
-    <p class="section-note">Seu nome e contato aparecem no relatório em Word. Eles só são enviados à Agência Voz se você marcar a autorização abaixo.</p>
+    <p class="section-note">Seu nome e contato aparecem no relatório em Word. Eles só são enviados à Agência Voz se você marcar a autorização abaixo. Imagens do seu vídeo nunca são enviadas.</p>
     <div class="ctxgrid" style="margin-top:12px">
       <div><label class="field-label" for="userName">Nome</label><input id="userName" type="text" autocomplete="name" placeholder="Seu nome completo" style="width:100%; border:1px solid var(--rule); background:var(--bg); color:var(--ink); padding:10px 12px; font-family:var(--font-sans); font-size:14px; margin-bottom:12px"></div>
       <div><label class="field-label" for="userContact">Contato (WhatsApp ou e-mail)</label><input id="userContact" type="text" autocomplete="tel" placeholder="(61) 90000-0000 ou voce@email.com" style="width:100%; border:1px solid var(--rule); background:var(--bg); color:var(--ink); padding:10px 12px; font-family:var(--font-sans); font-size:14px; margin-bottom:12px"></div>
@@ -2397,8 +2397,8 @@ function pilotGestosLista(o) {
     });
     var trechos = eps.slice(0, 4).map(function (e) { return e.fim_s - e.inicio_s >= 1 ? pilotFmtT(e.inicio_s) + ' a ' + pilotFmtT(e.fim_s) : 'em ' + pilotFmtT(e.inicio_s); }).join(', ');
     if (eps.length > 4) trechos += ' e mais ' + (eps.length - 4);
-    var nome = k === 'dedo_do_meio' ? 'Possível gesto considerado obsceno (dedo do meio levantado)' : (k === 'ok' ? 'Possível gesto considerado obsceno (conhecido como “OK”)' : 'Possível ' + x.descricao);
-    out.push({ chave: k, nome: nome, ofensivo: k === 'dedo_do_meio' || k === 'ok', vezes: eps.length, pct: x.pct_dos_quadros, trechos: trechos });
+    var nome = k === 'dedo_do_meio' ? 'Possível gesto considerado obsceno (dedo do meio levantado)' : (k === 'ok' ? 'Possível gesto considerado obsceno (conhecido como “OK”)' : (k === 'piramide' ? 'Possível gesto considerado obsceno (pirâmide de mãos, pontas dos dedos juntas)' : 'Possível ' + x.descricao));
+    out.push({ chave: k, eps: eps.slice(0, 3), nome: nome, ofensivo: k === 'dedo_do_meio' || k === 'ok' || k === 'piramide', vezes: eps.length, pct: x.pct_dos_quadros, trechos: trechos });
   });
   return out;
 }
@@ -2777,7 +2777,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     function u16(v) { return [v & 255, (v >>> 8) & 255]; }
     function u32(v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; }
     files.forEach(function (f) {
-      var name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+      var name = enc.encode(f.name), data = f.bin || enc.encode(f.data), crc = crc32(data);
       var head = [0x50, 0x4b, 3, 4].concat(u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0));
       chunks.push(new Uint8Array(head), name, data);
       central.push(new Uint8Array([0x50, 0x4b, 1, 2].concat(u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset))), name);
@@ -2794,6 +2794,19 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     var rpr = '<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>' + (o.b ? '<w:b/>' : '') + (o.i ? '<w:i/>' : '') +
       '<w:color w:val="' + (o.color || C.ink) + '"/><w:sz w:val="' + (o.size || 20) + '"/>' + (o.u ? '<w:u w:val="single"/>' : '');
     return '<w:r><w:rPr>' + rpr + '</w:rPr><w:t xml:space="preserve">' + esc(text) + '</w:t></w:r>';
+  }
+  // --- imagens (miniaturas dos gestos detectados) ---
+  var docImages = [], curOpts = {};
+  function imgPara(imgs) {
+    var CM = 360000, wEmu = Math.round(5.2 * CM), runs = '';
+    imgs.forEach(function (im) {
+      var n = docImages.length + 1, bin = atob(im.url.split(',')[1]), arr = new Uint8Array(bin.length), i;
+      for (i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      docImages.push({ rid: 'rIdImg' + n, name: 'media/img' + n + '.jpg', bin: arr });
+      var hEmu = Math.round(wEmu * im.h / im.w);
+      runs += '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + wEmu + '" cy="' + hEmu + '"/><wp:docPr id="' + (100 + n) + '" name="Imagem ' + n + '"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="' + (100 + n) + '" name="img' + n + '.jpg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdImg' + n + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + wEmu + '" cy="' + hEmu + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r><w:r><w:t xml:space="preserve">  </w:t></w:r>';
+    });
+    return '<w:p><w:pPr><w:spacing w:before="0" w:after="120"/></w:pPr>' + runs + '</w:p>';
   }
   function para(runs, o) {
     o = o || {};
@@ -2962,6 +2975,15 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
         body.push(para(run(gr.title, { b: 1, color: C.dark, size: 22 }), { before: 120, after: 80, keep: 1 }));
         body.push(kvTable(gr.rows.map(function (r) { return [r[0], String(r[1])]; })));
       });
+      if (!curOpts.semImagens && d.olhar) {
+        var gi = window.pilotGestosImgs || {}, first = true;
+        pilotGestosLista(d.olhar).forEach(function (g) {
+          var imgs = gi[g.chave]; if (!imgs || !imgs.length) return;
+          if (first) { body.push(para(run('Imagens dos gestos detectados', { b: 1, color: C.dark, size: 22 }), { before: 160, after: 40, keep: 1 })); body.push(para(run('Quadros do seu vídeo nos momentos em que a plataforma detectou o gesto. Confira se foi mesmo o gesto. Estas imagens ficam só neste arquivo.', { i: 1, size: 17, color: '5B5E51' }), { after: 60, keep: 1 })); first = false; }
+          body.push(para(run(g.nome + ' — ' + g.trechos, { b: 1, size: 18 }), { before: 80, after: 40, keep: 1 }));
+          body.push(imgPara(imgs));
+        });
+      }
       body.push(para(run('Os números de texto, voz e movimento vêm de heurísticas que ainda não foram calibradas contra avaliação humana. Servem como ponto de partida para conversa, não como nota final.', { i: 1, size: 17, color: '5B5E51' })));
     }
 
@@ -3050,11 +3072,13 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     n++; body.push(heading(n, 'Parecer Final'));
     body.push(table([cell(para(run(f.parecer || '[Parecer final a completar.]'), { after: 0 }), W, { fill: C.gray, leftBar: C.light })], [W]));
 
-    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>' +
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>' +
       body.join('') + '<w:sectPr><w:footerReference w:type="default" r:id="rIdFoot"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1000" w:right="1150" w:bottom="1100" w:left="1150" w:header="500" w:footer="500" w:gutter="0"/></w:sectPr></w:body></w:document>';
   }
 
-  function build(f, d) {
+  function build(f, d, opts) {
+    curOpts = opts || {}; docImages = [];
+    var docXml = buildDoc(f, d);   // antes dos rels: o documento registra as imagens
     var NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
     var footer = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ' + NS + '><w:p><w:pPr><w:jc w:val="right"/></w:pPr>' +
       run('FALA ', { size: 16, color: '8C8D80' }) + run('MUSICALIZADA', { b: 1, size: 16, color: C.light }) + run('  |  ', { size: 16, color: '8C8D80' }) +
@@ -3063,15 +3087,16 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
       '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
       '<Relationship Id="rIdFoot" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>' +
+      docImages.map(function (im) { return '<Relationship Id="' + im.rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="' + im.name + '"/>'; }).join('') +
       (f.link ? '<Relationship Id="rIdLink" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="' + esc(f.link) + '" TargetMode="External"/>' : '') + '</Relationships>';
     return zip([
-      { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>' },
+      { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>' },
       { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
-      { name: 'word/document.xml', data: buildDoc(f, d) },
+      { name: 'word/document.xml', data: docXml },
       { name: 'word/_rels/document.xml.rels', data: rels },
       { name: 'word/styles.xml', data: styles },
       { name: 'word/footer1.xml', data: footer }
-    ]);
+    ].concat(docImages.map(function (im) { return { name: 'word/' + im.name, bin: im.bin }; })));
   }
 
   var btn = document.getElementById('downloadWordBtn');
@@ -3089,9 +3114,9 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
   }
   function reportFileName(f) { return 'Relatorio_FalaMusicalizada_' + (f.aluno || 'aluno').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.docx'; }
   // Usado também pelo envio automático ao Google Drive (módulo de coleta).
-  window.pilotBuildReport = function () {
+  window.pilotBuildReport = function (opts) {
     var f = collectFields(), d = window.pilotReportData || {};
-    return { blob: build(f, d), name: reportFileName(f), f: f, d: d };
+    return { blob: build(f, d, opts), name: reportFileName(f), f: f, d: d };
   };
   btn.addEventListener('click', function () {
     var d = window.pilotReportData || {};
@@ -3481,7 +3506,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     if (!val('userName')) { st.textContent = 'Preencha seu nome para enviar o relatório.'; return; }
     busy = true; st.textContent = 'Enviando…';
     var r;
-    try { r = window.pilotBuildReport(); } catch (e) { busy = false; st.textContent = 'Não consegui preparar o relatório para envio.'; return; }
+    try { r = window.pilotBuildReport({ semImagens: true }); } catch (e) { busy = false; st.textContent = 'Não consegui preparar o relatório para envio.'; return; }
     var sinais = [];
     KEYS.forEach(function (k) { var x = pilotSignalStatus(k, r.d); if (x) sinais.push({ chave: k, label: x.label, valor: x.valor, ref: x.ref, status: k === 'rosto' ? x.status : x.status, nota: NOMES[x.status] }); });
     var file = (document.getElementById('audioFile') || {}).files; file = file && file[0] ? file[0].name : '';
@@ -3501,6 +3526,74 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     if (!firstReadyAt) firstReadyAt = Date.now();
     if (Date.now() - firstReadyAt > 6000) enviar();   // espera o resumo e o parecer serem gerados
   }, 2000);
+})();
+
+// ---------- Miniaturas dos gestos detectados (quadros do próprio vídeo, só no aparelho) ----------
+(function () {
+  var busy = false, lastSig = '';
+  var st = document.createElement('style');
+  st.textContent = '.gesto-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.gesto-thumbs figure{margin:0}.gesto-thumbs img{display:block;width:150px;max-width:100%;border-radius:6px;border:1px solid var(--rule,#ccc)}.gesto-thumbs figcaption{font-size:11px;opacity:.7;margin-top:2px}.gesto-priv{font-size:11px;opacity:.7;margin-top:4px;width:100%}';
+  document.head.appendChild(st);
+
+  function fmt(t) { return pilotFmtT(t); }
+  function signature(o) { return pilotGestosLista(o).map(function (g) { return g.chave + ':' + g.eps.map(function (e) { return e.inicio_s + '-' + e.fim_s; }).join(','); }).join('|'); }
+
+  function capture(lista, src) {
+    return new Promise(function (resolve) {
+      var out = {}, jobs = [], i = 0, v = document.createElement('video'), c = document.createElement('canvas'), done = false;
+      lista.forEach(function (g) { g.eps.forEach(function (e) { jobs.push({ k: g.chave, t: (e.inicio_s + e.fim_s) / 2 }); }); });
+      jobs = jobs.slice(0, 12);
+      function finish() { if (done) return; done = true; resolve(out); }
+      v.muted = true; v.playsInline = true; v.preload = 'auto';
+      v.addEventListener('error', finish);
+      v.addEventListener('loadedmetadata', next);
+      v.addEventListener('seeked', function () {
+        var j = jobs[i];
+        try {
+          var w = 480, h = Math.round(w * v.videoHeight / v.videoWidth);
+          c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h);
+          (out[j.k] = out[j.k] || []).push({ t: j.t, url: c.toDataURL('image/jpeg', 0.72), w: w, h: h });
+        } catch (e) {}
+        i++; next();
+      });
+      function next() {
+        if (i >= jobs.length) return finish();
+        var t = jobs[i].t; if (v.duration) t = Math.min(t, Math.max(0, v.duration - 0.05));
+        v.currentTime = t;
+      }
+      setTimeout(finish, 30000);
+      v.src = src;
+    });
+  }
+
+  function inject() {
+    var gi = window.pilotGestosImgs || {}, o = (window.pilotReportData || {}).olhar; if (!o) return;
+    var lista = pilotGestosLista(o), titles = document.querySelectorAll('.check-item .ct-title');
+    lista.forEach(function (g) {
+      var imgs = gi[g.chave]; if (!imgs || !imgs.length) return;
+      Array.prototype.forEach.call(titles, function (el) {
+        if (el.textContent.indexOf(g.nome) !== 0) return;
+        var box = el.parentNode; if (box.querySelector('.gesto-thumbs')) return;
+        var d = document.createElement('div'); d.className = 'gesto-thumbs';
+        d.innerHTML = imgs.map(function (im) { return '<figure><img alt="' + g.nome + ' em ' + fmt(im.t) + '" src="' + im.url + '"><figcaption>' + fmt(im.t) + '</figcaption></figure>'; }).join('') +
+          '<div class="gesto-priv">Quadros do seu vídeo, só neste aparelho. Confira se foi mesmo o gesto.</div>';
+        box.appendChild(d);
+      });
+    });
+  }
+
+  function tick() {
+    var o = (window.pilotReportData || {}).olhar;
+    if (!o || !o.gestos_especificos) return;
+    var sig = signature(o);
+    if (sig && sig !== lastSig && !busy) {
+      var fv = document.getElementById('frameVideo'), src = fv && (fv.currentSrc || fv.src);
+      if (!src || window.pilotAudioOnly) { lastSig = sig; return; }
+      busy = true; lastSig = sig;
+      capture(pilotGestosLista(o), src).then(function (out) { window.pilotGestosImgs = out; busy = false; inject(); }).catch(function () { busy = false; });
+    } else if (!busy) inject();
+  }
+  setInterval(tick, 1500);
 })();
 
 // ---------- Fluxo em duas etapas + caixinhas que abrem depois do olhar e postura ----------
