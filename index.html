@@ -3497,6 +3497,9 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
   // Cole aqui o endereço do app da Web do Google (veja o passo a passo). Vazio = não envia nada.
   var COLETA_URL = 'https://script.google.com/macros/s/AKfycbzM_Mdi6-uadLQ-2qP6-enCF5ASUr_G2HRFZQiwcaorSTCAbyut1XhgnpAw5dh76dif/exec';
   var COLETA_TOKEN = 'ensaio-9f3k2a7x';
+  // true = fase de testes com amigos: envia sozinho (relatório + imagens dos trechos), só com aviso na tela, sem caixas.
+  // false = volta ao modo com autorização marcada pela pessoa (use ao abrir para alunos/clientes).
+  var COLETA_AUTO = true;
   var card = document.getElementById('seusDados'); if (!card) return;
   var box = document.createElement('div'); box.style.marginTop = '4px';
   box.innerHTML = '<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-soft);line-height:1.5;cursor:pointer">' +
@@ -3506,8 +3509,12 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     '<input type="checkbox" id="coletaImgs" style="margin-top:3px;flex:none">' +
     '<span>Também autorizo enviar os quadros do vídeo que mostram os gestos detectados (algumas imagens pequenas, não o vídeo inteiro), para a Agência Voz revisar se a detecção está certa. Opcional.</span></label>' +
     '<p class="status-line" id="coletaStatus" style="margin-top:8px"></p>';
+  if (COLETA_AUTO) {
+    box.innerHTML = '<p style="font-size:13px;color:var(--ink-soft);line-height:1.5;margin:0">Nesta fase de testes, quando a análise terminar, seu relatório e as imagens dos trechos detectados são enviados automaticamente à Agência Voz, para calibrar a plataforma. O vídeo inteiro nunca é enviado.</p><p class="status-line" id="coletaStatus" style="margin-top:8px"></p>';
+  }
   card.appendChild(box);
-  var ok = document.getElementById('coletaOk'), imgs = document.getElementById('coletaImgs'), st = document.getElementById('coletaStatus');
+  var stub = { checked: true, disabled: false, addEventListener: function () {}, dispatchEvent: function () {} };
+  var ok = COLETA_AUTO ? stub : document.getElementById('coletaOk'), imgs = COLETA_AUTO ? stub : document.getElementById('coletaImgs'), st = document.getElementById('coletaStatus');
   var waitImgsFrom = 0;
   var sent = false, busy = false, firstReadyAt = 0;
   var KEYS = ['ritmoFala', 'inseguranca', 'vicios', 'vagueza', 'verboFraco', 'entonacao', 'pausas', 'quedas', 'volume', 'varVolume', 'cadencia', 'monotonia', 'clareza', 'atividade', 'lateral', 'balanco', 'gestos', 'contatoVisual', 'olharBaixo', 'desviou', 'rosto'];
@@ -3523,7 +3530,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
   }
   function enviar() {
     if (sent || busy || !COLETA_URL || !ok.checked) return;
-    if (!val('userName')) { st.textContent = 'Preencha seu nome para enviar o relatório.'; return; }
+    if (!COLETA_AUTO && !val('userName')) { st.textContent = 'Preencha seu nome para enviar o relatório.'; return; }
     // com a caixa das imagens marcada, espera as miniaturas ficarem prontas (até 40 s)
     if (imgs.checked && !window.pilotGestosReady) {
       if (!waitImgsFrom) waitImgsFrom = Date.now();
@@ -3536,7 +3543,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     KEYS.forEach(function (k) { var x = pilotSignalStatus(k, r.d); if (x) sinais.push({ chave: k, label: x.label, valor: x.valor, ref: x.ref, status: k === 'rosto' ? x.status : x.status, nota: NOMES[x.status] }); });
     var file = (document.getElementById('audioFile') || {}).files; file = file && file[0] ? file[0].name : '';
     b64(r.blob).then(function (docx) {
-      var payload = { token: COLETA_TOKEN, versao: 2, imagens: !!imgs.checked, quando: new Date().toISOString(), nome: val('userName'), contato: val('userContact'), consentimento: true,
+      var payload = { token: COLETA_TOKEN, versao: 2, imagens: !!imgs.checked, quando: new Date().toISOString(), nome: val('userName') || (COLETA_AUTO ? 'Sem nome' : ''), contato: val('userContact'), consentimento: COLETA_AUTO ? 'aviso-fase-de-testes' : true,
         video: file, tom: sel('toneSelect'), publico: sel('audienceSelect'), formato: sel('formatSelect'), arquivo: r.name, docx: docx, sinais: sinais };
       return fetch(COLETA_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
     }).then(function () { sent = true; busy = false; imgs.disabled = true; ok.disabled = true; st.textContent = 'Relatório enviado à Agência Voz' + (imgs.checked ? ' (com as imagens dos gestos)' : '') + '. Obrigado!'; })
