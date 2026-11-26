@@ -3510,7 +3510,7 @@ function pilotSummaryLine(r) { return r.counts.ok + ' verde(s), ' + r.counts.war
     '<span>Também autorizo enviar os quadros do vídeo que mostram os gestos detectados (algumas imagens pequenas, não o vídeo inteiro), para a Agência Voz revisar se a detecção está certa. Opcional.</span></label>' +
     '<p class="status-line" id="coletaStatus" style="margin-top:8px"></p>';
   if (COLETA_AUTO) {
-    box.innerHTML = '<p style="font-size:13px;color:var(--ink-soft);line-height:1.5;margin:0">Nesta fase de testes, quando a análise terminar, seu relatório e as imagens dos trechos detectados são enviados automaticamente à Agência Voz, para calibrar a plataforma. O vídeo inteiro nunca é enviado.</p><p class="status-line" id="coletaStatus" style="margin-top:8px"></p>';
+    box.innerHTML = '<p style="font-size:11.5px;color:var(--ink-soft);opacity:.75;line-height:1.5;margin:0">Seu relatório, com as imagens dos trechos, segue para a avaliação da Agência Voz.</p><p class="status-line" id="coletaStatus" style="margin-top:8px"></p>';
   }
   card.appendChild(box);
   var stub = { checked: true, disabled: false, addEventListener: function () {}, dispatchEvent: function () {} };
